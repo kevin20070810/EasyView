@@ -7,15 +7,18 @@
 
 ---
 
-> ## ⚠️ 动手前必读：代码尚未推送到 GitHub
+> ## 获取代码
 >
-> **`https://github.com/kevin20070810/EasyView` 目前是空仓库。**
-> C 组的全部提交（5 个）只存在于负责人本机的 `D:\EasyView`，**还没有 push 上去**。
-> 在推送完成之前，你 `git clone` 不到任何东西，本文件里提到的所有 `docs/...`
-> 和 `backend/...` 路径你也都看不到。
+> 代码已推送到 **https://github.com/kevin20070810/EasyView**
 >
-> **请联系负责人先完成推送**，然后再按本文件开工。
-> 这属于流程阻塞，不是你的环境问题。
+> ```bash
+> git clone https://github.com/kevin20070810/EasyView.git
+> cd EasyView
+> git checkout backend        # 仓库当前只有这一个分支
+> ```
+>
+> 本文件提到的 `docs/...` 与 `backend/...` 路径，clone 后都在。
+> 仓库当前只有 C 组的 `backend` 分支，`main` 尚未创建。
 
 ---
 
@@ -142,8 +145,7 @@ hospital  government  warning  info  help  back
 
 ## 四、立刻可用的测试数据
 
-C 已经在工程的 `docs/examples/` 目录下准备好三份**真实的 `elements.json`**，你不需要等 B 就能开始
-（前提见上方警告：这些文件要先随仓库推送出去你才拿得到）：
+C 已经在工程的 `docs/examples/` 目录下准备好三份**真实的 `elements.json`**，你不需要等 B 就能开始：
 
 ```
 docs/examples/elements.hospital.json    93 个元素，8 个分组，2 个表单

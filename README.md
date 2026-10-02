@@ -14,28 +14,19 @@ EasyView：我要挂号 / 查看报告 / 缴费 / 联系客服
 
 ---
 
-> ## ⚠️ 仓库状态：代码尚未推送到 GitHub
+> ## 获取代码
 >
-> `https://github.com/kevin20070810/EasyView` 目前是**空仓库**。
-> C 组的全部提交只存在于本机的 `D:\EasyView`（分支 `backend`，5 个提交），**尚未 push**。
->
-> 推送前，其他成员 `git clone` 不到任何内容，交接文件里提到的所有路径也不存在。
+> 分支 `backend` 已推送到 **https://github.com/kevin20070810/EasyView**
+> （7 个提交，30 个文件）。
 >
 > ```bash
-> cd D:\EasyView
-> git push -u origin backend      # remote 已配好，只需在有 GitHub 网络的环境下执行
+> git clone https://github.com/kevin20070810/EasyView.git
+> cd EasyView
+> git checkout backend
 > ```
 >
-> **未能推送的原因不是网络，而是缺少 GitHub 凭证：**
-> 实测 `git ls-remote` 可匿名连通（因此也确认了仓库存在且为空），
-> 但 `git push` 需要认证，本机没有缓存任何 GitHub 凭据，
-> 自动化环境也无法完成交互式登录。
->
-> 请在你自己的终端执行上述命令，Git Credential Manager 会引导你完成授权；
-> 授权后凭据被缓存，后续推送即可自动完成。
->
-> 另：仓库当前没有任何分支。按规范 §4，C 组只推 `backend` 分支，不直接推 `main`；
-> `main` 由谁创建属团队决定。
+> 仓库当前**只有 `backend` 这一个分支**，`main` 尚未创建 ——
+> 按规范 §4，C 组只推 `backend`、不直接推 `main`，`main` 由谁创建属团队决定。
 
 ---
 
