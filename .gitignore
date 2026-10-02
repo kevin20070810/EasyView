@@ -33,3 +33,6 @@ easyview-extension/tools/e2e-*.png
 # 移植保真度测试的输出与探针脚本（子代理调试产物）
 backend/tools/port_fidelity_out/
 backend/tools/_portprobe/
+
+# 前端评审截图
+easyview-extension/tools/shots/
