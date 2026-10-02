@@ -29,6 +29,11 @@
   /* ---------- 上限与常量（与 backend/app/extract_dom.js、config.py 一致） ---------- */
   const MAX_TEXT = 200;        // 单个文本/标签字段上限
   const MAX_VALUE = 120;       // 表单 value 上限
+  // value 只在"value 本身就是标签"的按钮类控件上采集。
+  // <input type="submit" value="查询"> 里 value 是按钮文字，属于页面内容；
+  // 而 text / number / date / textarea / select 的 value 是**用户已经填进去的内容**，
+  // 一律不采集 —— 老人可能先填了身份证号、手机号、住址，再点「适老」。
+  const VALUE_AS_LABEL_TYPES = new Set(['submit', 'button', 'reset', 'image']);
   const MAX_ELEMENTS = 400;    // backend/app/config.py MAX_ELEMENTS
   const SCHEMA_VERSION = '1.1.0';
 
@@ -414,8 +419,11 @@
         aria_label: norm(el.getAttribute('aria-label')) || null,
         placeholder: norm(el.getAttribute('placeholder')) || null,
         name: norm(el.getAttribute('name')) || null,
-        // 密码框的 value 一律不采集，避免任何形式的凭据泄露
-        value: isPassword ? null : (norm(el.value).slice(0, MAX_VALUE) || null),
+        // 只采集"value 即标签"的按钮类；输入类控件的 value 是用户隐私，绝不采集
+        value: (el.tagName === 'INPUT' &&
+          VALUE_AS_LABEL_TYPES.has(norm(el.getAttribute('type')).toLowerCase()))
+          ? (norm(el.value).slice(0, MAX_VALUE) || null)
+          : null,
         href: (el.tagName === 'A' && el.href) ? el.href : null,
         selector: selector,
         xpath: xpathOf(el),
