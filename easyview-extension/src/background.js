@@ -74,16 +74,18 @@ async function aiEndpoint() {
   }
 }
 
-async function analyzeViaService(elements, useAi) {
+async function analyzeViaService(bodyText, kind, useAi) {
   const endpoint = await aiEndpoint();
-  const url = `${endpoint}/analyze?debug=1${useAi ? "&ai=1" : ""}`;
+  // elements 直接交给 /analyze；digest 走 /draft（服务器只做"文字进、JSON 出"）
+  const route = kind === "digest" ? "draft" : "analyze";
+  const url = `${endpoint}/${route}?debug=1${useAi ? "&ai=1" : ""}`;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), ANALYZE_TIMEOUT_MS);
   try {
     const response = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(elements),
+      body: bodyText,
       signal: controller.signal
     });
     const text = await response.text();
@@ -116,7 +118,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (!message || typeof message.type !== "string") return undefined;
 
   if (message.type === "easyview:analyze") {
-    analyzeViaService(message.elements, message.ai !== false)
+    if (typeof message.body !== "string" || !message.body) {
+      sendResponse({ ok: false, error: "没有可发送的内容" });
+      return true;
+    }
+    analyzeViaService(message.body, message.kind, message.ai !== false)
       .then(sendResponse)
       .catch((error) => sendResponse({ ok: false, error: String(error) }));
     return true; // 异步回复，保持通道打开
@@ -177,10 +183,11 @@ chrome.action.onClicked.addListener(async (tab) => {
       return;
     }
 
-    // 通用网页：页面内提取 -> 分析服务理解 -> 渲染
+    // 通用网页：纯本地提取 -> 本地脱敏 -> 用户同意 -> 分析服务理解 -> 渲染
+    // 顺序重要：privacy 必须比 ai-content 先挂上，extract 同理
     await chrome.scripting.executeScript({
       target: { tabId },
-      files: ["src/extract.js", "src/ai-content.js"]
+      files: ["src/privacy.js", "src/extract.js", "src/ai-content.js"]
     });
   } catch (error) {
     console.warn("[EasyView] Could not open the current page:", error);

@@ -28,6 +28,7 @@ import asyncio
 import functools
 import http.server
 import pathlib
+import shutil
 import sys
 import threading
 
@@ -53,6 +54,18 @@ READ_OVERLAY = """
     message: text('.ev-message'),
     loading: text('.ev-content .ev-message'),
     stats: text('.ev-ai-stats'),
+    consent: (() => {
+      const box = shadow.querySelector('.ev-ai-consent');
+      if (!box) return null;
+      const list = box.querySelector('ul');
+      return list ? [...list.children].map((li) => li.textContent.trim()).join(' / ') : null;
+    })(),
+    previewShown: (() => {
+      const box = shadow.querySelector('.ev-ai-preview');
+      return box && !box.hidden ? box.textContent.trim().slice(0, 60) : null;
+    })(),
+    foot: text('.ev-ai-foot'),
+    buttons: [...shadow.querySelectorAll('button')].map((b) => b.textContent.trim()),
     cards: [...shadow.querySelectorAll('.ev-card')].map((card) => ({
       icon: card.dataset.icon || null,
       title: card.querySelector('strong') ? card.querySelector('strong').textContent.trim() : null,
@@ -61,6 +74,18 @@ READ_OVERLAY = """
       blocked: card.classList.contains('ev-ai-risk-blocked'),
     })),
   };
+}
+"""
+
+CLICK_BUTTON = """
+(label) => {
+  const host = document.getElementById('easyview-ai-root');
+  const shadow = host && host.shadowRoot;
+  if (!shadow) return false;
+  const target = [...shadow.querySelectorAll('button')].find((b) => b.textContent.trim() === label);
+  if (!target) return false;
+  target.click();
+  return true;
 }
 """
 
@@ -90,6 +115,12 @@ async def run(fixture: str, use_ai: bool) -> int:
 
     PROFILE_DIR.mkdir(parents=True, exist_ok=True)
     failures: list[str] = []
+
+    # 每次都用全新的 profile：同意状态存在里面，复用的话第二次就不会再问，
+    # 那条断言也就形同虚设。
+    if PROFILE_DIR.exists():
+        shutil.rmtree(PROFILE_DIR, ignore_errors=True)
+    PROFILE_DIR.mkdir(parents=True, exist_ok=True)
 
     async with async_playwright() as p:
         context = await p.chromium.launch_persistent_context(
@@ -128,14 +159,42 @@ async def run(fixture: str, use_ai: bool) -> int:
             else:
                 print("  [PASS] 内容脚本注入成功")
 
-            # 等渲染结果（模型可能要好几秒）
-            deadline = 90.0
-            state = None
-            for _ in range(int(deadline / 0.5)):
-                await asyncio.sleep(0.5)
-                state = await page.evaluate(READ_OVERLAY)
-                if state and (state["cards"] or state["error"]):
-                    break
+            async def wait_for(predicate, timeout_s: float):
+                for _ in range(int(timeout_s / 0.5)):
+                    await asyncio.sleep(0.5)
+                    snapshot = await page.evaluate(READ_OVERLAY)
+                    if snapshot and predicate(snapshot):
+                        return snapshot
+                return await page.evaluate(READ_OVERLAY)
+
+            # 首次使用应当先征求同意 —— 这一屏是隐私保证的一部分，必须测到
+            state = await wait_for(lambda s: s["consent"] or s["cards"] or s["error"], 30)
+            if state and state["consent"]:
+                print("  [PASS] 首次使用先出现了同意界面")
+                print(f"        将发送: {state['consent']}")
+                # 顺便验证「查看将发送的内容」确实能展开 —— 这是透明度的关键
+                if await page.evaluate(CLICK_BUTTON, "查看将发送的内容"):
+                    await asyncio.sleep(0.4)
+                    shown = await page.evaluate(READ_OVERLAY)
+                    if shown and shown["previewShown"]:
+                        print("  [PASS] 可以展开查看将发送的原文")
+                    else:
+                        failures.append("点了预览按钮但内容没展开")
+                        print("  [FAIL] 预览没展开")
+                else:
+                    failures.append("找不到预览按钮")
+                    print("  [FAIL] 找不到「查看将发送的内容」")
+                clicked = await page.evaluate(CLICK_BUTTON, "同意并继续")
+                if clicked:
+                    print("  [PASS] 「同意并继续」可点击")
+                else:
+                    failures.append("同意按钮不存在")
+                    print("  [FAIL] 找不到「同意并继续」按钮")
+                state = await wait_for(lambda s: s["cards"] or s["error"], 90)
+            else:
+                failures.append("首次使用没有出现同意界面")
+                print("  [FAIL] 没有出现同意界面（隐私保证的一部分）")
+                state = await wait_for(lambda s: s["cards"] or s["error"], 90)
 
             if not state:
                 failures.append("overlay 一直没出现")
@@ -150,6 +209,10 @@ async def run(fixture: str, use_ai: bool) -> int:
                     print(f"  [FAIL] 错误面板: {state['error']}")
                 if state["stats"]:
                     print(f"        统计: {state['stats']}")
+                if state["consent"]:
+                    print(f"        同意界面: {state['consent'].splitlines()[0][:80]}")
+                if state["foot"]:
+                    print(f"        发送说明: {state['foot'].splitlines()[0][:100]}")
                 if state["cards"]:
                     print(f"  [PASS] 渲染出 {len(state['cards'])} 张卡片:")
                     for card in state["cards"]:
