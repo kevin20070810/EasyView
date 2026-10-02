@@ -26,3 +26,6 @@ Thumbs.db
 # 本地备份 / 临时目录
 _backup_*/
 *.bak
+
+# 端到端检查产生的截图
+easyview-extension/tools/e2e-*.png

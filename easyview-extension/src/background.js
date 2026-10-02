@@ -1,6 +1,10 @@
 "use strict";
 
 const DEFAULT_TITLE = "为当前网页生成敬老版";
+const DEFAULT_ENDPOINT = "http://127.0.0.1:8787";
+const ANALYZE_TIMEOUT_MS = 120000;
+
+/* ---------- 专用站点 ---------- */
 
 function dedicatedRootFor(url) {
   if (url.protocol !== "https:") return null;
@@ -53,6 +57,95 @@ async function openDedicatedOverlay(rootId) {
   return Boolean(shadow.querySelector(".ev-overlay"));
 }
 
+/* ---------- 分析服务 ---------- */
+/*
+ * content script 不能绕过 CORS，而且从公网页面直接请求 127.0.0.1 还会被
+ * Chrome 的 Private Network Access 拦下。所以请求统一由这里代发 ——
+ * service worker 拥有 host_permissions，不受这两个限制。
+ */
+
+async function aiEndpoint() {
+  try {
+    const stored = await chrome.storage.local.get({ "easyview.aiEndpoint": "" });
+    const value = String(stored["easyview.aiEndpoint"] || "").trim();
+    return (value || DEFAULT_ENDPOINT).replace(/\/+$/, "");
+  } catch (_) {
+    return DEFAULT_ENDPOINT;
+  }
+}
+
+async function analyzeViaService(elements, useAi) {
+  const endpoint = await aiEndpoint();
+  const url = `${endpoint}/analyze?debug=1${useAi ? "&ai=1" : ""}`;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), ANALYZE_TIMEOUT_MS);
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(elements),
+      signal: controller.signal
+    });
+    const text = await response.text();
+    let payload;
+    try {
+      payload = JSON.parse(text);
+    } catch (_) {
+      return { ok: false, error: `分析服务返回的不是 JSON（HTTP ${response.status}）` };
+    }
+    if (!response.ok || payload.ok === false) {
+      const detail = payload?.error?.message || `HTTP ${response.status}`;
+      return { ok: false, error: detail };
+    }
+    return { ok: true, data: payload.data, meta: payload.meta || null, endpoint };
+  } catch (error) {
+    if (error && error.name === "AbortError") {
+      return { ok: false, error: `分析超时（${Math.round(ANALYZE_TIMEOUT_MS / 1000)} 秒）`, endpoint };
+    }
+    return {
+      ok: false,
+      error: `连不上分析服务 ${endpoint}。请先启动：cd ai-service && python app.py`,
+      endpoint
+    };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (!message || typeof message.type !== "string") return undefined;
+
+  if (message.type === "easyview:analyze") {
+    analyzeViaService(message.elements, message.ai !== false)
+      .then(sendResponse)
+      .catch((error) => sendResponse({ ok: false, error: String(error) }));
+    return true; // 异步回复，保持通道打开
+  }
+
+  if (message.type === "easyview:endpoint") {
+    aiEndpoint().then((endpoint) => sendResponse({ ok: true, endpoint }));
+    return true;
+  }
+
+  // 分析服务不可用时，退回扩展内置的本地规则版（generic-content.js）
+  if (message.type === "easyview:fallback-generic") {
+    const tabId = sender?.tab?.id;
+    if (typeof tabId !== "number") {
+      sendResponse({ ok: false, error: "找不到标签页" });
+      return undefined;
+    }
+    chrome.scripting
+      .executeScript({ target: { tabId }, files: ["src/generic-content.js"] })
+      .then(() => sendResponse({ ok: true }))
+      .catch((error) => sendResponse({ ok: false, error: String(error) }));
+    return true;
+  }
+
+  return undefined;
+});
+
+/* ---------- 点击图标 ---------- */
+
 chrome.action.onClicked.addListener(async (tab) => {
   if (typeof tab.id !== "number") return;
   const tabId = tab.id;
@@ -84,9 +177,10 @@ chrome.action.onClicked.addListener(async (tab) => {
       return;
     }
 
+    // 通用网页：页面内提取 -> 分析服务理解 -> 渲染
     await chrome.scripting.executeScript({
       target: { tabId },
-      files: ["src/generic-content.js"]
+      files: ["src/extract.js", "src/ai-content.js"]
     });
   } catch (error) {
     console.warn("[EasyView] Could not open the current page:", error);
