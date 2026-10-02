@@ -14,6 +14,23 @@ EasyView：我要挂号 / 查看报告 / 缴费 / 联系客服
 
 ---
 
+> ## ⚠️ 仓库状态：代码尚未推送到 GitHub
+>
+> `https://github.com/kevin20070810/EasyView` 目前是**空仓库**。
+> C 组的全部提交只存在于本机的 `D:\EasyView`（分支 `backend`，5 个提交），**尚未 push**。
+>
+> 推送前，其他成员 `git clone` 不到任何内容，交接文件里提到的所有路径也不存在。
+>
+> ```bash
+> cd D:\EasyView
+> git push -u origin backend      # remote 已配好，只需在有 GitHub 网络的环境下执行
+> ```
+>
+> 本机 git 协议访问 github.com 被网络阻断（TCP 层可连通、HTTPS 数据传输被重置），
+> 因此推送需要在可访问 GitHub 的网络或代理下完成。
+
+---
+
 ## 架构
 
 一条单向数据流水线，三个模块靠两个 JSON 文件解耦：
