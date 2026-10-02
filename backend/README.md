@@ -185,7 +185,15 @@ python -m tools.selfcheck --url https://...     # 额外测真实站点
 python -m tools.selfcheck --live-only --url https://...
 ```
 
-自检做两件事：
+三个工具构成一条完整的接口防线：
+
+| 工具 | 校验对象 | 检查项 |
+|---|---|---|
+| `tools/selfcheck.py` | C 的产出 vs `elements.schema.json` | 113 项 |
+| `tools/check_ui.py` | B 的 `ui_schema.json` vs 配对的 `elements.json` | 14 项 |
+| `tools/check_docs.py` | A/B 两份交接文件的契约表格 | 19 项 |
+
+`selfcheck.py` 做两件事：
 
 1. **JSON Schema 校验** —— 用 `docs/elements.schema.json` 校验实际产出
 2. **业务不变量校验** —— schema 拦不住的那些：

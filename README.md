@@ -40,14 +40,50 @@ EasyView/
 ├── docs/                       # 公共协议（三人确认才能改）
 │   ├── elements.schema.json    #   C -> B 契约
 │   ├── ui.schema.json          #   B -> A 契约
-│   └── PROTOCOL.md             #   协议说明与设计理由
+│   ├── PROTOCOL.md             #   协议说明与设计理由
+│   ├── A_前端交接.md            #   → A 组：进度、职责、渲染规则
+│   ├── B_AI交接.md              #   → B 组：进度、职责、生成规则
+│   └── examples/               #   可直接使用的真实样例数据
+│       ├── elements.hospital.json      C 的真实产出（93 元素）
+│       ├── elements.gov.json           C 的真实产出（80 元素）
+│       ├── elements.traffic.json       C 的真实产出（81 元素）
+│       └── ui_schema.hospital.json     B 的输出格式模板（校验全通过）
 ├── backend/                    # C 组：网页解析服务
 │   ├── app/
 │   ├── fixtures/               #   降级用本地快照
-│   └── tools/selfcheck.py      #   协议自检
+│   └── tools/                  #   协议自检 / 接口交叉校验 / 文档一致性
 ├── frontend/                   # A 组
 └── ai-service/                 # B 组
 ```
+
+---
+
+## 交接文件
+
+| 文件 | 给谁 | 内容 |
+|---|---|---|
+| [`docs/A_前端交接.md`](docs/A_前端交接.md) | **A 组** | 当前进度、职责边界、`ui_schema.json` 完整字段表、渲染规则、联调自测清单 |
+| [`docs/B_AI交接.md`](docs/B_AI交接.md) | **B 组** | 当前进度、职责边界、`elements.json` 完整字段表、`ui_schema.json` 生成规则、联调自测清单 |
+| [`docs/PROTOCOL.md`](docs/PROTOCOL.md) | 全员 | 协议的设计理由、ID 规则边界、截断策略、变更记录 |
+
+> 两份交接文件里的**契约表格逐字一致**，由 `backend/tools/check_docs.py` 程序化强制。
+> 改了一边忘了另一边会被直接检出 —— 这是防止 A/B 接口漂移的机制，不是靠自觉。
+
+---
+
+## 接口一致性校验
+
+三个工具，全部可执行、无外部依赖：
+
+```bash
+cd backend
+
+python -m tools.selfcheck              # C 的产出是否符合 elements.schema.json（113 项）
+python -m tools.check_ui --pair hospital   # B 的 ui_schema 引用的 ID 是否真实存在（14 项）
+python -m tools.check_docs             # A/B 两份交接文件的契约表格是否一致（19 项）
+```
+
+**约定**：B 产出 `ui_schema.json` 后放进 `docs/examples/`，`check_ui` 全绿再叫 A 联调。
 
 ---
 
