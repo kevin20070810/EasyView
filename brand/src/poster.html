@@ -1,0 +1,134 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ink:#0D5C63; --ink-deep:#0A4249; --warm:#E86A33; --warm-soft:#F2A65A;
+  --cream:#FFF8EC; --paper:#FFFDF8; --text:#1F2933; --muted:#5B6B76;
+  --zh:"Microsoft YaHei","Noto Sans SC",sans-serif;
+  --en:"Verdana","Segoe UI",sans-serif;
+}
+
+body{background:#DDE2E4;font-family:var(--zh)}
+.poster{position:relative;width:1080px;height:1620px;background:var(--cream);overflow:hidden}
+.deco1{position:absolute;right:-180px;top:-180px;width:560px;height:560px;border-radius:50%;background:var(--ink);opacity:.05}
+.deco2{position:absolute;left:-140px;bottom:240px;width:420px;height:420px;border-radius:50%;border:56px solid var(--warm);opacity:.08}
+.hdr{position:absolute;left:72px;right:72px;top:64px;display:flex;align-items:center;justify-content:space-between}
+.hdr .brand{display:flex;align-items:center;gap:18px}
+.hdr .brand b{font-size:30px;color:var(--ink);letter-spacing:1px}
+.hdr .brand i{font-family:var(--en);font-style:normal;font-size:19px;color:var(--muted);letter-spacing:2px;margin-top:6px}
+.hdr .tag{font-size:21px;color:var(--ink);background:rgba(13,92,99,.09);border:1.5px solid rgba(13,92,99,.25);padding:10px 22px;border-radius:999px;letter-spacing:2px}
+.eyebrow{position:absolute;left:72px;top:196px;font-size:26px;color:var(--warm);letter-spacing:6px;font-weight:700}
+h1{position:absolute;left:72px;top:248px;font-size:96px;line-height:1.22;color:var(--ink);font-weight:700;letter-spacing:2px}
+h1 em{font-style:normal;color:var(--warm)}
+.sub{position:absolute;left:72px;top:520px;font-size:30px;line-height:1.75;color:var(--muted);letter-spacing:1px}
+.demo{position:absolute;left:72px;top:672px;width:936px;height:520px;background:var(--paper);border-radius:30px;box-shadow:0 10px 34px rgba(10,66,73,.10);padding:34px 36px;display:flex;gap:26px;align-items:stretch}
+.mock{border-radius:18px;overflow:hidden;border:1.5px solid rgba(13,92,99,.16);display:flex;flex-direction:column}
+.mock .bar{height:40px;background:#EEF1F2;display:flex;align-items:center;gap:7px;padding:0 14px;flex:none}
+.mock .bar i{width:10px;height:10px;border-radius:50%;background:#C7CFD3}
+.mock .bar u{flex:1;height:14px;border-radius:7px;background:#fff;margin-left:8px;text-decoration:none}
+.mock .body{flex:1;background:#fff;padding:16px}
+.bad .body{display:flex;flex-direction:column;gap:7px}
+.bad .ln{height:7px;border-radius:3px;background:#C9D2D6}
+.bad .ln.ad{height:34px;background:#E4E9EB;border-radius:5px}
+.bad .ln.link{background:#9FB6C9;width:52%}
+.bad .ln.t{height:11px;background:#8FA0A8;width:70%}
+.good{flex:1}
+.good .body{background:var(--cream);padding:14px;display:flex;flex-direction:column;gap:12px}
+.card{background:#fff;border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:14px;box-shadow:0 2px 8px rgba(10,66,73,.07);flex:1}
+.card .ic{width:44px;height:44px;border-radius:11px;flex:none;display:flex;align-items:center;justify-content:center}
+.card .tx{flex:1}
+.card .tx b{display:block;font-size:26px;color:var(--ink);letter-spacing:1px}
+.card .tx s{display:block;text-decoration:none;font-size:15px;color:var(--muted);margin-top:4px}
+.card .go{background:var(--warm);color:#fff;font-size:17px;padding:9px 16px;border-radius:999px;flex:none;letter-spacing:1px}
+.arrow{width:96px;flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px}
+.arrow b{font-size:20px;color:var(--warm);letter-spacing:2px;writing-mode:vertical-rl}
+.cap{position:absolute;left:0;right:0;bottom:-40px;text-align:center;font-size:20px;letter-spacing:1px}
+.cap.badc{color:var(--muted)} .cap.goodc{color:var(--ink);font-weight:700}
+.wrap{position:relative;flex:none}
+.w1{width:330px}.w2{width:414px}
+.chips{position:absolute;left:72px;top:1268px;display:flex;gap:18px}
+.chips span{font-size:25px;color:var(--ink);background:#fff;border:2px solid rgba(13,92,99,.22);border-radius:999px;padding:13px 26px;letter-spacing:2px}
+.band{position:absolute;left:0;right:0;bottom:0;height:236px;background:var(--ink)}
+.band .in{position:absolute;left:72px;right:72px;top:52px;display:flex;align-items:center;gap:30px}
+.band .nm b{font-size:46px;color:var(--cream);letter-spacing:3px;display:block}
+.band .nm i{font-family:var(--en);font-style:normal;font-size:20px;color:rgba(255,248,236,.72);letter-spacing:3px}
+.band .slogan{margin-left:auto;text-align:right}
+.band .slogan b{display:block;font-size:30px;color:var(--warm-soft);letter-spacing:4px}
+.band .slogan s{display:block;text-decoration:none;font-size:19px;color:rgba(255,248,236,.66);margin-top:12px;letter-spacing:1px}
+</style></head><body>
+<div class="poster" data-shot="poster">
+  <div class="deco1"></div><div class="deco2"></div>
+  <div class="hdr">
+    <div class="brand"><div style="width:60px;height:60px">
+<svg width="100%" height="100%" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="pA" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#14707A"/><stop offset="1" stop-color="#0A4249"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="30" fill="url(#pA)"/>
+  <circle cx="64" cy="19.5" r="6.5" fill="#F2A65A"/>
+  <path d="M94.2 28 A47 47 0 1 1 33.8 28" fill="none" stroke="#E86A33" stroke-width="7" stroke-linecap="round"/>
+  <rect x="35" y="39" width="58" height="50" rx="9" fill="#FFF8EC"/>
+  <rect x="43" y="47" width="30" height="7" rx="3.5" fill="#0D5C63"/>
+  <rect x="43" y="59.5" width="42" height="5" rx="2.5" fill="#0D5C63" opacity=".26"/>
+  <rect x="43" y="69" width="42" height="13" rx="6.5" fill="#E86A33"/>
+</svg></div><b>暖龄</b><i>EasyView</i></div>
+    <div class="tag">48 小时黑客松 · 适老化赛道</div>
+  </div>
+  <div class="eyebrow">面向长辈的网页辅助插件</div>
+  <h1>网页再乱，<br>也能<em>一眼看懂</em>。</h1>
+  <div class="sub">暖龄把医院、政务、购票等网站，自动整理成<br>大字、大按钮、只留要办的事。</div>
+  <div class="demo">
+    <div class="wrap w1">
+      <div class="mock bad" style="height:440px">
+        <div class="bar"><i></i><i></i><i></i><u></u></div>
+        <div class="body">
+          <div class="ln t"></div><div class="ln ad"></div>
+          <div class="ln" style="width:92%"></div><div class="ln" style="width:84%"></div>
+          <div class="ln link"></div><div class="ln" style="width:88%"></div>
+          <div class="ln ad"></div><div class="ln" style="width:78%"></div>
+          <div class="ln" style="width:90%"></div><div class="ln link" style="width:44%"></div>
+          <div class="ln" style="width:86%"></div><div class="ln ad" style="height:26px"></div><div class="ln" style="width:64%"></div><div class="ln link" style="width:38%"></div>
+        </div>
+      </div>
+      <div class="cap badc">普通网页：密密麻麻</div>
+    </div>
+    <div class="arrow">
+      <svg width="64" height="64" viewBox="0 0 64 64"><path d="M8 32h40M34 16l16 16-16 16" fill="none" stroke="#E86A33" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <b>暖龄整理</b>
+    </div>
+    <div class="wrap w2">
+      <div class="mock good" style="height:440px">
+        <div class="bar"><i></i><i></i><i></i><u></u></div>
+        <div class="body">
+          <div class="card"><div class="ic" style="background:rgba(13,92,99,.12)"><svg width="26" height="26" viewBox="0 0 24 24"><path d="M12 4v16M4 12h16" stroke="#0D5C63" stroke-width="3.4" stroke-linecap="round"/></svg></div><div class="tx"><b>我要挂号</b><s>协和医院 · 明天上午 有号</s></div><div class="go">去办理</div></div>
+          <div class="card"><div class="ic" style="background:rgba(232,106,51,.13)"><svg width="26" height="26" viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z M9 12h7M9 16h7" fill="none" stroke="#E86A33" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="tx"><b>查看报告</b><s>上周的化验单 已出</s></div><div class="go">去查看</div></div>
+          <div class="card"><div class="ic" style="background:rgba(13,92,99,.12)"><svg width="26" height="26" viewBox="0 0 24 24"><path d="M4 17h16M6 17V9m6 8V5m6 12v-6" fill="none" stroke="#0D5C63" stroke-width="2.6" stroke-linecap="round"/></svg></div><div class="tx"><b>缴纳水电费</b><s>9 月账单 待缴</s></div><div class="go">去缴纳</div></div>
+        </div>
+      </div>
+      <div class="cap goodc">暖龄模式：一目了然</div>
+    </div>
+  </div>
+  <div class="chips"><span>看病挂号</span><span>政务办事</span><span>出行购票</span><span>看新闻</span><span>找兴趣</span></div>
+  <div class="band"><div class="in">
+    <div style="width:104px;height:104px">
+<svg width="100%" height="100%" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="pB" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#14707A"/><stop offset="1" stop-color="#0A4249"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="30" fill="url(#pB)"/>
+  <circle cx="64" cy="19.5" r="6.5" fill="#F2A65A"/>
+  <path d="M94.2 28 A47 47 0 1 1 33.8 28" fill="none" stroke="#E86A33" stroke-width="7" stroke-linecap="round"/>
+  <rect x="35" y="39" width="58" height="50" rx="9" fill="#FFF8EC"/>
+  <rect x="43" y="47" width="30" height="7" rx="3.5" fill="#0D5C63"/>
+  <rect x="43" y="59.5" width="42" height="5" rx="2.5" fill="#0D5C63" opacity=".26"/>
+  <rect x="43" y="69" width="42" height="13" rx="6.5" fill="#E86A33"/>
+</svg></div>
+    <div class="nm"><b>暖龄</b><i>EasyView</i></div>
+    <div class="slogan"><b>暖龄相伴，上网不难</b><s>陪您看清，帮您办妥 · github.com/kevin20070810/EasyView</s></div>
+  </div></div>
+</div>
+</body></html>

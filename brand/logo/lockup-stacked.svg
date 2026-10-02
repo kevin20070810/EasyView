@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 316" width="340" height="316" role="img" aria-label="暖龄 EasyView · 暖龄相伴，上网不难">
+  <defs>
+    <linearGradient id="ev-badge-v" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#14707A"/><stop offset="1" stop-color="#0A4249"/>
+    </linearGradient>
+  </defs>
+  <g transform="translate(106,0)">
+    <rect width="128" height="128" rx="30" fill="url(#ev-badge-v)"/>
+    <circle cx="64" cy="19.5" r="6.5" fill="#F2A65A"/>
+    <path d="M94.2 28 A47 47 0 1 1 33.8 28" fill="none" stroke="#E86A33" stroke-width="7" stroke-linecap="round"/>
+    <rect x="35" y="39" width="58" height="50" rx="9" fill="#FFF8EC"/>
+    <rect x="43" y="47" width="30" height="7" rx="3.5" fill="#0D5C63"/>
+    <rect x="43" y="59.5" width="42" height="5" rx="2.5" fill="#0D5C63" opacity=".26"/>
+    <rect x="43" y="69" width="42" height="13" rx="6.5" fill="#E86A33"/>
+  </g>
+  <text x="170" y="212" text-anchor="middle" font-family="Microsoft YaHei, Noto Sans SC, sans-serif" font-size="54" font-weight="700" fill="#0D5C63" letter-spacing="3">暖龄<tspan font-family="Verdana, Segoe UI, sans-serif" font-size="24" fill="#5B6B76" letter-spacing="2" dx="10">EasyView</tspan></text>
+  <text x="170" y="258" text-anchor="middle" font-family="Microsoft YaHei, Noto Sans SC, sans-serif" font-size="23" fill="#E86A33" letter-spacing="6">暖龄相伴，上网不难</text>
+  <text x="170" y="296" text-anchor="middle" font-family="Microsoft YaHei, Noto Sans SC, sans-serif" font-size="17" fill="#5B6B76" letter-spacing="3">陪您看清，帮您办妥</text>
+</svg>

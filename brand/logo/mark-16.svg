@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-label="暖龄 EasyView">
+  <!-- 小尺寸专用（<=48px）：去掉弧线，保证 16px 仍可辨认 -->
+  <rect width="128" height="128" rx="32" fill="#0D5C63"/>
+  <circle cx="64" cy="24" r="10" fill="#F2A65A"/>
+  <rect x="28" y="44" width="72" height="58" rx="12" fill="#FFF8EC"/>
+  <rect x="38" y="55" width="40" height="10" rx="5" fill="#0D5C63"/>
+  <rect x="38" y="76" width="52" height="16" rx="8" fill="#E86A33"/>
+</svg>
