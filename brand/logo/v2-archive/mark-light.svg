@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-label="暖龄 EasyView">
+  <!-- 暖龄 v2 反白版：深色背景直接用，去掉底板只留图形 -->
+  <path d="M97 36 A47 47 0 1 1 31 36" fill="none" stroke="#E86A33" stroke-width="7.5" stroke-linecap="round"/>
+  <text x="64" y="31" text-anchor="middle" font-family="Microsoft YaHei, Noto Sans SC, sans-serif" font-size="22" font-weight="700" fill="#FFF8EC" letter-spacing="1">暖龄</text>
+  <rect x="36" y="44" width="56" height="48" rx="9" fill="#FFF8EC"/>
+  <rect x="44" y="52" width="27" height="7" rx="3.5" fill="#0D5C63"/>
+  <rect x="44" y="64.5" width="40" height="5" rx="2.5" fill="#0D5C63" opacity=".26"/>
+  <rect x="44" y="75" width="40" height="12.5" rx="6.25" fill="#E86A33"/>
+</svg>
