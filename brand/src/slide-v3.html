@@ -1,0 +1,111 @@
+<!doctype html><html><head><meta charset="utf-8"><style>*{box-sizing:border-box;margin:0;padding:0}
+:root{--ink:#0E6068;--warm:#EE6C2D;--soft:#F6A64F;--paper:#FFFBF2;--cream:#FFF3DC;--muted:#66757E}
+body{background:#E8E2D6;}/*slide*/
+body{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif}
+.p{position:relative;width:1920px;height:1080px;overflow:hidden;background:var(--paper)}
+.grid{position:absolute;inset:0;background-image:linear-gradient(rgba(14,96,104,.055) 1px,transparent 1px),linear-gradient(90deg,rgba(14,96,104,.055) 1px,transparent 1px);background-size:46px 46px}
+.grain{position:absolute;inset:0;opacity:.06;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/></filter><rect width='140' height='140' filter='url(%23n)'/></svg>")}
+.sun{position:absolute;right:-34px;top:-64px;width:300px;height:300px}
+.star{position:absolute}
+.tape{position:absolute;left:110px;top:86px;transform:rotate(-1.8deg);background:rgba(246,166,79,.38);padding:11px 26px;font-size:24px;letter-spacing:7px;color:var(--ink);font-weight:700;box-shadow:0 2px 0 rgba(14,96,104,.08)}
+.h1w{position:absolute;left:108px;top:150px;width:900px}
+.h1w h1{font-size:92px;line-height:1.24;letter-spacing:3px;font-weight:700;color:var(--ink)}
+.h1w .ghost{position:absolute;left:6px;top:7px;color:rgba(246,166,79,.42);z-index:0}
+.h1w .real{position:relative;z-index:1}
+.h1w em{font-style:normal;color:var(--warm)}
+.kw{position:relative;display:inline-block}
+.kwring{position:absolute;left:-16px;top:-14px;width:calc(100% + 32px);height:calc(100% + 30px);overflow:visible;pointer-events:none}
+.hand{position:absolute;left:116px;top:452px;transform:rotate(-1.6deg);font-family:KaiTi,STKaiti,serif;font-size:31px;color:var(--muted);display:flex;align-items:flex-end;gap:10px}
+.couplet{position:absolute;right:92px;top:352px;writing-mode:vertical-rl;font-family:KaiTi,STKaiti,serif;font-size:46px;letter-spacing:12px;line-height:1.62;color:var(--ink);font-weight:700}
+.couplet em{font-style:normal;color:var(--warm)}
+.stage{position:absolute;left:1000px;top:150px;width:820px;height:640px}
+.halftone{position:absolute;left:-40px;bottom:-30px;right:auto;width:300px;height:230px;transform:rotate(3deg);-webkit-mask-image:radial-gradient(closest-side,#000 45%,transparent 100%);mask-image:radial-gradient(closest-side,#000 45%,transparent 100%)}
+.framewrap{position:absolute;left:20px;top:64px;width:650px;height:540px;transform:rotate(-2.4deg)}
+.frame{position:absolute;inset:0;width:620px;height:520px;background:#FFFDF8;border:2px solid rgba(14,96,104,.2);border-radius:22px;box-shadow:12px 14px 0 rgba(238,108,45,.16);overflow:hidden}
+.frame .bar{height:46px;background:var(--cream);display:flex;align-items:center;gap:8px;padding:0 18px;border-bottom:2px solid rgba(14,96,104,.12)}
+.frame .bar i{width:11px;height:11px;border-radius:50%;background:rgba(14,96,104,.28)}
+.frame .bar u{flex:1;height:15px;border-radius:8px;background:#fff;margin-left:10px;text-decoration:none;border:1.5px solid rgba(14,96,104,.12)}
+.frame .body{padding:20px;display:flex;flex-direction:column;gap:16px;height:calc(100% - 46px)}
+.card{background:#fff;border:1.6px solid rgba(14,96,104,.14);border-radius:16px;padding:16px 18px;display:flex;align-items:center;gap:16px;box-shadow:4px 5px 0 rgba(14,96,104,.07);flex:1}
+.card .ic{width:52px;height:52px;border-radius:13px;flex:none;display:flex;align-items:center;justify-content:center}
+.card .tx{flex:1}.card .tx b{display:block;font-size:30px;color:var(--ink);letter-spacing:1px}
+.card .tx s{display:block;text-decoration:none;font-size:17px;color:var(--muted);margin-top:5px}
+.card .go{background:var(--warm);color:#fff;font-size:19px;padding:11px 19px;border-radius:999px;flex:none;letter-spacing:1px;border:2px solid #C9531F;box-shadow:3px 3px 0 rgba(14,96,104,.22)}
+.tapebit{position:absolute;width:130px;height:36px;background:rgba(246,166,79,.42);box-shadow:0 2px 4px rgba(14,96,104,.12)}
+.pop{position:absolute;right:-10px;top:-16px;width:340px;background:#fff;border:1.6px solid rgba(14,96,104,.16);border-radius:18px;padding:18px 20px;display:flex;align-items:center;gap:14px;transform:rotate(5deg);box-shadow:8px 9px 0 rgba(238,108,45,.2)}
+.pop .ic{width:46px;height:46px;border-radius:12px;background:rgba(238,108,45,.12);display:flex;align-items:center;justify-content:center;flex:none}
+.pop b{display:block;font-size:26px;color:var(--ink)}
+.pop s{display:block;text-decoration:none;font-size:15px;color:var(--muted);margin-top:4px}
+.pop .go{margin-left:auto;background:var(--warm);color:#fff;font-size:16px;padding:9px 14px;border-radius:999px;border:2px solid #C9531F}
+.trail{position:absolute;left:430px;top:70px}
+.sticky{position:absolute;left:110px;top:776px;width:660px;height:146px;background:#FFE9BE;transform:rotate(-1.2deg);box-shadow:6px 8px 0 rgba(14,96,104,.12);padding:20px 28px;font-family:KaiTi,STKaiti,serif;color:#4A4234}
+.sticky b{display:inline-block;font-size:25px;letter-spacing:2px;color:#3E3626;border-bottom:2px solid rgba(238,108,45,.5);padding-bottom:4px}
+.sticky .rows{display:flex;gap:34px;margin-top:12px}
+.sticky .row{display:flex;align-items:center;gap:10px;font-size:25px;letter-spacing:1px}
+.seal{position:absolute;right:112px;top:772px;filter:drop-shadow(3px 4px 0 rgba(14,96,104,.15))}
+.chips{position:absolute;left:110px;top:690px;display:flex;gap:16px}
+.chips span{font-size:24px;color:var(--ink);border:2px solid rgba(14,96,104,.5);border-radius:999px;padding:12px 24px;letter-spacing:2px;background:#FFFDF8;box-shadow:3px 3px 0 rgba(238,108,45,.22)}
+.chips span:nth-child(odd){transform:rotate(-1.1deg)}
+.chips span:nth-child(even){transform:rotate(1.2deg)}
+.foot{position:absolute;left:110px;right:110px;top:930px}
+.foot .row{display:flex;align-items:center;gap:18px;padding-top:26px}
+.foot b{font-size:31px;color:var(--ink);letter-spacing:2px}
+.foot i{font-family:Verdana,sans-serif;font-style:normal;font-size:18px;color:var(--muted);letter-spacing:2px}
+.foot s{text-decoration:none;margin-left:auto;font-size:17px;color:var(--muted);letter-spacing:1px}
+.tagline{position:absolute;left:116px;top:560px;font-family:KaiTi,STKaiti,serif;font-size:36px;letter-spacing:6px;color:var(--warm);font-weight:700}
+.tagline i{font-style:normal;color:rgba(14,96,104,.4);padding:0 12px}
+.wavy{width:1700px}</style></head><body>
+<svg width="0" height="0" style="position:absolute"><defs>
+<filter id="rough" x="-10%" y="-10%" width="120%" height="120%"><feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="11" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="3.5"/></filter>
+<filter id="rough2" x="-12%" y="-12%" width="124%" height="124%"><feTurbulence type="fractalNoise" baseFrequency="0.022" numOctaves="2" seed="4" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="6"/></filter>
+<pattern id="dots" width="15" height="15" patternUnits="userSpaceOnUse"><circle cx="3.5" cy="3.5" r="2.3" fill="#EE6C2D" opacity=".45"/></pattern>
+</defs></svg>
+
+<div class="p" data-shot="slide3">
+  <div class="grid"></div><div class="grain"></div>
+  <svg class="sun" width="320" height="320" viewBox="0 0 320 320" xmlns="http://www.w3.org/2000/svg">
+<circle cx="176" cy="150" r="118" fill="url(#dots)"/>
+<circle cx="160" cy="160" r="88" fill="#EE6C2D" filter="url(#rough2)"/>
+<circle cx="132" cy="132" r="30" fill="#F6A64F" opacity=".8" filter="url(#rough2)"/>
+<g stroke="#EE6C2D" stroke-width="7" stroke-linecap="round" filter="url(#rough)">
+<path d="M160 34v-22"/><path d="M248 72l16-16"/><path d="M286 160h24"/><path d="M248 248l16 16"/><path d="M160 286v22"/><path d="M72 248l-16 16"/><path d="M34 160H12"/><path d="M72 72L56 56"/></g></svg>
+  <svg class="star" style="left:930px;top:110px;transform:rotate(12deg)" width="30" height="30" viewBox="0 0 30 30"><g stroke="#F6A64F" stroke-width="3.4" stroke-linecap="round" filter="url(#rough)"><path d="M15 4v22M5 9l20 12M25 9L5 21"/></g></svg><svg class="star" style="left:60px;top:620px;transform:rotate(18deg)" width="30" height="30" viewBox="0 0 30 30"><g stroke="#0E6068" stroke-width="3.4" stroke-linecap="round" filter="url(#rough)"><path d="M15 4v22M5 9l20 12M25 9L5 21"/></g></svg><svg class="star" style="left:1755px;top:300px;transform:rotate(-8deg)" width="30" height="30" viewBox="0 0 30 30"><g stroke="#EE6C2D" stroke-width="3.4" stroke-linecap="round" filter="url(#rough)"><path d="M15 4v22M5 9l20 12M25 9L5 21"/></g></svg>
+  <div class="tape">面向长辈的网页辅助插件 · 48 小时黑客松</div>
+  <div class="h1w"><h1 class="ghost">网页再乱，<br>也能一眼看懂。</h1><h1 class="real">网页再乱，<br>也能<em><span class="kw">一眼看懂<svg class="kwring" viewBox="0 0 420 130" xmlns="http://www.w3.org/2000/svg"><ellipse cx="210" cy="65" rx="202" ry="54" fill="none" stroke="#F6A64F" stroke-width="8" filter="url(#rough)"/></svg></span></em>。</h1></div>
+  <div class="hand">一打开插件，乱页面自己排好队<svg width="110" height="74" viewBox="0 0 110 74"><path d="M10 6 C 34 40, 62 56, 96 62" fill="none" stroke="#66757E" stroke-width="3.6" stroke-linecap="round" filter="url(#rough)"/><path d="M84 50 L98 62 L80 68" fill="none" stroke="#66757E" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round" filter="url(#rough)"/></svg></div>
+  <div class="tagline">暖龄相伴<i>·</i>上网不难<i>·</i>陪您看清，帮您办妥</div>
+  <div class="chips"><span>看病挂号</span><span>政务办事</span><span>出行购票</span><span>看新闻</span><span>找兴趣</span></div>
+  <div class="stage">
+    <svg class="halftone" viewBox="0 0 300 230"><rect width="300" height="230" fill="url(#dots)"/></svg>
+    <div class="framewrap">
+    <div class="tapebit" style="left:-38px;top:-14px;transform:rotate(-40deg)"></div>
+    <div class="tapebit" style="right:-30px;bottom:-16px;transform:rotate(-40deg)"></div>
+    <div class="frame">
+      <div class="bar"><i></i><i></i><i></i><u></u></div>
+      <div class="body"><div class="card"><div class="ic" style="background:rgba(14,96,104,.10)"><svg width="27" height="27" viewBox="0 0 24 24"><path d="M12 4.4v15.4M4.6 12h15" stroke="#0E6068" stroke-width="3.2" stroke-linecap="round" filter="url(#rough)"/></svg></div><div class="tx"><b>我要挂号</b><s>协和医院 · 明天上午 有号</s></div><div class="go">去办理</div></div><div class="card"><div class="ic" style="background:rgba(238,108,45,.12)"><svg width="27" height="27" viewBox="0 0 24 24"><path d="M6.2 3.2h8.6l4 4v13.6H6.2z M9.4 12h6.6M9.4 15.8h6.6" fill="none" stroke="#EE6C2D" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" filter="url(#rough)"/></svg></div><div class="tx"><b>查看报告</b><s>上周的化验单 已出</s></div><div class="go">去查看</div></div><div class="card"><div class="ic" style="background:rgba(14,96,104,.10)"><svg width="27" height="27" viewBox="0 0 24 24"><path d="M4.4 17.4h15.4M6.6 17.4V9.4m5.6 8V5.6m5.6 11.8v-6.2" fill="none" stroke="#0E6068" stroke-width="2.5" stroke-linecap="round" filter="url(#rough)"/></svg></div><div class="tx"><b>缴纳水电费</b><s>9 月账单 待缴</s></div><div class="go">去缴纳</div></div></div>
+    </div>
+    </div>
+    
+    <svg class="trail" width="150" height="90" viewBox="0 0 150 90"><path d="M138 14 C 104 34, 66 50, 18 66" fill="none" stroke="#EE6C2D" stroke-width="3.6" stroke-linecap="round" stroke-dasharray="1 11" filter="url(#rough)"/><path d="M36 50 L20 63 L40 70" fill="none" stroke="#EE6C2D" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round" filter="url(#rough)"/></svg>
+    <div class="pop"><div class="ic"><svg width="27" height="27" viewBox="0 0 24 24"><path d="M6.2 3.2h8.6l4 4v13.6H6.2z M9.4 12h6.6M9.4 15.8h6.6" fill="none" stroke="#EE6C2D" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" filter="url(#rough)"/></svg></div><div><b>看今日新闻</b><s>广告和废话，都收走了</s></div><div class="go">读</div></div>
+  </div>
+<div class="sticky"><b>给长辈的三条规矩</b><div class="rows"><div class="row"><svg width="26" height="26" viewBox="0 0 26 26"><rect x="3" y="3" width="20" height="20" rx="4" fill="none" stroke="#4A4234" stroke-width="2.4" filter="url(#rough)"/><path d="M7 13l5 6 9-12" fill="none" stroke="#EE6C2D" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" filter="url(#rough)"/></svg>字要大</div><div class="row"><svg width="26" height="26" viewBox="0 0 26 26"><rect x="3" y="3" width="20" height="20" rx="4" fill="none" stroke="#4A4234" stroke-width="2.4" filter="url(#rough)"/><path d="M7 13l5 6 9-12" fill="none" stroke="#EE6C2D" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" filter="url(#rough)"/></svg>按钮要大</div><div class="row"><svg width="26" height="26" viewBox="0 0 26 26"><rect x="3" y="3" width="20" height="20" rx="4" fill="none" stroke="#4A4234" stroke-width="2.4" filter="url(#rough)"/><path d="M7 13l5 6 9-12" fill="none" stroke="#EE6C2D" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" filter="url(#rough)"/></svg>只留要办的事</div></div></div>
+  <div class="couplet">暖龄相伴<br><em>上网不难</em></div>
+  <div class="seal"><svg viewBox="0 0 128 128" width="140" height="140" style="transform:rotate(-6deg)" xmlns="http://www.w3.org/2000/svg">
+<g filter="url(#rough2)" opacity=".94">
+<rect x="8" y="8" width="112" height="112" rx="24" fill="#EE6C2D"/>
+<rect x="18" y="18" width="92" height="92" rx="16" fill="none" stroke="#FFF6E6" stroke-opacity=".7" stroke-width="2.6"/>
+<text x="64" y="70" text-anchor="middle" font-family="KaiTi, STKaiti, serif" font-size="44" font-weight="700" fill="#FFF6E6" letter-spacing="2">暖龄</text>
+<path d="M38 84h52" stroke="#FFF6E6" stroke-width="7" stroke-linecap="round"/></g></svg></div>
+  <div class="foot"><svg class="wavy" width="1700" height="16" viewBox="0 0 928 16" preserveAspectRatio="none"><path d="M4 9 Q 26 2 48 9 T 92 9 T 136 9 T 180 9 T 224 9 T 268 9 T 312 9 T 356 9 T 400 9 T 444 9 T 488 9 T 532 9 T 576 9 T 620 9 T 664 9 T 708 9 T 752 9 T 796 9 T 840 9 T 884 9 T 924 9" fill="none" stroke="#0E6068" stroke-opacity=".4" stroke-width="2.6" stroke-linecap="round" filter="url(#rough)"/></svg><div class="row"><div style="width:58px;height:58px"><svg width="100%" height="100%" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+<defs><linearGradient id="fM3" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#14707A"/><stop offset="1" stop-color="#0A4249"/></linearGradient></defs>
+<rect width="128" height="128" rx="30" fill="url(#fM3)"/>
+<path d="M97 36 A47 47 0 1 1 31 36" fill="none" stroke="#E86A33" stroke-width="7.5" stroke-linecap="round"/>
+<text x="64" y="31" text-anchor="middle" font-family="Microsoft YaHei, Noto Sans SC, sans-serif" font-size="22" font-weight="700" fill="#FFF8EC" letter-spacing="1">暖龄</text>
+<rect x="36" y="44" width="56" height="48" rx="9" fill="#FFF8EC"/>
+<rect x="44" y="52" width="27" height="7" rx="3.5" fill="#0D5C63"/>
+<rect x="44" y="64.5" width="40" height="5" rx="2.5" fill="#0D5C63" opacity=".26"/>
+<rect x="44" y="75" width="40" height="12.5" rx="6.25" fill="#E86A33"/></svg></div><b>暖龄</b><i>EasyView</i><s>陪您看清，帮您办妥 · github.com/kevin20070810/EasyView</s></div></div>
+</div>
+
+</body></html>
