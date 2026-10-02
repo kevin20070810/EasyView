@@ -1,0 +1,34 @@
+{
+ "page_url": "https://ΟΣ.example/İstanbul",
+ "page_title": "希腊",
+ "elements": [
+  {
+   "id": "el_z",
+   "type": "link",
+   "text": "链接",
+   "label": null,
+   "aria_label": null,
+   "placeholder": null,
+   "name": null,
+   "value": null,
+   "href": "https://ΟΣ.example/x",
+   "selector": "body > div > *",
+   "xpath": "/html[1]/body[1]/div[1]/*[1]",
+   "visible": true,
+   "bbox": {
+    "x": 10.0,
+    "y": 10.0,
+    "width": 100.0,
+    "height": 20.0
+   },
+   "group_id": null,
+   "in_form": false,
+   "form_id": null,
+   "required": null,
+   "disabled": false,
+   "level": null,
+   "options": null,
+   "order": 0
+  }
+ ]
+}

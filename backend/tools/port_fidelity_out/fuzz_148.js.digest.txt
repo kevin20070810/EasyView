@@ -1,0 +1,37 @@
+站点：javascript://void(0)
+页面：缴费
+来源：7｜采集元素 13 个
+
+下面是这张页面按可见位置切成的区块。每行格式：[元素ID] 类型 字段=原文。
+引用证据时请使用元素ID和字段名；原文若被截断，绑定时会自动补全。
+链接后的 → 只是路径提示，不要写进给老人看的文案。
+
+━━ 页脚区块（通常是噪声）：/guahao?x=1（2 项）━━
+[el_004] 多行输入 label=无障碍  选项：😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀
+[el_012] 多选 value=www.example.com  → a/b
+
+━━ constructor：公安备案（1 项）━━
+[el_002] 按钮 text=😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀  禁用 → /
+
+━━ 页脚区块（通常是噪声）：sſelector（6 项）━━
+[el_004] 多行输入 label=无障碍  选项：😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀
+[el_004] 多行输入 label=无障碍  选项：😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀
+[el_004] 多行输入 label=无障碍  选项：😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀
+[el_001] 多行输入 label=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa…  提示：登录
+[el_001] 多行输入 label=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa…  提示：登录
+[el_007] 标题 text=😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀…
+
+━━ 页面顶部（站点标识、快捷入口）（1 项）━━
+[el_006] 元素 text=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa…
+
+━━ 主体内容（1 项）━━
+[el_006] 元素 aria_label=😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀…  → /pppppppppppppppppppppppppppppppppppppp…
+
+━━ 区块：身份证号（1 项）━━
+[el_008] div text=12345  → 中文://host/p
+
+━━ 导航：_com（1 项）━━
+[el_008] div text=12345  → 中文://host/p
+
+━━ 页面底部（页脚 / 版权，通常是噪声）（1 项）━━
+[el_011] 图片 text=——·、,，。;；

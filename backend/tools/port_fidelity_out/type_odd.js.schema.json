@@ -1,0 +1,35 @@
+{
+  "schema_version": "0.3.0-draft",
+  "artifact_kind": "runtime",
+  "source_elements_schema_version": "0.3.0-draft",
+  "page_url": "https://demo.easyview.local/index",
+  "final_url": "https://demo.easyview.local/index",
+  "page_title": "测试页面",
+  "source": "extract",
+  "generated_at": "2026-10-02T12:00:00+08:00",
+  "input_snapshot": {
+    "sha256": "cd372fb85148700fa88095e3492d3f9f5beb43e555e5ff26d95f5a6adc36f8e6",
+    "extracted_at": "2026-10-02T11:59:00+08:00"
+  },
+  "generator": {
+    "mode": "rules",
+    "policy_version": "senior-v0.3",
+    "prompt_version": null,
+    "fallback_reason": null
+  },
+  "user_goal": null,
+  "state": "empty",
+  "empty_reason": "no_reliable_tasks",
+  "page": {
+    "greeting": "您好，这个页面暂时没找到可以代办的事情。",
+    "summary": "您可以退出适老模式，继续使用原网页。"
+  },
+  "stats": {
+    "input_elements": 10,
+    "visible_elements": 10,
+    "input_truncated": false,
+    "referenced_elements": 0,
+    "task_cards": 0
+  },
+  "cards": []
+}

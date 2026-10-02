@@ -1,0 +1,26 @@
+站点：a.com
+页面：x﻿y
+来源：extract｜采集元素 13 个
+
+下面是这张页面按可见位置切成的区块。每行格式：[元素ID] 类型 字段=原文。
+引用证据时请使用元素ID和字段名；原文若被截断，绑定时会自动补全。
+链接后的 → 只是路径提示，不要写进给老人看的文案。
+
+━━ 页面顶部（站点标识、快捷入口）（3 项）━━
+[el_007] FORM text=病历com  隐藏 选项：内科/外科 → a/b
+[el_006] 链接 label=身份证号
+[el_009] 标题 label=——·、,，。;；
+
+━━ 主体内容（4 项）━━
+[el_006] 单选 placeholder=/guahao?x=1
+[el_010] 按钮 aria_label=( )
+[el_000] 链接 text=( )  → /
+[el_009] 文字 label=在线预约挂号
+
+━━ 页面底部（页脚 / 版权，通常是噪声）（6 项）━━
+[el_010] 文字 label=www.example.com  → /x
+[el_010] 输入框 aria_label=友情链接  提示：aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa 必填 → /℀x
+[el_012] 表单 label=无障碍  → :
+[el_000] 输入框 label=toKen  → 中文://host/p
+[el_003] 表单 text=😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀…  选项：内科/外科
+[el_009] 表单 text=© 2026  → /

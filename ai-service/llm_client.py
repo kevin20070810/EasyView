@@ -44,6 +44,7 @@ class LlmConfig:
     model: str = "deepseek-flash"
     timeout: float = 60.0
     reasoning: str = "low"
+    temperature: float = 0.0
     json_mode: bool = False
 
     @classmethod
@@ -54,12 +55,17 @@ class LlmConfig:
         reasoning = os.getenv("EASYVIEW_REASONING", cls.reasoning).strip().lower()
         if reasoning not in REASONING_LEVELS:
             reasoning = cls.reasoning
+        try:
+            temperature = float(os.getenv("EASYVIEW_TEMPERATURE", str(cls.temperature)))
+        except ValueError:
+            temperature = cls.temperature
         return cls(
             api_key=api_key,
             base_url=os.getenv("EASYVIEW_BASE_URL", cls.base_url).rstrip("/"),
             model=os.getenv("EASYVIEW_MODEL", cls.model),
             timeout=float(os.getenv("EASYVIEW_TIMEOUT", str(cls.timeout))),
             reasoning=reasoning,
+            temperature=temperature,
             json_mode=os.getenv("EASYVIEW_JSON_MODE", "0").strip() == "1",
         )
 
@@ -140,7 +146,7 @@ class OpenAICompatibleClient:
             )
         body: dict[str, Any] = {
             "model": self.config.model,
-            "temperature": 0.1,
+            "temperature": self.config.temperature,
             "messages": [
                 {"role": "system", "content": self.system_prompt()},
                 {"role": "user", "content": user_content},

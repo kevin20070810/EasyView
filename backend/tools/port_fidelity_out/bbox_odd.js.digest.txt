@@ -1,0 +1,28 @@
+站点：demo.easyview.local
+页面：测试页面
+来源：extract｜采集元素 15 个，其中可见 15 个
+
+下面是这张页面按可见位置切成的区块。每行格式：[元素ID] 类型 字段=原文。
+引用证据时请使用元素ID和字段名；原文若被截断，绑定时会自动补全。
+链接后的 → 只是路径提示，不要写进给老人看的文案。
+
+━━ 页面顶部（站点标识、快捷入口）（13 项）━━
+[el_bb10] 文字 text=负 bbox
+[el_bb2] 文字 text=null bbox
+[el_bb3] 文字 text=空 bbox
+[el_bb5] 文字 text=坏 bbox
+[el_bb8] 文字 text=list bbox
+[el_bb9] 文字 text=零 bbox
+[el_bb11] 文字 text=类型错 bbox
+[el_bb13] 文字 text=负零
+[el_bb15] 文字 text=空串
+[el_bb7] 文字 text=bool bbox
+[el_bb1] 文字 text=无 bbox
+[el_bb14] 文字 text=下划线数字
+[el_bb4] 文字 text=字符串 bbox
+
+━━ 主体内容（1 项）━━
+[el_bb6] 文字 text=nan bbox
+
+━━ 页面底部（页脚 / 版权，通常是噪声）（1 项）━━
+[el_bb12] 文字 text=无穷

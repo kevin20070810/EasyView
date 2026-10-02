@@ -1,0 +1,25 @@
+站点：host
+页面：无障碍
+来源：unknown｜采集元素 13 个
+
+下面是这张页面按可见位置切成的区块。每行格式：[元素ID] 类型 字段=原文。
+引用证据时请使用元素ID和字段名；原文若被截断，绑定时会自动补全。
+链接后的 → 只是路径提示，不要写进给老人看的文案。
+
+━━ 页头区块：1com（1 项）━━
+[el_000] 多行输入 aria_label=点击 https://a.com/x 查看  → /x
+
+━━ 页面顶部（站点标识、快捷入口）（9 项）━━
+[el_008] Link text=( )  → /x
+[el_001] 单选 label=医疗服务价格公示  提示：( ) → /def
+[el_002] 表单 label=点击 https://a.com/x 查看  → /def
+[el_010] 多行输入 label=null
+[el_005] constructor text=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa  → /pppppppppppppppppppppppppppppppppppppp…
+[el_007] constructor aria_label=😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀  → 5
+[el_011] 链接 placeholder=身份证号  选项：男/女 → /
+[el_006] 链接 label=None
+[el_003] 输入框 aria_label=None
+
+━━ 页面底部（页脚 / 版权，通常是噪声）（2 项）━━
+[el_004] constructor text=友情链接  → /a
+[el_012] constructor text=网站地图  选项：内科/外科

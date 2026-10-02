@@ -1,0 +1,24 @@
+站点：mailto://a@b.com
+页面：ICP 备案
+来源：7｜采集元素 3 个
+
+下面是这张页面按可见位置切成的区块。每行格式：[元素ID] 类型 字段=原文。
+引用证据时请使用元素ID和字段名；原文若被截断，绑定时会自动补全。
+链接后的 → 只是路径提示，不要写进给老人看的文案。
+
+━━ 区块：toKen（5 项）━━
+[el_000] Link text=中😀文  → / x
+[el_001] 链接 aria_label=日本語
+[el_000] Link text=中😀文  → / x
+[el_000] Link text=中😀文  → / x
+[el_000] Link text=中😀文  → / x
+
+━━ 区块：中😀文（8 项）━━
+[el_002] 图片 label=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx…  → /x
+[el_002] 图片 label=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx…  → /x
+[el_002] 图片 label=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx…  → /x
+[el_000] Link text=中😀文  → / x
+[el_000] Link text=中😀文  → / x
+[el_001] 链接 aria_label=日本語
+[el_001] 链接 aria_label=日本語
+[el_002] 图片 label=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx…  → /x

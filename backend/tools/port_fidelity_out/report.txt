@@ -1,0 +1,283 @@
+==============================================================================
+digest.js / binder.js 与 Python 基准的差分结果
+==============================================================================
+用例：40 个 fixture/具名用例 + 150 组随机输入
+
+### hospital
+  digest : OK  逐字节一致（4497 字节）
+  binder : OK  sort_keys 序列化一致（6769 字节）
+  dropped: OK  两边 0 条
+
+### gov
+  digest : OK  逐字节一致（3687 字节）
+  binder : OK  sort_keys 序列化一致（7071 字节）
+  dropped: OK  两边 0 条
+
+### traffic
+  digest : OK  逐字节一致（3430 字节）
+  binder : OK  sort_keys 序列化一致（6250 字节）
+  dropped: OK  两边 0 条
+
+### empty
+  digest : OK  逐字节一致（385 字节）
+  binder : (跳过：该输入只测 digest)
+
+### missing_fields
+  digest : OK  逐字节一致（524 字节）
+  binder : (跳过：该输入只测 digest)
+
+### long_text
+  digest : OK  逐字节一致（1898 字节）
+  binder : OK  sort_keys 序列化一致（2315 字节）
+  dropped: OK  两边 0 条
+
+### emoji_astral
+  digest : OK  逐字节一致（1949 字节）
+  binder : OK  sort_keys 序列化一致（1959 字节）
+  dropped: OK  两边 0 条
+
+### unicode_space
+  digest : OK  逐字节一致（785 字节）
+  binder : OK  sort_keys 序列化一致（1708 字节）
+  dropped: OK  两边 0 条
+
+### bands
+  digest : OK  逐字节一致（732 字节）
+  binder : OK  sort_keys 序列化一致（1698 字节）
+  dropped: OK  两边 0 条
+
+### budget
+  digest : OK  逐字节一致（7562 字节）
+  binder : OK  sort_keys 序列化一致（878 字节）
+  dropped: OK  两边 1 条
+
+### weird_urls
+  digest : OK  逐字节一致（1672 字节）
+  binder : OK  sort_keys 序列化一致（876 字节）
+  dropped: OK  两边 1 条
+
+### structure_odd
+  digest : OK  逐字节一致（792 字节）
+  binder : OK  sort_keys 序列化一致（1650 字节）
+  dropped: OK  两边 0 条
+
+### bbox_odd
+  digest : OK  逐字节一致（1046 字节）
+  binder : OK  sort_keys 序列化一致（1726 字节）
+  dropped: OK  两边 0 条
+
+### order_odd
+  digest : OK  逐字节一致（701 字节）
+  binder : OK  sort_keys 序列化一致（928 字节）
+  dropped: OK  两边 0 条
+
+### order_bad
+  digest : OK(同样报错)  python="ValueError: invalid literal for int() with base 10: 'abc'" js="ValueError: invalid literal for int() with base 10: 'abc'"
+  binder : OK  sort_keys 序列化一致（928 字节）
+  dropped: OK  两边 0 条
+
+### order_bad2
+  digest : OK(同样报错)  python="ValueError: invalid literal for int() with base 10: '1.5'" js="ValueError: invalid literal for int() with base 10: '1.5'"
+  binder : OK  sort_keys 序列化一致（928 字节）
+  dropped: OK  两边 0 条
+
+### type_odd
+  digest : OK  逐字节一致（841 字节）
+  binder : OK  sort_keys 序列化一致（930 字节）
+  dropped: OK  两边 0 条
+
+### options_dedupe
+  digest : OK  逐字节一致（868 字节）
+  binder : OK  sort_keys 序列化一致（1768 字节）
+  dropped: OK  两边 0 条
+
+### site_fallback
+  digest : OK  逐字节一致（455 字节）
+  binder : (跳过：该输入只测 digest)
+
+### site_snapshot_pageurl
+  digest : OK  逐字节一致（437 字节）
+  binder : (跳过：该输入只测 digest)
+
+### site_scheme_only
+  digest : OK  逐字节一致（352 字节）
+  binder : (跳过：该输入只测 digest)
+
+### site_greek_host
+  digest : OK  逐字节一致（423 字节）
+  binder : (跳过：该输入只测 digest)
+
+### stats_odd
+  digest : OK  逐字节一致（435 字节）
+  binder : (跳过：该输入只测 digest)
+
+### stats_missing
+  digest : OK  逐字节一致（427 字节）
+  binder : (跳过：该输入只测 digest)
+
+### scrub_regex
+  digest : OK  逐字节一致（458 字节）
+  binder : OK  sort_keys 序列化一致（869 字节）
+  dropped: OK  两边 8 条
+
+### draft_features
+  digest : OK  逐字节一致（937 字节）
+  binder : OK  sort_keys 序列化一致（7230 字节）
+  dropped: OK  两边 11 条
+
+### draft_scrub
+  digest : OK  逐字节一致（937 字节）
+  binder : OK  sort_keys 序列化一致（7805 字节）
+  dropped: OK  两边 4 条
+
+### draft_emoji_title
+  digest : OK  逐字节一致（937 字节）
+  binder : OK  sort_keys 序列化一致（3726 字节）
+  dropped: OK  两边 0 条
+
+### draft_empty
+  digest : OK  逐字节一致（937 字节）
+  binder : OK  sort_keys 序列化一致（930 字节）
+  dropped: OK  两边 0 条
+
+### draft_text_only
+  digest : OK  逐字节一致（937 字节）
+  binder : OK  sort_keys 序列化一致（930 字节）
+  dropped: OK  两边 0 条
+
+### draft_cards_not_list
+  digest : OK  逐字节一致（937 字节）
+  binder : OK  sort_keys 序列化一致（828 字节）
+  dropped: OK  两边 0 条
+
+### draft_cards_missing
+  digest : OK  逐字节一致（937 字节）
+  binder : OK  sort_keys 序列化一致（876 字节）
+  dropped: OK  两边 0 条
+
+### draft_cards_dict
+  digest : OK  逐字节一致（937 字节）
+  binder : OK  sort_keys 序列化一致（876 字节）
+  dropped: OK  两边 0 条
+
+### draft_no_evidence
+  digest : OK  逐字节一致（937 字节）
+  binder : OK  sort_keys 序列化一致（930 字节）
+  dropped: OK  两边 1 条
+
+### draft_dup_ids
+  digest : OK  逐字节一致（937 字节）
+  binder : OK  sort_keys 序列化一致（5363 字节）
+  dropped: OK  两边 0 条
+
+### draft_user_goal
+  digest : OK  逐字节一致（440 字节）
+  binder : OK  sort_keys 序列化一致（855 字节）
+  dropped: OK  两边 1 条
+
+### draft_no_evidence2
+  digest : OK  逐字节一致（508 字节）
+  binder : OK  sort_keys 序列化一致（1743 字节）
+  dropped: OK  两边 1 条
+
+### draft_href_number
+  digest : OK  逐字节一致（462 字节）
+  binder : OK  sort_keys 序列化一致（928 字节）
+  dropped: OK  两边 1 条
+
+### draft_href_number_sensitive
+  digest : OK  逐字节一致（463 字节）
+  binder : OK  sort_keys 序列化一致（928 字节）
+  dropped: OK  两边 1 条
+
+### draft_user_goal2
+  digest : OK  逐字节一致（937 字节）
+  binder : OK  sort_keys 序列化一致（1734 字节）
+  dropped: OK  两边 0 条
+
+------------------------------------------------------------------------------
+随机输入（150 组，seed=20261002）：只统计，逐条明细见下方失败项
+------------------------------------------------------------------------------
+
+### fuzz_010
+  digest : NaN 顺序差异（已知，元素集合一致）
+  binder : OK  sort_keys 序列化一致（862 字节）
+  dropped: OK  两边 0 条
+
+### fuzz_016
+  digest : NaN 顺序差异（已知，元素集合一致）
+  binder : OK  sort_keys 序列化一致（1882 字节）
+  dropped: OK  两边 2 条
+
+### fuzz_022
+  digest : MISMATCH  python=2031 字节 js=2018 字节
+           首个差异在码点 198
+           python: '定时会自动补全。\n链接后的 → 只是路径提示，不要写进给老人看的文案。\n\n━━ 导航：1com（5 项）━━\n[el_007] 文字 text=见 http:/'
+           js    : '定时会自动补全。\n链接后的 → 只是路径提示，不要写进给老人看的文案。\n\n━━ 区块：中文字（7 项）━━\n[el_dup] 下拉框 aria_label=无障'
+  binder : OK(同样报错)  python='KeyError: slice(None, 5, None)' js='KeyError: slice(None, 5, None)'
+
+### fuzz_053
+  digest : NaN 顺序差异（已知，元素集合一致）
+  binder : OK  sort_keys 序列化一致（1655 字节）
+  dropped: OK  两边 11 条
+
+### fuzz_079
+  digest : NaN 顺序差异（已知，元素集合一致）
+  binder : OK  sort_keys 序列化一致（2503 字节）
+  dropped: OK  两边 10 条
+
+### fuzz_083
+  digest : NaN 顺序差异（已知，元素集合一致）
+  binder : OK  sort_keys 序列化一致（811 字节）
+  dropped: OK  两边 3 条
+
+### fuzz_116
+  digest : NaN 顺序差异（已知，元素集合一致）
+  binder : OK  sort_keys 序列化一致（1839 字节）
+  dropped: OK  两边 4 条
+
+### fuzz_134
+  digest : NaN 顺序差异（已知，元素集合一致）
+  binder : OK  sort_keys 序列化一致（853 字节）
+  dropped: OK  两边 0 条
+
+==============================================================================
+已知的 Python / JS 天生差异（下列内容是故意不一致的，逐条验证）
+==============================================================================
+
+### int/float 不分：JSON 的 3.0 在 JS 里就是 3
+  digest  两边一致（此例没有暴露差异）
+  binder  一致（此例没有暴露差异）
+
+### 大整数：>2^53 的 stats.total 会被 JS 的 double 吃掉
+  digest  不一致（正是上面说的原因）
+          python: '源：extract｜采集元素 9007199254740993 个，其中可见 1 个\n\n下面是这张页面按可见位置切成的区'
+          js    : '源：extract｜采集元素 9007199254740992 个，其中可见 1 个\n\n下面是这张页面按可见位置切成的区'
+
+### 非 ASCII 十进制数字：int('٣') 合法，JS 抛错
+  digest  python=None
+  digest  js    ="ValueError: invalid literal for int() with base 10: '٣'"
+  binder  一致（此例没有暴露差异）
+
+==============================================================================
+NaN 排序：为什么这里不追求逐字节一致
+==============================================================================
+  elements.json 里的 bbox 来自 getBoundingClientRect，JSON 也没有 NaN
+  字面量，所以真实输入不可能出现 NaN。只有当人手工写 {"y": "nan"} 时，
+  Python 的 float('nan') 才会参与排序键。此时：
+    · CPython 的 list.sort 在 (y, order) 这种元组比较下不是全序
+      （NaN 与任何值既不 < 也不 ==）；
+    · 落点由 timsort 的二元插入/归并细节，以及浮点对象在元组比较里的
+      身份短路（`v is w` 命中会让等于判定成立）共同决定 —— 同一批数据
+      换个顺序构造，Python 自己给出的顺序都会不同，属于未定义行为。
+  处理方式：JS 侧固定用"确定性稳定归并 + Python 的元组比较语义"。
+  全序 key（真实输入）下与 Python 完全一致；含 NaN 时保证元素集合一致、
+  顺序确定。上面的随机输入里出现的 NaN 用例按这个口径单独计数。
+
+==============================================================================
+统计
+  digest 逐字节一致 / 两边同样报错 : 121 / 61
+  digest 仅顺序不同（bbox 为 NaN，见下文说明）: 7
+  binder 序列化一致 / 两边同样报错 : 180 / 2
+  不一致项 : 1
+==============================================================================

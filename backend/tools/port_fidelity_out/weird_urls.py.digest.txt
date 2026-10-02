@@ -1,0 +1,43 @@
+站点：demo.easyview.local
+页面：测试页面
+来源：extract｜采集元素 34 个，其中可见 34 个
+
+下面是这张页面按可见位置切成的区块。每行格式：[元素ID] 类型 字段=原文。
+引用证据时请使用元素ID和字段名；原文若被截断，绑定时会自动补全。
+链接后的 → 只是路径提示，不要写进给老人看的文案。
+
+━━ 主体内容（34 项）━━
+[el_u0] 链接 text=入口0
+[el_u1] 链接 text=入口1
+[el_u2] 链接 text=入口2
+[el_u3] 链接 text=入口3
+[el_u4] 链接 text=入口4
+[el_u5] 链接 text=入口5  → /guahao
+[el_u6] 链接 text=入口6  → /路径
+[el_u7] 链接 text=入口7  → /x
+[el_u8] 链接 text=入口8
+[el_u9] 链接 text=入口9  → www.example.com/x
+[el_u10] 链接 text=入口10  → /a
+[el_u11] 链接 text=入口11  → /p
+[el_u12] 链接 text=入口12  → /path
+[el_u13] 链接 text=入口13  → /x
+[el_u14] 链接 text=入口14  → a/b
+[el_u15] 链接 text=入口15
+[el_u16] 链接 text=入口16  → /x
+[el_u17] 链接 text=入口17  → /x
+[el_u18] 链接 text=入口18  → /def
+[el_u19] 链接 text=入口19  → /
+[el_u20] 链接 text=入口20  → /x
+[el_u21] 链接 text=入口21  → ht tp://a.com/x
+[el_u22] 链接 text=入口22  → 中文://host/p
+[el_u23] 链接 text=入口23  → /x
+[el_u24] 链接 text=入口24
+[el_u25] 链接 text=入口25
+[el_u26] 链接 text=入口26  → /x
+[el_u27] 链接 text=入口27
+[el_u28] 链接 text=入口28  → /
+[el_u29] 链接 text=入口29  → /
+[el_u30] 链接 text=入口30  → b
+[el_u31] 链接 text=入口31  → /
+[el_u32] 链接 text=入口32  → /
+[el_u33] 链接 text=入口33  → /℀x

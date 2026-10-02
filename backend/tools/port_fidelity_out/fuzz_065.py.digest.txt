@@ -1,0 +1,45 @@
+站点：host
+页面：——·、,，。;；
+来源：unknown｜采集元素 5 个
+
+下面是这张页面按可见位置切成的区块。每行格式：[元素ID] 类型 字段=原文。
+引用证据时请使用元素ID和字段名；原文若被截断，绑定时会自动补全。
+链接后的 → 只是路径提示，不要写进给老人看的文案。
+
+━━ 表单：DOM 选择器 xpath token JSON ui_schema element_id target_selector（5 项）━━
+[el_005] 导航 label=0  选项：男/女
+[el_031] 图片 text=…
+[el_006] div placeholder=ıstanbul  选项：男/女
+[el_030] 输入框 label=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx…  提示：——·、,，。;； → /x
+[el_021] 输入框 label=ıstanbul  提示：www.example.com
+
+━━ 页面顶部（站点标识、快捷入口）（16 项）━━
+[el_012] 表格 text=在线预约挂号  必填 → /x
+[el_019] 多行输入 aria_label=【 】  提示：emoji 😀 mix 👍🏽
+[el_016] div text=见 http://x.com/p?a=1#f
+[el_011] 链接 text=sſelector  选项：😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀 → www.example.com/x
+[el_010] 链接 aria_label=提交预约
+[el_003] 表格 label=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+[el_019] 多行输入 text=x﻿y  必填
+[el_026] 链接 label=拨打电话
+[el_009] 表单 text=点击 https://a.com/x 查看  必填 → /路径
+[el_025] 元素 text=😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀…
+[el_000] Link text=病历com
+[el_027] 表单 label=None
+[el_016] Link label=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa…
+[el_022] div text=𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏…  → /x
+[el_016] 单选 label=DOM 选择器 xpath token JSON ui_schema element_id target_select…  提示：x﻿y 禁用 选项：选项选项选项选项选项选项选项选项选项选项选项选项选项选项选项选项选项选项选项选项选项选项选项选项选项选项选项选项选项选… → /p
+[el_033] 单选 label=a.com  提示：1com → :
+
+━━ 主体内容（2 项）━━
+[el_014] 多行输入 label=前后 空白  提示：None → /def
+[el_008] 多选 label=ıstanbul  提示：℀x
+
+━━ 页面底部（页脚 / 版权，通常是噪声）（7 项）━━
+[el_001] 输入框 aria_label=emoji 😀 mix 👍🏽  提示：aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa…
+[el_002] 输入框 label=( )  提示：版权
+[el_000] FORM text=© 2026
+[el_012] 多选 label=登 录  提示：ıstanbul
+[el_017] 图片 text=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa…  → :
+[el_017] FORM text=无障碍  → /x
+[el_028] div text=登录  隐藏 → /pppppppppppppppppppppppppppppppppppppp…

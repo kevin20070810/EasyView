@@ -1,0 +1,18 @@
+站点：a.com
+页面：在线预约挂号
+来源：unknown｜采集元素 8 个，其中可见 0 个
+
+下面是这张页面按可见位置切成的区块。每行格式：[元素ID] 类型 字段=原文。
+引用证据时请使用元素ID和字段名；原文若被截断，绑定时会自动补全。
+链接后的 → 只是路径提示，不要写进给老人看的文案。
+
+━━ 页面顶部（站点标识、快捷入口）（2 项）━━
+[el_003] 输入框 aria_label=DOM 选择器 xpath token JSON ui_schema element_id target_select…  提示：缴费 → /x
+[el_003] 多选 label=【 】  → /pppppppppppppppppppppppppppppppppppppp…
+
+━━ 页面底部（页脚 / 版权，通常是噪声）（5 项）━━
+[el_007] 元素 text=见 http://x.com/p?a=1#f  禁用 选项：内科/外科
+[el_003] div text=uİ_schema  隐藏
+[el_004] 链接 text=😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀…  必填 → /guahao
+[el_004] constructor text=© 2026
+[el_000] __proto__ label=网站地图

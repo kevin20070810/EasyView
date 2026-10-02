@@ -1,0 +1,32 @@
+站点：例子.中国
+页面：DOM 选择器 xpath token JSON ui_schema element_id target_selector
+来源：7｜采集元素 21 个，其中可见 0 个
+
+下面是这张页面按可见位置切成的区块。每行格式：[元素ID] 类型 字段=原文。
+引用证据时请使用元素ID和字段名；原文若被截断，绑定时会自动补全。
+链接后的 → 只是路径提示，不要写进给老人看的文案。
+
+━━ 页面顶部（站点标识、快捷入口）（12 项）━━
+[el_013] 文字 text=见 http://x.com/p?a=1#f  选项：空/5/眼科
+[el_010] 输入框 label=中😀文  选项：选项选项选项选项选项选项选项选项选项选项选项选项选项选项选项选项选项选项选项选项选项选项选项选项选项选项选项选项选项选…
+[el_011] Link text=中 文 字  选项：😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀
+[el_007] 元素 label=登录  选项：😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀
+[el_018] 单选 aria_label=病历com
+[el_014] 按钮 text=😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀
+[el_006] 链接 text=😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀…  → /
+[el_011] 图片 (无文字)  → 5
+[el_000] 多选 label=登录  → /x
+[el_009] Link text=…  → 5
+[el_007] 图片 text=缴费  选项：男/女
+[el_006] 元素 text=toKen  隐藏 → /℀x
+
+━━ 页面底部（页脚 / 版权，通常是噪声）（9 项）━━
+[el_010] 多选 label=无障碍  提示：aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa → /x
+[el_011] Link label=网站地图
+[el_015] 按钮 label=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx…
+[el_015] 表单 text=…  必填 禁用
+[el_018] 单选 label=DOM 选择器 xpath token JSON ui_schema element_id target_select…  提示：aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa → /x
+[el_000] 多行输入 label=无障碍  提示：𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏… → /a
+[el_014] 图片 text=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx…
+[el_008] Link text=DOM 选择器 xpath token JSON ui_schema element_id target_select…  选项：空/5/眼科
+[el_003] 按钮 text=😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀

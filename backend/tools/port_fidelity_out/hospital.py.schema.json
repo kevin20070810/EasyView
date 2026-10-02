@@ -1,0 +1,425 @@
+{
+  "schema_version": "0.3.0-draft",
+  "artifact_kind": "runtime",
+  "source_elements_schema_version": "1.1.0",
+  "page_url": "https://demo.easyview.local/hospital/",
+  "final_url": "snapshot://hospital",
+  "page_title": "市第一人民医院 · 网上服务（本地快照）",
+  "source": "fallback",
+  "generated_at": "2026-10-02T12:00:00+08:00",
+  "input_snapshot": {
+    "sha256": "4ce5a99e6b694df45b23a5b99e01c87fb23ead29bf79f9b5fae2f67fd3bb9530",
+    "extracted_at": "2026-10-02T12:37:05+08:00"
+  },
+  "generator": {
+    "mode": "rules",
+    "policy_version": "senior-v0.3",
+    "prompt_version": null,
+    "fallback_reason": null
+  },
+  "user_goal": null,
+  "state": "ready",
+  "empty_reason": null,
+  "page": {
+    "greeting": "您好，这里是市第一人民医院 网上服务（本地快照）",
+    "summary": "这里可以挂号、查看报告、缴费和查医保"
+  },
+  "stats": {
+    "input_elements": 102,
+    "visible_elements": 102,
+    "input_truncated": false,
+    "referenced_elements": 6,
+    "task_cards": 6
+  },
+  "cards": [
+    {
+      "id": "card_01",
+      "title": "我要挂号",
+      "subtitle": "回到原网页的这个位置，由您自己操作",
+      "icon": "calendar",
+      "priority": 1,
+      "intent": "book",
+      "provenance": {
+        "source_element_ids": [
+          "el_6f230879"
+        ],
+        "evidence": [
+          {
+            "id": "ev_1",
+            "element_id": "el_6f230879",
+            "field": "text",
+            "quote": "门诊预约登记"
+          }
+        ]
+      },
+      "content_meta": {
+        "title": {
+          "mode": "rewritten",
+          "evidence_ids": [
+            "ev_1"
+          ]
+        },
+        "subtitle": {
+          "mode": "rewritten",
+          "evidence_ids": [
+            "ev_1"
+          ]
+        }
+      },
+      "facts": [],
+      "ranking": {
+        "reason_codes": [
+          "main_service"
+        ],
+        "explanation": "规则引擎按关键词表选出",
+        "evidence_ids": [
+          "ev_1"
+        ]
+      },
+      "risk": {
+        "level": "blocked",
+        "domains": [
+          "healthcare"
+        ],
+        "reason_codes": [
+          "medical_submission"
+        ],
+        "evidence_ids": [
+          "ev_1"
+        ]
+      },
+      "action": {
+        "target_element_id": "el_6f230879",
+        "target_selector": "div:nth-of-type(4) > div > form",
+        "target_xpath": "/html[1]/body[1]/div[2]/div[1]/div[4]/div[1]/form[1]",
+        "kind": "scroll",
+        "href": null,
+        "confirmation": null
+      }
+    },
+    {
+      "id": "card_02",
+      "title": "查看报告",
+      "subtitle": null,
+      "icon": "document",
+      "priority": 2,
+      "intent": "query",
+      "provenance": {
+        "source_element_ids": [
+          "el_816c3fc2"
+        ],
+        "evidence": [
+          {
+            "id": "ev_1",
+            "element_id": "el_816c3fc2",
+            "field": "text",
+            "quote": "查看报告"
+          }
+        ]
+      },
+      "content_meta": {
+        "title": {
+          "mode": "verbatim",
+          "evidence_ids": [
+            "ev_1"
+          ]
+        },
+        "subtitle": null
+      },
+      "facts": [],
+      "ranking": {
+        "reason_codes": [
+          "main_service"
+        ],
+        "explanation": "规则引擎按关键词表选出",
+        "evidence_ids": [
+          "ev_1"
+        ]
+      },
+      "risk": {
+        "level": "sensitive",
+        "domains": [
+          "healthcare"
+        ],
+        "reason_codes": [
+          "personal_data"
+        ],
+        "evidence_ids": [
+          "ev_1"
+        ]
+      },
+      "action": {
+        "target_element_id": "el_816c3fc2",
+        "target_selector": "div:nth-of-type(3) > div > a:nth-of-type(2)",
+        "target_xpath": "/html[1]/body[1]/div[2]/div[1]/div[3]/div[1]/a[2]",
+        "kind": "navigate",
+        "href": "https://demo.easyview.local/report",
+        "confirmation": {
+          "message": "这会打开需要核对个人信息的页面，请注意保护您的资料。",
+          "confirm_label": "继续",
+          "cancel_label": "先不打开"
+        }
+      }
+    },
+    {
+      "id": "card_03",
+      "title": "缴费",
+      "subtitle": "在线缴费",
+      "icon": "payment",
+      "priority": 3,
+      "intent": "pay",
+      "provenance": {
+        "source_element_ids": [
+          "el_d4e15498"
+        ],
+        "evidence": [
+          {
+            "id": "ev_1",
+            "element_id": "el_d4e15498",
+            "field": "text",
+            "quote": "在线缴费"
+          }
+        ]
+      },
+      "content_meta": {
+        "title": {
+          "mode": "rewritten",
+          "evidence_ids": [
+            "ev_1"
+          ]
+        },
+        "subtitle": {
+          "mode": "rewritten",
+          "evidence_ids": [
+            "ev_1"
+          ]
+        }
+      },
+      "facts": [],
+      "ranking": {
+        "reason_codes": [
+          "main_service"
+        ],
+        "explanation": "规则引擎按关键词表选出",
+        "evidence_ids": [
+          "ev_1"
+        ]
+      },
+      "risk": {
+        "level": "blocked",
+        "domains": [
+          "money"
+        ],
+        "reason_codes": [
+          "payment"
+        ],
+        "evidence_ids": [
+          "ev_1"
+        ]
+      },
+      "action": {
+        "target_element_id": "el_d4e15498",
+        "target_selector": "div:nth-of-type(3) > div > a:nth-of-type(3)",
+        "target_xpath": "/html[1]/body[1]/div[2]/div[1]/div[3]/div[1]/a[3]",
+        "kind": "navigate",
+        "href": "https://demo.easyview.local/pay",
+        "confirmation": null
+      }
+    },
+    {
+      "id": "card_04",
+      "title": "查医保",
+      "subtitle": "医保查询",
+      "icon": "search",
+      "priority": 4,
+      "intent": "query",
+      "provenance": {
+        "source_element_ids": [
+          "el_20acb35b"
+        ],
+        "evidence": [
+          {
+            "id": "ev_1",
+            "element_id": "el_20acb35b",
+            "field": "text",
+            "quote": "医保查询"
+          }
+        ]
+      },
+      "content_meta": {
+        "title": {
+          "mode": "rewritten",
+          "evidence_ids": [
+            "ev_1"
+          ]
+        },
+        "subtitle": {
+          "mode": "rewritten",
+          "evidence_ids": [
+            "ev_1"
+          ]
+        }
+      },
+      "facts": [],
+      "ranking": {
+        "reason_codes": [
+          "main_service"
+        ],
+        "explanation": "规则引擎按关键词表选出",
+        "evidence_ids": [
+          "ev_1"
+        ]
+      },
+      "risk": {
+        "level": "sensitive",
+        "domains": [
+          "healthcare"
+        ],
+        "reason_codes": [
+          "personal_data"
+        ],
+        "evidence_ids": [
+          "ev_1"
+        ]
+      },
+      "action": {
+        "target_element_id": "el_20acb35b",
+        "target_selector": "div > a:nth-of-type(6)",
+        "target_xpath": "/html[1]/body[1]/div[2]/div[1]/div[3]/div[1]/a[6]",
+        "kind": "navigate",
+        "href": "https://demo.easyview.local/insurance",
+        "confirmation": {
+          "message": "这会打开需要核对个人信息的页面，请注意保护您的资料。",
+          "confirm_label": "继续",
+          "cancel_label": "先不打开"
+        }
+      }
+    },
+    {
+      "id": "card_05",
+      "title": "查看就医指南",
+      "subtitle": "就医指南",
+      "icon": "info",
+      "priority": 5,
+      "intent": "query",
+      "provenance": {
+        "source_element_ids": [
+          "el_e64c55d5"
+        ],
+        "evidence": [
+          {
+            "id": "ev_1",
+            "element_id": "el_e64c55d5",
+            "field": "text",
+            "quote": "就医指南"
+          }
+        ]
+      },
+      "content_meta": {
+        "title": {
+          "mode": "rewritten",
+          "evidence_ids": [
+            "ev_1"
+          ]
+        },
+        "subtitle": {
+          "mode": "rewritten",
+          "evidence_ids": [
+            "ev_1"
+          ]
+        }
+      },
+      "facts": [],
+      "ranking": {
+        "reason_codes": [
+          "main_service"
+        ],
+        "explanation": "规则引擎按关键词表选出",
+        "evidence_ids": [
+          "ev_1"
+        ]
+      },
+      "risk": {
+        "level": "normal",
+        "domains": [],
+        "reason_codes": [
+          "read_only"
+        ],
+        "evidence_ids": [
+          "ev_1"
+        ]
+      },
+      "action": {
+        "target_element_id": "el_e64c55d5",
+        "target_selector": "nav > a:nth-of-type(2)",
+        "target_xpath": "/html[1]/body[1]/nav[1]/a[2]",
+        "kind": "navigate",
+        "href": "https://demo.easyview.local/guide",
+        "confirmation": null
+      }
+    },
+    {
+      "id": "card_06",
+      "title": "查看住院服务",
+      "subtitle": "住院服务",
+      "icon": "hospital",
+      "priority": 6,
+      "intent": "query",
+      "provenance": {
+        "source_element_ids": [
+          "el_6a435f92"
+        ],
+        "evidence": [
+          {
+            "id": "ev_1",
+            "element_id": "el_6a435f92",
+            "field": "text",
+            "quote": "住院服务"
+          }
+        ]
+      },
+      "content_meta": {
+        "title": {
+          "mode": "rewritten",
+          "evidence_ids": [
+            "ev_1"
+          ]
+        },
+        "subtitle": {
+          "mode": "rewritten",
+          "evidence_ids": [
+            "ev_1"
+          ]
+        }
+      },
+      "facts": [],
+      "ranking": {
+        "reason_codes": [
+          "main_service"
+        ],
+        "explanation": "规则引擎按关键词表选出",
+        "evidence_ids": [
+          "ev_1"
+        ]
+      },
+      "risk": {
+        "level": "normal",
+        "domains": [],
+        "reason_codes": [
+          "read_only"
+        ],
+        "evidence_ids": [
+          "ev_1"
+        ]
+      },
+      "action": {
+        "target_element_id": "el_6a435f92",
+        "target_selector": "div:nth-of-type(3) > div > a:nth-of-type(5)",
+        "target_xpath": "/html[1]/body[1]/div[2]/div[1]/div[3]/div[1]/a[5]",
+        "kind": "navigate",
+        "href": "https://demo.easyview.local/inpatient",
+        "confirmation": null
+      }
+    }
+  ]
+}

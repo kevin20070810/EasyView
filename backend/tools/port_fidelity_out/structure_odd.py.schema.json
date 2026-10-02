@@ -1,0 +1,99 @@
+{
+  "schema_version": "0.3.0-draft",
+  "artifact_kind": "runtime",
+  "source_elements_schema_version": "0.3.0-draft",
+  "page_url": "https://demo.easyview.local/x",
+  "final_url": "",
+  "page_title": "结构",
+  "source": "extract",
+  "generated_at": "2026-10-02T12:00:00+08:00",
+  "input_snapshot": {
+    "sha256": "cd372fb85148700fa88095e3492d3f9f5beb43e555e5ff26d95f5a6adc36f8e6",
+    "extracted_at": ""
+  },
+  "generator": {
+    "mode": "rules",
+    "policy_version": "senior-v0.3",
+    "prompt_version": null,
+    "fallback_reason": null
+  },
+  "user_goal": null,
+  "state": "ready",
+  "empty_reason": null,
+  "page": {
+    "greeting": "您好，这里是结构",
+    "summary": "这里可以查看页面内容"
+  },
+  "stats": {
+    "input_elements": 8,
+    "visible_elements": 7,
+    "input_truncated": true,
+    "referenced_elements": 1,
+    "task_cards": 1
+  },
+  "cards": [
+    {
+      "id": "card_01",
+      "title": "查看页面内容",
+      "subtitle": "回到原网页的这个位置，由您自己操作",
+      "icon": "info",
+      "priority": 1,
+      "intent": "query",
+      "provenance": {
+        "source_element_ids": [
+          "el_dup"
+        ],
+        "evidence": [
+          {
+            "id": "ev_1",
+            "element_id": "el_dup",
+            "field": "text",
+            "quote": "第二份"
+          }
+        ]
+      },
+      "content_meta": {
+        "title": {
+          "mode": "rewritten",
+          "evidence_ids": [
+            "ev_1"
+          ]
+        },
+        "subtitle": {
+          "mode": "rewritten",
+          "evidence_ids": [
+            "ev_1"
+          ]
+        }
+      },
+      "facts": [],
+      "ranking": {
+        "reason_codes": [
+          "main_service"
+        ],
+        "explanation": "规则引擎按关键词表选出",
+        "evidence_ids": [
+          "ev_1"
+        ]
+      },
+      "risk": {
+        "level": "normal",
+        "domains": [],
+        "reason_codes": [
+          "read_only"
+        ],
+        "evidence_ids": [
+          "ev_1"
+        ]
+      },
+      "action": {
+        "target_element_id": "el_dup",
+        "target_selector": "body > div > *",
+        "target_xpath": "/html[1]/body[1]/div[1]/*[1]",
+        "kind": "scroll",
+        "href": null,
+        "confirmation": null
+      }
+    }
+  ]
+}

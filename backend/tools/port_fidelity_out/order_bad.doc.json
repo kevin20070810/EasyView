@@ -1,0 +1,46 @@
+{
+ "schema_version": "0.3.0-draft",
+ "page_url": "https://demo.easyview.local/index",
+ "final_url": "https://demo.easyview.local/index",
+ "page_title": "测试页面",
+ "lang": "zh-CN",
+ "source": "extract",
+ "fallback_reason": null,
+ "extracted_at": "2026-10-02T11:59:00+08:00",
+ "stats": {
+  "total": 1,
+  "visible": 1,
+  "truncated": false
+ },
+ "elements": [
+  {
+   "id": "el_o1",
+   "type": "text",
+   "text": "order 非法",
+   "label": null,
+   "aria_label": null,
+   "placeholder": null,
+   "name": null,
+   "value": null,
+   "href": null,
+   "selector": "body > div > *",
+   "xpath": "/html[1]/body[1]/div[1]/*[1]",
+   "visible": true,
+   "bbox": {
+    "x": 10.0,
+    "y": 10.0,
+    "width": 100.0,
+    "height": 20.0
+   },
+   "group_id": null,
+   "in_form": false,
+   "form_id": null,
+   "required": null,
+   "disabled": false,
+   "level": null,
+   "options": null,
+   "order": "abc"
+  }
+ ],
+ "groups": []
+}

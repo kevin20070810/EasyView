@@ -1,0 +1,25 @@
+站点：demo.easyview.local
+页面：前后 空白
+来源：unknown｜采集元素 13 个，其中可见 0 个
+
+下面是这张页面按可见位置切成的区块。每行格式：[元素ID] 类型 字段=原文。
+引用证据时请使用元素ID和字段名；原文若被截断，绑定时会自动补全。
+链接后的 → 只是路径提示，不要写进给老人看的文案。
+
+━━ 页面顶部（站点标识、快捷入口）（3 项）━━
+[el_004] 链接 placeholder=就诊人姓名  禁用
+[el_011] Link aria_label=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa  → /guahao
+[el_009] 图片 text=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx…  必填 选项：内科/外科 → b
+
+━━ 主体内容（8 项）━━
+[el_011] __proto__ text=就诊人姓名  → www.example.com/x
+[el_007] 下拉框 placeholder=就诊人姓名
+[el_000] __proto__ label=ıstanbul  → /pppppppppppppppppppppppppppppppppppppp…
+[el_003] 多行输入 label=😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀  提示：在线预约挂号 → /guahao
+[el_000] 链接 label=登录  → /
+[el_003] 多行输入 label=www.example.com  禁用
+[el_002] 输入框 placeholder=toKen  选项：空/5/眼科
+[el_004] 链接 aria_label=😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀…  选项：男/女 → /p
+
+━━ 页面底部（页脚 / 版权，通常是噪声）（1 项）━━
+[el_008] FORM text=한국어

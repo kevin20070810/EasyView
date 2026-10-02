@@ -440,10 +440,31 @@
         disabled: !!el.disabled,
         level: /^h[1-6]$/.test(el.tagName) ? parseInt(el.tagName[1], 10) : null,
         options: type === 'select' ? selectOptionsOf(el) : null,
-        // 截断优先级：可见交互元素(0) > 可见文本(1) > 隐藏交互元素(2) > 隐藏文本(3)。
-        // 隐藏元素不丢弃、只排最后 —— 弹窗/折叠面板里的表单往往才是核心功能
-        // （12306 的购票表单就在 display:none 的容器里），过滤权交给 B。
-        _rank: c.rank + (visible ? 0 : 2),
+        /* 截断优先级（数字越小越先保留）。只看客观属性：是不是交互元素、
+         * 是不是表单控件、可不可见、是不是标题 —— 不含任何「对老人重要不重要」
+         * 的判断，那是理解层的活。
+         *
+         *   0  可见的交互/结构元素   能办事的东西
+         *   1  隐藏的表单控件       折叠面板、弹窗里的表单往往才是核心功能
+         *                          （实测 12306 的出发地/到达地/日期就在 display:none 里）
+         *   2  可见标题             页面的骨架，模型靠它理解分区
+         *   3  可见文本             上下文
+         *   4  其他隐藏交互/结构     通常是折叠起来的导航菜单
+         *   5  隐藏文本             最后才考虑
+         *
+         * 注意 1 排在 2、3 之前：表单控件即使当前不可见，它承载的也是"任务"，
+         * 而可见散文只是背景。这个站点上老人是来办事的，不是来读新闻的。
+         */
+        _rank: (() => {
+          const isControl = el.tagName === 'INPUT' || el.tagName === 'SELECT' ||
+            el.tagName === 'TEXTAREA';
+          const isHeading = /^h[1-6]$/.test(el.tagName);
+          if (c.rank === 0) {
+            if (visible) return isHeading ? 2 : 0;
+            return isControl ? 1 : 4;
+          }
+          return visible ? 3 : 5;
+        })(),
         _order: DOC_ORDER.has(el) ? DOC_ORDER.get(el) : 0,
         _node: el
       });
@@ -590,27 +611,20 @@
       });
     });
 
-    /* ---------- 3. 截断：可见优先保留 ----------
-     * rank 0 = 可见的交互/结构元素（必留），其余按序补足：
-     * 0 可见交互 > 1 可见文本 > 2 隐藏交互 > 3 隐藏文本。
-     * 依据只有「可见性」这一客观 DOM 属性，不含任何「对老人重要不重要」的判断。
+    /* ---------- 3. 截断：按优先级保留 ----------
+     * 优先级定义见上面 _rank 的注释。这里必须**真的按 rank 排序** ——
+     * 早先的实现把"其余"按文档顺序截取，于是"可见文本优先于隐藏表单控件"
+     * 只写在注释里，并没有生效：谁在文档里靠前谁活下来。
      */
     let truncated = false;
     if (kept.length > MAX_ELEMENTS) {
       truncated = true;
-      const always = kept.filter((b) => b.rank <= 0);
-      const optional = kept.filter((b) => b.rank > 0);
-      kept.length = 0;
-      if (always.length >= MAX_ELEMENTS) {
-        Array.prototype.push.apply(kept, always.slice(0, MAX_ELEMENTS));
-      } else {
-        Array.prototype.push.apply(kept, always);
-        Array.prototype.push.apply(kept, optional.slice(0, MAX_ELEMENTS - always.length));
-      }
+      kept.sort((a, b) => a.rank - b.rank || a.order - b.order);
+      kept.length = MAX_ELEMENTS;
     }
 
     // 截断后恢复 DOM 文档序。优先级只用于决定「谁被保留」，
-    // 绝不能变成「输出顺序即重要性排序」——那等于 C 在替 B 做功能排序（规范 §3）。
+    // 绝不能变成「输出顺序即重要性排序」——那等于替理解层做功能排序（规范 §3）。
     kept.sort((a, b) => a.order - b.order);
 
     /* ---------- 4. 分组归属：只保留仍有元素归属的分组 ---------- */

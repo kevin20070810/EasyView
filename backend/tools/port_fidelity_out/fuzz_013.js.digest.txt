@@ -1,0 +1,76 @@
+站点：javascript://void(0)
+页面：拨打电话
+来源：7｜采集元素 60 个
+
+下面是这张页面按可见位置切成的区块。每行格式：[元素ID] 类型 字段=原文。
+引用证据时请使用元素ID和字段名；原文若被截断，绑定时会自动补全。
+链接后的 → 只是路径提示，不要写进给老人看的文案。
+
+━━ 页脚区块（通常是噪声）：缴费（3 项）━━
+[el_052] 链接 text=x﻿y  → /path
+[el_029] 多选 label=提交预约  → /x
+[el_030] 单选 label=emoji 😀 mix 👍🏽
+
+━━ 页头区块：拨打电话（4 项）━━
+[el_013] 图片 label=版权  → /p
+[el_059] div text=x﻿y  选项：内科/外科 → /
+[el_055] 图片 aria_label=版权  禁用
+[el_059] div text=x﻿y  选项：内科/外科 → /
+
+━━ 页面顶部（站点标识、快捷入口）（29 项）━━
+[el_023] 标题 label=( )  必填
+[el_049] 链接 label=℀x  → /路路路路路路路路路路路路路路路路路路路路路路路路路路路路路路路路路路路路路路…
+[el_009] 表格 label=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+[el_008] 下拉框 placeholder=前后 空白  选项：空/5/眼科
+[el_011] 单选 placeholder=℀x  → /x
+[el_049] 链接 text=😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀  必填 → /x
+[el_036] 按钮 text=한국어  选项：男/女
+[el_045] 元素 label=𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏…
+[el_006] div placeholder=x﻿y  选项：空/5/眼科
+[el_027] constructor text=a b  选项：空/5/眼科
+[el_046] 链接 text=提交预约
+[el_046] constructor text=中 文 字
+[el_051] 文字 text=null  必填 → /x
+[el_046] 链接 label=a b  选项：😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀
+[el_057] 元素 text=医疗服务价格公示  → ://x
+[el_036] 链接 label=( )
+[el_002] 链接 text=中 文 字  → /
+[el_009] 元素 aria_label=0  隐藏 → /x
+[el_022] 元素 text=中😀文  → /a
+[el_017] 标题 aria_label=true
+[el_032] FORM text=在线预约挂号
+[el_023] 表格 text=null  选项：内科/外科 → /x
+[el_037] 标题 label=1com  选项：😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀
+[el_047] 链接 placeholder=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+[el_007] Link text=ıstanbul  选项：男/女
+[el_044] 多行输入 label=12345  → /x
+[el_011] FORM label=𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏…
+[el_032] 元素 aria_label=查看检验报告
+[el_007] 多选 label=医疗服务价格公示
+
+━━ 区块：版权（3 项）━━
+[el_030] 单选 label=emoji 😀 mix 👍🏽
+[el_059] div text=x﻿y  选项：内科/外科 → /
+[el_005] 链接 text=𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏𝕏…  选项：内科/外科
+
+━━ FORM：中😀文（5 项）━━
+[el_004] 按钮 text=…  → /x
+[el_029] 多选 label=提交预约  → /x
+[el_015] 标题 label=한국어  隐藏
+[el_016] 表单 text=1com  选项：选项选项选项选项选项选项选项选项选项选项选项选项选项选项选项选项选项选项选项选项选项选项选项选项选项选项选项选项选项选…
+[el_028] Link aria_label=拨打电话  → /
+
+━━ 页面底部（页脚 / 版权，通常是噪声）（13 项）━━
+[el_009] 链接 label=© 2026  → /path
+[el_023] 输入框 label=公安备案  提示：/guahao?x=1 选项：选项选项选项选项选项选项选项选项选项选项选项选项选项选项选项选项选项选项选项选项选项选项选项选项选项选项选项选项选项选…
+[el_050] __proto__ aria_label=© 2026  选项：空/5/眼科
+[el_048] 链接 aria_label=ICP 备案  禁用
+[el_042] constructor label=手机版  禁用 → /x
+[el_044] 输入框 label=手机版  → /
+[el_033] 按钮 label=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa…  → /def
+[el_045] 输入框 aria_label=无障碍  选项：男/女 → :
+[el_002] 输入框 aria_label=DOM 选择器 xpath token JSON ui_schema element_id target_select…  提示：None → /x
+[el_044] 文字 text=身份证号
+[el_042] 表格 text=公安备案  → /x
+[el_042] Link text=/guahao?x=1  → /a
+[el_008] constructor label=身份证号  → /
