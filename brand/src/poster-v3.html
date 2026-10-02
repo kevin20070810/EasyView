@@ -15,6 +15,9 @@ body{background:#E8E2D6;font-family:"Microsoft YaHei","Noto Sans SC",sans-serif}
 .kw{position:relative;display:inline-block}
 .kwring{position:absolute;left:-16px;top:-14px;width:calc(100% + 32px);height:calc(100% + 30px);overflow:visible;pointer-events:none}
 .hand{position:absolute;left:74px;top:486px;transform:rotate(-1.6deg);font-family:KaiTi,STKaiti,serif;font-size:31px;color:var(--muted);display:flex;align-items:flex-end;gap:10px}
+.hand2{position:absolute;left:78px;top:574px;font-family:KaiTi,STKaiti,serif;font-size:31px;color:var(--warm);letter-spacing:3px;font-weight:700;transform:rotate(-1deg)}
+.bubble{position:absolute;left:560px;top:520px;width:280px;background:#fff;border:2px solid rgba(14,96,104,.18);border-radius:18px;padding:14px 18px;transform:rotate(-1.5deg);box-shadow:5px 6px 0 rgba(238,108,45,.18);font-family:KaiTi,STKaiti,serif;font-size:25px;line-height:1.5;color:#3E565A;letter-spacing:1px}
+.bubble::after{content:"";position:absolute;left:34px;bottom:-13px;width:22px;height:22px;background:#fff;border-right:2px solid rgba(14,96,104,.18);border-bottom:2px solid rgba(14,96,104,.18);transform:rotate(45deg)}
 .couplet{position:absolute;right:86px;top:398px;writing-mode:vertical-rl;font-family:KaiTi,STKaiti,serif;font-size:46px;letter-spacing:12px;line-height:1.62;color:var(--ink);font-weight:700}
 .couplet em{font-style:normal;color:var(--warm)}
 .stage{position:absolute;left:44px;top:648px;width:760px;height:620px}
@@ -25,7 +28,9 @@ body{background:#E8E2D6;font-family:"Microsoft YaHei","Noto Sans SC",sans-serif}
 .frame .bar i{width:11px;height:11px;border-radius:50%;background:rgba(14,96,104,.28)}
 .frame .bar u{flex:1;height:15px;border-radius:8px;background:#fff;margin-left:10px;text-decoration:none;border:1.5px solid rgba(14,96,104,.12)}
 .frame .body{padding:20px;display:flex;flex-direction:column;gap:16px;height:calc(100% - 46px)}
-.card{background:#fff;border:1.6px solid rgba(14,96,104,.14);border-radius:16px;padding:16px 18px;display:flex;align-items:center;gap:16px;box-shadow:4px 5px 0 rgba(14,96,104,.07);flex:1}
+.frame .hi{background:rgba(246,166,79,.16);border:1.6px dashed rgba(238,108,45,.5);border-radius:14px;padding:10px 16px;font-family:KaiTi,STKaiti,serif;font-size:24px;color:#8A4A22;letter-spacing:1px;display:flex;align-items:center;gap:10px}
+.frame .hi svg{flex:none}
+.card{background:#fff;border:1.6px solid rgba(14,96,104,.14);border-radius:20px;padding:16px 18px;display:flex;align-items:center;gap:16px;box-shadow:4px 5px 0 rgba(14,96,104,.07);flex:1}
 .card .ic{width:52px;height:52px;border-radius:13px;flex:none;display:flex;align-items:center;justify-content:center}
 .card .tx{flex:1}.card .tx b{display:block;font-size:30px;color:var(--ink);letter-spacing:1px}
 .card .tx s{display:block;text-decoration:none;font-size:17px;color:var(--muted);margin-top:5px}
@@ -60,13 +65,15 @@ body{background:#E8E2D6;font-family:"Microsoft YaHei","Noto Sans SC",sans-serif}
   <svg class="sun" width="320" height="320" viewBox="0 0 320 320" xmlns="http://www.w3.org/2000/svg">
 <circle cx="176" cy="150" r="118" fill="url(#dots)"/>
 <circle cx="160" cy="160" r="88" fill="#EE6C2D" filter="url(#rough2)"/>
-<circle cx="132" cy="132" r="30" fill="#F6A64F" opacity=".8" filter="url(#rough2)"/>
+<g filter="url(#rough)"><circle cx="136" cy="146" r="7.5" fill="#FFF6E6"/><circle cx="184" cy="146" r="7.5" fill="#FFF6E6"/><path d="M132 176 Q160 198 188 176" fill="none" stroke="#FFF6E6" stroke-width="7" stroke-linecap="round"/></g>
 <g stroke="#EE6C2D" stroke-width="7" stroke-linecap="round" filter="url(#rough)">
 <path d="M160 34v-22"/><path d="M248 72l16-16"/><path d="M286 160h24"/><path d="M248 248l16 16"/><path d="M160 286v22"/><path d="M72 248l-16 16"/><path d="M34 160H12"/><path d="M72 72L56 56"/></g></svg>
-  <svg class="star" style="left:700px;top:120px;transform:rotate(12deg)" width="30" height="30" viewBox="0 0 30 30"><g stroke="#F6A64F" stroke-width="3.4" stroke-linecap="round" filter="url(#rough)"><path d="M15 4v22M5 9l20 12M25 9L5 21"/></g></svg><svg class="star" style="left:760px;top:404px;transform:rotate(-8deg)" width="30" height="30" viewBox="0 0 30 30"><g stroke="#EE6C2D" stroke-width="3.4" stroke-linecap="round" filter="url(#rough)"><path d="M15 4v22M5 9l20 12M25 9L5 21"/></g></svg><svg class="star" style="left:58px;top:586px;transform:rotate(20deg)" width="30" height="30" viewBox="0 0 30 30"><g stroke="#0E6068" stroke-width="3.4" stroke-linecap="round" filter="url(#rough)"><path d="M15 4v22M5 9l20 12M25 9L5 21"/></g></svg>
+  <svg class="star" style="left:700px;top:120px;transform:rotate(12deg)" width="30" height="30" viewBox="0 0 30 30"><g stroke="#F6A64F" stroke-width="3.4" stroke-linecap="round" filter="url(#rough)"><path d="M15 4v22M5 9l20 12M25 9L5 21"/></g></svg><svg class="star" style="left:760px;top:404px;transform:rotate(-8deg)" width="30" height="30" viewBox="0 0 30 30"><g stroke="#EE6C2D" stroke-width="3.4" stroke-linecap="round" filter="url(#rough)"><path d="M15 4v22M5 9l20 12M25 9L5 21"/></g></svg><svg class="star" style="left:500px;top:606px;transform:rotate(20deg)" width="30" height="30" viewBox="0 0 30 30"><g stroke="#0E6068" stroke-width="3.4" stroke-linecap="round" filter="url(#rough)"><path d="M15 4v22M5 9l20 12M25 9L5 21"/></g></svg>
   <div class="tape">面向长辈的网页辅助插件</div>
   <div class="h1w"><h1 class="ghost">网页再乱，<br>也能一眼看懂。</h1><h1 class="real">网页再乱，<br>也能<em><span class="kw">一眼看懂<svg class="kwring" viewBox="0 0 420 130" xmlns="http://www.w3.org/2000/svg"><ellipse cx="210" cy="65" rx="202" ry="54" fill="none" stroke="#F6A64F" stroke-width="8" filter="url(#rough)"/></svg></span></em>。</h1></div>
   <div class="hand">一打开插件，乱页面自己排好队<svg width="110" height="74" viewBox="0 0 110 74"><path d="M10 6 C 34 40, 62 56, 96 62" fill="none" stroke="#66757E" stroke-width="3.6" stroke-linecap="round" filter="url(#rough)"/><path d="M84 50 L98 62 L80 68" fill="none" stroke="#66757E" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round" filter="url(#rough)"/></svg></div>
+  <div class="hand2">上网的路，以后有人陪您走。</div>
+  <div class="bubble">别急，慢慢看，<br>我等您。</div>
   <div class="couplet">暖龄相伴<br><em>上网不难</em></div>
   <div class="stage">
     <svg class="halftone" viewBox="0 0 300 230"><rect width="300" height="230" fill="url(#dots)"/></svg>
@@ -75,7 +82,7 @@ body{background:#E8E2D6;font-family:"Microsoft YaHei","Noto Sans SC",sans-serif}
     <div class="tapebit" style="right:-30px;bottom:-16px;transform:rotate(-40deg)"></div>
     <div class="frame">
       <div class="bar"><i></i><i></i><i></i><u></u></div>
-      <div class="body"><div class="card"><div class="ic" style="background:rgba(14,96,104,.10)"><svg width="27" height="27" viewBox="0 0 24 24"><path d="M12 4.4v15.4M4.6 12h15" stroke="#0E6068" stroke-width="3.2" stroke-linecap="round" filter="url(#rough)"/></svg></div><div class="tx"><b>我要挂号</b><s>协和医院 · 明天上午 有号</s></div><div class="go">去办理</div></div><div class="card"><div class="ic" style="background:rgba(238,108,45,.12)"><svg width="27" height="27" viewBox="0 0 24 24"><path d="M6.2 3.2h8.6l4 4v13.6H6.2z M9.4 12h6.6M9.4 15.8h6.6" fill="none" stroke="#EE6C2D" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" filter="url(#rough)"/></svg></div><div class="tx"><b>查看报告</b><s>上周的化验单 已出</s></div><div class="go">去查看</div></div><div class="card"><div class="ic" style="background:rgba(14,96,104,.10)"><svg width="27" height="27" viewBox="0 0 24 24"><path d="M4.4 17.4h15.4M6.6 17.4V9.4m5.6 8V5.6m5.6 11.8v-6.2" fill="none" stroke="#0E6068" stroke-width="2.5" stroke-linecap="round" filter="url(#rough)"/></svg></div><div class="tx"><b>缴纳水电费</b><s>9 月账单 待缴</s></div><div class="go">去缴纳</div></div></div>
+      <div class="body"><div class="hi"><svg width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5.4" fill="#EE6C2D"/><g stroke="#EE6C2D" stroke-width="2.4" stroke-linecap="round"><path d="M12 2.2v2.6M12 19.2v2.6M2.2 12h2.6M19.2 12h2.6M5.2 5.2l1.9 1.9M16.9 16.9l1.9 1.9M18.8 5.2l-1.9 1.9M7.1 16.9l-1.9 1.9"/></g></svg>早上好，今天的事我给您排好了。</div><div class="card"><div class="ic" style="background:rgba(14,96,104,.10)"><svg width="27" height="27" viewBox="0 0 24 24"><path d="M12 4.4v15.4M4.6 12h15" stroke="#0E6068" stroke-width="3.2" stroke-linecap="round" filter="url(#rough)"/></svg></div><div class="tx"><b>我要挂号</b><s>协和医院 · 明天上午 有号</s></div><div class="go">去办理</div></div><div class="card"><div class="ic" style="background:rgba(238,108,45,.12)"><svg width="27" height="27" viewBox="0 0 24 24"><path d="M6.2 3.2h8.6l4 4v13.6H6.2z M9.4 12h6.6M9.4 15.8h6.6" fill="none" stroke="#EE6C2D" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" filter="url(#rough)"/></svg></div><div class="tx"><b>查看报告</b><s>上周的化验单 已出</s></div><div class="go">去查看</div></div><div class="card"><div class="ic" style="background:rgba(14,96,104,.10)"><svg width="27" height="27" viewBox="0 0 24 24"><path d="M4.4 17.4h15.4M6.6 17.4V9.4m5.6 8V5.6m5.6 11.8v-6.2" fill="none" stroke="#0E6068" stroke-width="2.5" stroke-linecap="round" filter="url(#rough)"/></svg></div><div class="tx"><b>缴纳水电费</b><s>9 月账单 待缴</s></div><div class="go">去缴纳</div></div></div>
     </div>
     </div>
     <svg class="trail" width="150" height="90" viewBox="0 0 150 90"><path d="M138 14 C 104 34, 66 50, 18 66" fill="none" stroke="#EE6C2D" stroke-width="3.6" stroke-linecap="round" stroke-dasharray="1 11" filter="url(#rough)"/><path d="M36 50 L20 63 L40 70" fill="none" stroke="#EE6C2D" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round" filter="url(#rough)"/></svg>
