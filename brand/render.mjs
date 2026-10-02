@@ -48,6 +48,7 @@ const jobs = [
   ['slide.html',  '[data-shot="slide"]',  'slide-v1.png',  1],
   ['slide-v2.html','[data-shot="slide2"]', 'slide-v2.png',  1],
   ['names.html',  '[data-shot="names"]',  'name-options.png', 2],
+  ['names-v2.html', '[data-shot="names2"]', 'name-options-v2.png', 2],
 ];
 
 const files = new Set((await readdir(src)).filter(f => f.endsWith('.html')));
