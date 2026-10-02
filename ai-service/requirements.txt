@@ -1,0 +1,2 @@
+# B 组运行代码仅使用 Python 标准库。
+# 官方 tools/check_ui.py 需要 jsonschema，已由 backend/requirements.txt 提供。

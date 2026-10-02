@@ -1,0 +1,138 @@
+{
+  "schema_version": "0.1.0-draft",
+  "source_elements_schema_version": "1.0.0",
+  "page_url": "https://demo.easyview.local/hospital/",
+  "page_title": "市第一人民医院 · 网上服务（本地快照）",
+  "source": "fallback",
+  "generated_at": "2026-10-02T10:35:30+08:00",
+  "page": {
+    "greeting": "您好，这里是市第一人民医院 网上服务（本地快照）",
+    "summary": "这里可以我要挂号、查看报告、缴费、医保查询"
+  },
+  "cards": [
+    {
+      "id": "form_6f230879",
+      "title": "我要挂号",
+      "subtitle": "门诊预约登记",
+      "icon": "calendar",
+      "priority": 1,
+      "action": {
+        "kind": "form",
+        "target_element_id": "el_6f230879",
+        "href": null
+      },
+      "form": {
+        "submit_element_id": "el_0a5dde7d",
+        "fields": [
+          {
+            "element_id": "el_1ccf3fbc",
+            "label": "就诊人姓名",
+            "input_type": "text",
+            "placeholder": "请输入就诊人真实姓名",
+            "required": true
+          },
+          {
+            "element_id": "el_3a19b50d",
+            "label": "身份证号",
+            "input_type": "idcard",
+            "placeholder": "请输入18位身份证号",
+            "required": true
+          },
+          {
+            "element_id": "el_f2848cc3",
+            "label": "手机号码",
+            "input_type": "tel",
+            "placeholder": "接收预约短信的手机号",
+            "required": true
+          },
+          {
+            "element_id": "el_3ce58500",
+            "label": "就诊科室",
+            "input_type": "select",
+            "placeholder": null,
+            "required": false
+          },
+          {
+            "element_id": "el_bf9607cb",
+            "label": "就诊日期",
+            "input_type": "date",
+            "placeholder": null,
+            "required": false
+          },
+          {
+            "element_id": "el_1fdde1f8",
+            "label": "指定医生",
+            "input_type": "text",
+            "placeholder": "不填则由系统分配",
+            "required": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "el_816c3fc2",
+      "title": "查看报告",
+      "subtitle": null,
+      "icon": "document",
+      "priority": 2,
+      "action": {
+        "kind": "navigate",
+        "target_element_id": "el_816c3fc2",
+        "href": null
+      },
+      "form": null
+    },
+    {
+      "id": "el_d4e15498",
+      "title": "缴费",
+      "subtitle": "在线缴费",
+      "icon": "payment",
+      "priority": 3,
+      "action": {
+        "kind": "navigate",
+        "target_element_id": "el_d4e15498",
+        "href": null
+      },
+      "form": null
+    },
+    {
+      "id": "el_20acb35b",
+      "title": "医保查询",
+      "subtitle": null,
+      "icon": "search",
+      "priority": 4,
+      "action": {
+        "kind": "navigate",
+        "target_element_id": "el_20acb35b",
+        "href": null
+      },
+      "form": null
+    },
+    {
+      "id": "el_c8dc41cb",
+      "title": "联系客服",
+      "subtitle": "联系我们",
+      "icon": "phone",
+      "priority": 5,
+      "action": {
+        "kind": "navigate",
+        "target_element_id": "el_c8dc41cb",
+        "href": null
+      },
+      "form": null
+    },
+    {
+      "id": "el_e64c55d5",
+      "title": "就医指南",
+      "subtitle": null,
+      "icon": "info",
+      "priority": 6,
+      "action": {
+        "kind": "navigate",
+        "target_element_id": "el_e64c55d5",
+        "href": null
+      },
+      "form": null
+    }
+  ]
+}
