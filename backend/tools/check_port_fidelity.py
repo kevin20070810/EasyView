@@ -249,6 +249,27 @@ def boundary_cases():
         el("el_o1", "text", text="order 浮点串", order="1.5"),
     ]), {"greeting": "", "summary": "", "cards": []}))
 
+    # 11.5 浮点字段：数字落到 _clean/str() 上时，两边的 repr 必须一致
+    #       （整数值的浮点 3.0 在 JS 里就是 3，这一条不算在内）
+    cases.append(("float_values", doc([
+        el("el_fv1", "input", value=1.5),
+        el("el_fv2", "input", value=0.1),
+        el("el_fv3", "input", value=1e16),
+        el("el_fv4", "input", value=1e17),
+        el("el_fv5", "input", value=1.5e-7),
+        el("el_fv6", "input", value=1e-5),
+        el("el_fv7", "input", value=-1234.5678),
+        el("el_fv8", "input", value=2.0 / 3.0),
+        el("el_fv9", "input", value=1.2e29),
+        el("el_fv10", "input", value=5e-324),
+        el("el_fv11", "input", value=1.7976931348623157e308),
+        el("el_fv12", "link", value=123.456, text=None),
+        el("el_fv13", "input", label=7.5, text=None, placeholder=None),
+        el("el_fv14", "input", placeholder=0.5, text=None),
+        el("el_fv15", "text", text=None, label=None, aria_label=None, placeholder=None,
+           value=1.0000000000000002),
+    ]), {"greeting": "", "summary": "", "cards": []}))
+
     # 12. type 怪值（JS 对象原型陷阱 / 未知类型）
     cases.append(("type_odd", doc([
         el("el_ty1", "constructor", text="原型键"),
@@ -748,7 +769,8 @@ def run_js(js_payloads, expression=None):
         for name, payload in js_payloads.items():
             result = {"digest": None, "digest_error": None, "schema": None,
                       "schema_error": None, "dropped": None}
-            res = page.evaluate(JS_DIGEST, {"doc": payload["doc"], "options": {}})
+            res = page.evaluate(expression or JS_DIGEST,
+                                {"doc": payload["doc"], "options": {}})
             if res["ok"]:
                 result["digest"] = res["value"]
             else:
@@ -878,7 +900,7 @@ def nan_control(payloads):
         except Exception as exc:  # noqa: BLE001
             py_control[name] = ("err", type(exc).__name__)
         js_payloads[name] = {"doc": san}
-    js_control = run_js(js_payloads, expression=JS_DIGEST_NOLIMIT)
+    js_control = run_js(js_payloads)
 
     # 对照 2：不设上限，行集合必须一致（Python 侧可能会抛错，那就只比错误类型）
     js_rows = run_js({n: {"doc": payloads[n]["doc"]} for n in nan_names},
@@ -1059,16 +1081,33 @@ class Report:
 # --------------------------------------------------------------------------
 
 KNOWN_DIVERGENCE_CASES = [
-    # (说明, doc, draft)
-    ("int/float 不分：JSON 的 3.0 在 JS 里就是 3",
-     doc([el("el_v1", "text", value=3.0, text="值")]),
-     {"cards": [{"title": "值", "element_id": "el_v1"}]}),
+    # (说明, doc, draft, 预期)  预期: "differ" 表示两边理应不同，"match" 表示理应相同
+    ("整数值浮点：JSON 的 3.0 / 1e15 在 JS 里就是整数 3 / 1000000000000000，"
+     "还原不出 Python 的 '3.0' / '1000000000000000.0'",
+     doc([el("el_v1", "input", text=None, label=None, aria_label=None,
+             placeholder=None, value=3.0)]),
+     {"cards": [{"title": "值", "element_id": "el_v1"}]}, "differ"),
+    ("小数值浮点：两边都应还原成 '1.5'（这条必须相同）",
+     doc([el("el_v1", "input", text=None, label=None, aria_label=None,
+             placeholder=None, value=1.5)]),
+     {"cards": [{"title": "值", "element_id": "el_v1"}]}, "match"),
+    ("大浮点的 repr：1e16 → '1e+16'（这条必须相同）",
+     doc([el("el_v1", "input", text=None, label=None, aria_label=None,
+             placeholder=None, value=1e16)]),
+     {"cards": [{"title": "值", "element_id": "el_v1"}]}, "match"),
     ("大整数：>2^53 的 stats.total 会被 JS 的 double 吃掉",
      doc([el("el_v1", "text", text="x")], stats={"total": 9007199254740993, "visible": 1}),
-     None),
-    ("非 ASCII 十进制数字：int('٣') 合法，JS 抛错",
-     doc([el("el_v1", "text", text="阿拉伯数字 order", order="\u0663")]),
-     {"cards": []}),
+     None, "differ"),
+    ("负零：JSON 的 -0.0 与 -0 在 JS 里都是 -0，Python 分别是 float 的 '-0.0' 和 int 的 '0'",
+     doc([el("el_v1", "input", text=None, label=None, aria_label=None,
+             placeholder=None, value=-0.0)]),
+     {"cards": [{"title": "值", "element_id": "el_v1"}]}, "differ"),
+    ("非 ASCII 十进制数字：Python 的 int('٣') 是 3，JS 只认 ASCII，解析失败按 0（只影响排序）",
+     doc([el("el_v1", "text", text="阿拉伯数字", order="\u0663",
+             bbox={"y": 10.0, "height": 1.0}),
+          el("el_v2", "text", text="普通数字", order="2",
+             bbox={"y": 10.0, "height": 1.0})]),
+     None, "differ"),
 ]
 
 
@@ -1079,7 +1118,7 @@ def run_known_divergences(report):
     report.add("=" * 78)
     payloads = {}
     py_results = {}
-    for i, (label, data, draft) in enumerate(KNOWN_DIVERGENCE_CASES):
+    for i, (label, data, draft, expect) in enumerate(KNOWN_DIVERGENCE_CASES):
         name = "divergence_%d" % i
         raw = SHA256_ENCODED.encode("utf-8")
         payloads[name] = {"doc": data, "raw_bytes": raw, "extra": {}}
@@ -1095,31 +1134,40 @@ def run_known_divergences(report):
             "user_goal": None,
         }
     js_results = run_js(js_payloads)
-    for i, (label, data, draft) in enumerate(KNOWN_DIVERGENCE_CASES):
+    wrong_claims = 0
+    for i, (label, data, draft, expect) in enumerate(KNOWN_DIVERGENCE_CASES):
         name = "divergence_%d" % i
         py = py_results[name]
         js = js_results[name]
+        actual = "match"
+        detail = ""
+        if py["digest_error"] or js["digest_error"]:
+            actual = "differ" if err_kind(py["digest_error"]) != err_kind(js["digest_error"]) else "match"
+            detail = "python=%r js=%r" % (py["digest_error"], js["digest_error"])
+        elif py["digest"] == js["digest"]:
+            actual = "match"
+        else:
+            actual = "differ"
+            limit = min(len(py["digest"]), len(js["digest"]))
+            at = next((k for k in range(limit) if py["digest"][k] != js["digest"][k]), limit)
+            detail = "python=%r js=%r" % (py["digest"][max(0, at - 30):at + 30],
+                                          js["digest"][max(0, at - 30):at + 30])
+        ok = actual == expect
+        if not ok:
+            wrong_claims += 1
         report.add("")
         report.add("### %s" % label)
-        if py["digest_error"] or js["digest_error"]:
-            report.add("  digest  python=%r" % py["digest_error"])
-            report.add("  digest  js    =%r" % js["digest_error"])
-        else:
-            if py["digest"] == js["digest"]:
-                report.add("  digest  两边一致（此例没有暴露差异）")
-            else:
-                report.add("  digest  不一致（正是上面说的原因）")
-                limit = min(len(py["digest"]), len(js["digest"]))
-                at = next((k for k in range(limit) if py["digest"][k] != js["digest"][k]), limit)
-                report.add("          python: %r" % py["digest"][max(0, at - 30):at + 30])
-                report.add("          js    : %r" % js["digest"][max(0, at - 30):at + 30])
+        report.add("  预期=%s 实测=%s  %s" % (expect, actual, "OK" if ok else "!! 与说明不符"))
+        if detail:
+            report.add("  %s" % detail)
         if py["draft"] is not None:
             if py["schema_error"] or js["schema_error"]:
-                report.add("  binder  python=%r js=%r" % (py["schema_error"], js["schema_error"]))
+                report.add("  binder python=%r js=%r" % (py["schema_error"], js["schema_error"]))
             else:
                 same = (json.dumps(py["schema"], ensure_ascii=False, sort_keys=True) ==
                         json.dumps(js["schema"], ensure_ascii=False, sort_keys=True))
-                report.add("  binder  %s" % ("一致（此例没有暴露差异）" if same else "不一致（正是上面说的原因）"))
+                report.add("  binder %s" % ("一致" if same else "不一致"))
+    return wrong_claims
 
 
 def run_nan_order_note(report):
@@ -1240,7 +1288,7 @@ def main(argv=None):
                 # 一切正常：丢掉这次产生的明细，只保留失败/可疑项
                 del report.lines[before_lines:]
 
-    run_known_divergences(report)
+    report.failures += run_known_divergences(report)
     report.failures += run_nan_control(report, nan_names, nan_results, nan_bad)
     run_nan_order_note(report)
 

@@ -10,6 +10,12 @@
   ],
   "background": { "service_worker": "src/background.js" },
   "action": { "default_title": "为当前网页生成敬老版" },
+  "commands": {
+    "_execute_action": {
+      "suggested_key": { "default": "Alt+Shift+E" },
+      "description": "为当前网页生成敬老版"
+    }
+  },
   "content_scripts": [
     {
       "matches": ["https://*.12306.cn/*"],

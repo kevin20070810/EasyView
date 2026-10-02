@@ -80,9 +80,12 @@
     var fp = m[3] || "";
     var ex = m[4] ? parseInt(m[4], 10) : 0;
     var all = ip + fp;
+    // value = (ip+fp) × 10^-len(fp) × 10^ex；去掉前导零后写成 0.digits × 10^decpt
+    // 再顺带去掉尾零（Python 的最短表示不带尾零，JS 的 String(1e16) 带）。
     var stripped = all.replace(/^0+/, "");
-    var decpt = all.length + ex - (all.length - stripped.length);
-    var digits = stripped === "" ? "0" : stripped;
+    var decpt = stripped.length - fp.length + ex;
+    var digits = stripped === "" ? "0" : stripped.replace(/0+$/, "");
+    if (digits === "") digits = "0";
     if (decpt > -4 && decpt <= 16) {
       if (decpt <= 0) return sign + "0." + new Array(-decpt + 1).join("0") + digits;
       if (decpt >= digits.length) {
