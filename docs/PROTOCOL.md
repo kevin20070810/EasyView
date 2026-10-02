@@ -1,4 +1,4 @@
-# EasyView 公共协议说明（C 组代拟 v1.0.0）
+# EasyView 公共协议说明（C 组代拟 v1.1.0）
 
 > **状态**：`elements.schema.json` 建议冻结；`ui.schema.json` 为 **草案**，待 A/B 确认。
 > **依据**：《EasyView 统一协作开发规范 v2.0》§7 —— 核心协议文件任何修改必须三人确认。
@@ -132,7 +132,7 @@ A 没有这个契约就无法开工，因此 C 组代拟草案。
 
 ```json
 {
-  "schema_version": "0.1.0-draft",
+  "schema_version": "0.2.0-draft",
   "page": { "greeting": "您好，这里是 XX 医院网上服务", "summary": "可以挂号、查报告、缴费" },
   "cards": [
     { "id": "form_3a91c2de", "title": "我要挂号", "priority": 1,
@@ -171,6 +171,87 @@ C 组**只做**：访问网页 → 解析 DOM → 客观描述 → 输出 JSON�
 
 ### 变更记录
 
-| 版本 | 日期 | 变更 | 确认人 |
-|---|---|---|---|
-| 1.0.0 | 待定 | C 组起草 elements 协议扩展；ui 协议草案 | 待 A/B/C 确认 |
+| 版本 | 变更 | 确认人 |
+|---|---|---|
+| `elements` 1.0.0 / `ui` 0.1.0-draft | C 组起草 elements 协议扩展（type 枚举、groups 分组、label 关联标签、href、visible、source 降级标记、稳定 ID）；ui 协议草案 | A / B / C |
+| `elements` **1.1.0** / `ui` **0.2.0-draft** | **修复元素无法定位的断点，并补齐选项数据**（详见 §5） | A / B / C 已确认 |
+
+---
+
+## 5. v1.1.0 / v0.2.0-draft 修订：为什么必须改
+
+三方首次会合后实测发现两个**光看 JSON 形状发现不了**的运行时断点。
+
+### 5.1 断点：`target_element_id` 无法映射回 DOM
+
+A 的渲染器用 `document.getElementById(target_element_id)` 定位元素。
+但 C 的 ID 是 **`sha1(selector)[:8]` 派生哈希，不是 DOM 的 `id` 属性** ——
+`elements.json` 之所以带 `selector`/`xpath`，正是因为 ID 无法反查 DOM。
+
+实测（C 的真实数据 + B 的真实产出）：
+
+```
+el_6f230879 -> DOM 无 id   ★ 找不到      el_c8dc41cb -> DOM 无 id   ★ 找不到
+el_816c3fc2 -> DOM 无 id   ★ 找不到      el_e64c55d5 -> DOM 无 id   ★ 找不到
+el_d4e15498 -> DOM 无 id   ★ 找不到      el_20acb35b -> DOM 无 id   ★ 找不到
+
+表单字段：el_1ccf3fbc 的 DOM 实际 id 是 "name"，不是 "el_1ccf3fbc"
+```
+
+**6/6 全部失败，成功率 0%。** 而这既不是 A 的错也不是 B 的错 ——
+是协议要求 A「点击后操作元素 el_xxx」，却从未给 A 定位它的手段。
+A 只持有 `ui_schema.json`，拿不到 `elements[].selector`。
+
+**修法**：`ui_schema.json` 补上 `target_selector` / `target_xpath` /
+`submit_selector` / `field.selector`，让这份文档自给自足。
+`elements.json` 本来就有 `selector`/`xpath`，B 只需原样透传。
+
+### 5.2 断点：`select` / `radio` / `checkbox` 没有选项数据
+
+C 把选项当纯文本拼进了 `text` 字段，结构化信息在**提取阶段就丢了**；
+协议 `field` 也没有 `options`。A 只能把它们退化成文本输入。
+
+**修法分两层**：
+- `elements.json` 新增 `element.options`（含 `label`/`value`/`selected`/`selector`）
+- `ui_schema.json` 新增 `field.options`
+
+### 5.3 radio / checkbox 为什么必须逐项给 selector（A 组补充）
+
+一个 radio/checkbox 组在语义上是「一个问题 + N 个选项」，
+但在 DOM 上是 **N 个独立元素**，而协议里一个 `field` 只能带一个 `selector`。
+
+因此 C 侧在提取时就把它们**合并成一个「选项组」元素**：
+元素自身的 `selector` 指向该组的容器，每个选项的定位信息放在 `options[].selector`。
+
+```
+radio  组 selector = fieldset > fieldset:nth-of-type(1)     ← field.selector
+  ├─ 上午  selector = fieldset:nth-of-type(1) > label:nth-of-type(1) > input   ← options[0].selector
+  ├─ 下午  selector = fieldset:nth-of-type(1) > label:nth-of-type(2) > input
+  └─ 夜间  selector = fieldset:nth-of-type(1) > label:nth-of-type(3) > input
+```
+
+`select` 不同：`field.selector` 指向 `<select>` 本身，
+`options[].selector` 固定为 `null`（A 按 `value` 匹配 `<option>` 即可）。
+
+> `options[].element_id` 保留作跨模块追溯，但 **A 不持有 `elements.json`，不得用它定位** ——
+> 必须用 `selector`。
+
+### 5.4 A 组的实施顺序（A 已确认）
+
+1. `target_selector` 定位动作元素
+2. `selector` 回填普通字段
+3. `select` 按 `value` 匹配选项
+4. `radio` / `checkbox` 按每个 `option.selector` 写回
+5. `submit_selector` 点击提交按钮
+
+### 5.5 影响面
+
+| 文件 | 变化 |
+|---|---|
+| `docs/elements.schema.json` | `1.0.0` → `1.1.0`，新增可选 `element.options`（向后兼容） |
+| `docs/ui.schema.json` | `0.1.0-draft` → `0.2.0-draft`，新增定位与选项字段 |
+| `backend/` | 提取 `<option>`、按 (form, name) 合并 radio/checkbox 组 |
+| `ai-service/` | 透传 `selector` / `xpath` / `options`（不涉及任何判断） |
+| `extension/` | `resolveTargetElement` 改用 `target_selector`；`ELEMENTS_VERSION` 改 `"1.1.0"` |
+
+**C 侧的 `selector` / `xpath` 本来就已经产出，B 只需搬运**，三方改动都很小。

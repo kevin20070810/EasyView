@@ -17,8 +17,8 @@
   "additionalProperties": false,
   "properties": {
     "schema_version": {
-      "const": "0.1.0-draft",
-      "description": "本协议版本。A/B 双方必须实现同一个版本号；升为 1.0.0 需三人确认。"
+      "const": "0.2.0-draft",
+      "description": "本协议版本。A/B 双方必须实现同一个版本号。0.2.0-draft 相对 0.1.0-draft 新增元素定位字段（target_selector / target_xpath / submit_selector / field.selector / field.options），修复 target_element_id 无法反查 DOM 的断点。"
     },
     "source_elements_schema_version": {
       "type": "string",
@@ -135,7 +135,15 @@
         },
         "target_element_id": {
           "type": ["string", "null"],
-          "description": "要触发/定位的原网页元素 ID。kind=navigate/form/scroll 时必填。⚠️ 必须是 elements[].id（el_ 前缀），不能是 groups[].id（grp_/form_ 前缀）—— 分组 ID 不在 elements[] 中，A 查不到。一张卡片对应对表单时，这里应填该 <form> 元素自身的 el_ id（其 type 为 form），表单字段另见 form.fields。由 tools/check_ui.py 交叉校验。"
+          "description": "要触发/定位的原网页元素 ID。kind=navigate/form/scroll 时必填。⚠️ 必须是 elements[].id（el_ 前缀），不能是 groups[].id（grp_/form_ 前缀）—— 分组 ID 不在 elements[] 中。⚠️ 该 ID 是 sha1(selector)[:8] 派生哈希，**不是 DOM 的 id 属性**，严禁用 document.getElementById 定位，必须用 target_selector。保留它仅为跨模块追溯与去重。由 tools/check_ui.py 交叉校验。"
+        },
+        "target_selector": {
+          "type": ["string", "null"],
+          "description": "kind=navigate/form/scroll 时必填。宿主页面上定位目标元素的 CSS 选择器，取自 elements[].selector。**A 必须用 querySelector(target_selector) 定位，这是唯一可行的手段**（target_element_id 无法反查 DOM）。kind=external 时为 null。"
+        },
+        "target_xpath": {
+          "type": ["string", "null"],
+          "description": "可选。取自 elements[].xpath。当 target_selector 在宿主页面上匹配失败时，A 可用它兜底定位。"
         },
         "href": {
           "type": ["string", "null"],
@@ -145,12 +153,16 @@
     },
     "form": {
       "type": "object",
-      "required": ["fields", "submit_element_id"],
+      "required": ["fields", "submit_element_id", "submit_selector"],
       "additionalProperties": false,
       "properties": {
         "submit_element_id": {
           "type": "string",
-          "description": "必填。提交按钮在对应 elements.json 中的 ID，该元素 type 应为 submit 或 button。"
+          "description": "必填。提交按钮在对应 elements.json 中的 ID，该元素 type 应为 submit 或 button。仅作追溯，定位请用 submit_selector。"
+        },
+        "submit_selector": {
+          "type": "string",
+          "description": "必填。提交按钮的 CSS 选择器。A 靠它 click() 提交。"
         },
         "fields": {
           "type": "array",
@@ -162,12 +174,16 @@
     },
     "field": {
       "type": "object",
-      "required": ["element_id", "label", "input_type", "required"],
+      "required": ["element_id", "selector", "label", "input_type", "required"],
       "additionalProperties": false,
       "properties": {
         "element_id": {
           "type": "string",
-          "description": "必填。对应 elements.json 的 element.id，必须存在且 type 为 input/select/textarea。"
+          "description": "必填。对应 elements.json 的 element.id，必须存在且 type 为 input/select/textarea/radio/checkbox。仅作追溯与去重，定位请用 selector。"
+        },
+        "selector": {
+          "type": "string",
+          "description": "必填。该字段元素的 CSS 选择器。约定：input/textarea/select 指向控件本身；radio/checkbox 指向该选项组的**容器**（真正的逐项定位在 options[].selector）。"
         },
         "label": {
           "type": "string",
@@ -182,6 +198,38 @@
         "required": {
           "type": "boolean",
           "description": "必填。应透传自 elements.json 中该元素的 required 字段（为 null 时按 false 处理）。"
+        },
+        "options": {
+          "type": ["array", "null"],
+          "description": "input_type 为 select / radio / checkbox 时必填，其他类型必须为 null。从 elements[].options 原样透传。",
+          "items": { "$ref": "#/$defs/fieldOption" }
+        }
+      }
+    },
+    "fieldOption": {
+      "type": "object",
+      "required": ["label", "value", "selected", "selector"],
+      "additionalProperties": false,
+      "properties": {
+        "label": {
+          "type": "string",
+          "description": "选项文字，如「内科」。"
+        },
+        "value": {
+          "type": "string",
+          "description": "提交值。input_type=select 时，A 用它匹配 <option value>。"
+        },
+        "selected": {
+          "type": "boolean",
+          "description": "当前是否已选中。"
+        },
+        "selector": {
+          "type": ["string", "null"],
+          "description": "该选项自身的 CSS 选择器。**input_type 为 radio / checkbox 时必填** —— A 靠它逐项勾选并触发 input/change 事件。input_type=select 时为 null，A 按 value 匹配即可。"
+        },
+        "element_id": {
+          "type": ["string", "null"],
+          "description": "该选项的 element.id，仅 radio/checkbox 有值。仅供追溯去重：A 不持有 elements.json，不得用它定位。"
         }
       }
     }

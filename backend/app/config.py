@@ -42,4 +42,4 @@ BLOCK_KEYWORDS = (
     "access denied", "are you a robot", "请开启javascript",
 )
 
-SCHEMA_VERSION = "1.0.0"
+SCHEMA_VERSION = "1.1.0"

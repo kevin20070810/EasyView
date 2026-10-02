@@ -1,6 +1,6 @@
 {
-  "schema_version": "0.1.0-draft",
-  "source_elements_schema_version": "1.0.0",
+  "schema_version": "0.2.0-draft",
+  "source_elements_schema_version": "1.1.0",
   "page_url": "https://demo.easyview.local/hospital/",
   "page_title": "市第一人民医院 · 网上服务（本地快照）",
   "source": "fallback",
@@ -19,45 +19,172 @@
       "action": {
         "kind": "form",
         "target_element_id": "el_6f230879",
+        "target_selector": "div:nth-of-type(4) > div > form",
+        "target_xpath": "/html[1]/body[1]/div[2]/div[1]/div[4]/div[1]/form[1]",
         "href": null
       },
       "form": {
         "submit_element_id": "el_0a5dde7d",
+        "submit_selector": "fieldset > button:nth-of-type(1)",
         "fields": [
           {
             "element_id": "el_1ccf3fbc",
+            "selector": "#name",
             "label": "就诊人姓名",
             "input_type": "text",
             "placeholder": "请输入就诊人真实姓名",
-            "required": true
+            "required": true,
+            "options": null
           },
           {
             "element_id": "el_3a19b50d",
+            "selector": "#idcard",
             "label": "身份证号",
             "input_type": "idcard",
             "placeholder": "请输入18位身份证号",
-            "required": true
+            "required": true,
+            "options": null
           },
           {
             "element_id": "el_f2848cc3",
+            "selector": "#phone",
             "label": "手机号码",
             "input_type": "tel",
             "placeholder": "接收预约短信的手机号",
-            "required": true
+            "required": true,
+            "options": null
           },
           {
             "element_id": "el_3ce58500",
+            "selector": "#dept",
             "label": "就诊科室",
             "input_type": "select",
             "placeholder": null,
-            "required": false
+            "required": false,
+            "options": [
+              {
+                "label": "请选择科室",
+                "value": "请选择科室",
+                "selected": true,
+                "selector": null,
+                "element_id": null
+              },
+              {
+                "label": "内科",
+                "value": "nk",
+                "selected": false,
+                "selector": null,
+                "element_id": null
+              },
+              {
+                "label": "外科",
+                "value": "wk",
+                "selected": false,
+                "selector": null,
+                "element_id": null
+              },
+              {
+                "label": "儿科",
+                "value": "ek",
+                "selected": false,
+                "selector": null,
+                "element_id": null
+              },
+              {
+                "label": "妇科",
+                "value": "fk",
+                "selected": false,
+                "selector": null,
+                "element_id": null
+              },
+              {
+                "label": "骨科",
+                "value": "gk",
+                "selected": false,
+                "selector": null,
+                "element_id": null
+              }
+            ]
           },
           {
             "element_id": "el_bf9607cb",
+            "selector": "#date",
             "label": "就诊日期",
             "input_type": "date",
             "placeholder": null,
-            "required": false
+            "required": false,
+            "options": null
+          },
+          {
+            "element_id": "el_1fdde1f8",
+            "selector": "#doctor",
+            "label": "指定医生",
+            "input_type": "text",
+            "placeholder": "不填则由系统分配",
+            "required": false,
+            "options": null
+          },
+          {
+            "element_id": "el_bff494c8",
+            "selector": "fieldset > fieldset:nth-of-type(1)",
+            "label": "就诊时段",
+            "input_type": "radio",
+            "placeholder": null,
+            "required": false,
+            "options": [
+              {
+                "label": "上午（8:00 - 12:00）",
+                "value": "am",
+                "selected": true,
+                "selector": "fieldset:nth-of-type(1) > label:nth-of-type(1) > input",
+                "element_id": "el_9c9b26fc"
+              },
+              {
+                "label": "下午（13:30 - 17:00）",
+                "value": "pm",
+                "selected": false,
+                "selector": "fieldset:nth-of-type(1) > label:nth-of-type(2) > input",
+                "element_id": "el_04057d71"
+              },
+              {
+                "label": "夜间门诊（18:00 - 21:00）",
+                "value": "night",
+                "selected": false,
+                "selector": "fieldset:nth-of-type(1) > label:nth-of-type(3) > input",
+                "element_id": "el_3040ed9f"
+              }
+            ]
+          },
+          {
+            "element_id": "el_674e595b",
+            "selector": "fieldset:nth-of-type(2)",
+            "label": "需要的提醒方式",
+            "input_type": "checkbox",
+            "placeholder": null,
+            "required": false,
+            "options": [
+              {
+                "label": "短信提醒",
+                "value": "sms",
+                "selected": true,
+                "selector": "fieldset:nth-of-type(2) > label:nth-of-type(1) > input",
+                "element_id": "el_2b1f18fd"
+              },
+              {
+                "label": "电话提醒",
+                "value": "phone",
+                "selected": false,
+                "selector": "fieldset:nth-of-type(2) > label:nth-of-type(2) > input",
+                "element_id": "el_c5ebc8f9"
+              },
+              {
+                "label": "微信提醒",
+                "value": "wechat",
+                "selected": false,
+                "selector": "fieldset:nth-of-type(2) > label:nth-of-type(3) > input",
+                "element_id": "el_55dc5093"
+              }
+            ]
           }
         ]
       }
@@ -71,6 +198,8 @@
       "action": {
         "kind": "navigate",
         "target_element_id": "el_816c3fc2",
+        "target_selector": "div:nth-of-type(3) > div > a:nth-of-type(2)",
+        "target_xpath": "/html[1]/body[1]/div[2]/div[1]/div[3]/div[1]/a[2]",
         "href": null
       },
       "form": null
@@ -84,6 +213,8 @@
       "action": {
         "kind": "navigate",
         "target_element_id": "el_d4e15498",
+        "target_selector": "div:nth-of-type(3) > div > a:nth-of-type(3)",
+        "target_xpath": "/html[1]/body[1]/div[2]/div[1]/div[3]/div[1]/a[3]",
         "href": null
       },
       "form": null
@@ -97,6 +228,8 @@
       "action": {
         "kind": "scroll",
         "target_element_id": "el_177a57da",
+        "target_selector": "div > button",
+        "target_xpath": "/html[1]/body[1]/div[2]/div[2]/div[4]/div[1]/button[1]",
         "href": null
       },
       "form": null
@@ -109,6 +242,8 @@
       "action": {
         "kind": "navigate",
         "target_element_id": "el_20acb35b",
+        "target_selector": "div > a:nth-of-type(6)",
+        "target_xpath": "/html[1]/body[1]/div[2]/div[1]/div[3]/div[1]/a[6]",
         "href": null
       },
       "form": null

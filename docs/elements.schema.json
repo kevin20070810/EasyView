@@ -18,8 +18,8 @@
   "additionalProperties": false,
   "properties": {
     "schema_version": {
-      "const": "1.0.0",
-      "description": "协议版本。修改本文件必须三人确认（规范 §7）。"
+      "const": "1.1.0",
+      "description": "协议版本。修改本文件必须三人确认（规范 §7）。1.1.0 相对 1.0.0 新增可选的 element.options（向后兼容）。"
     },
     "page_url": {
       "type": "string",
@@ -183,10 +183,42 @@
           "type": ["integer", "null"],
           "description": "标题层级（h1=1 ... h6=6）。仅 type=heading 时有值，否则为 null。"
         },
+        "options": {
+          "type": ["array", "null"],
+          "description": "选项列表，仅 type 为 select / radio / checkbox 时有值，其他类型为 null。约定：radio/checkbox 组在 DOM 上本是 N 个独立控件，C 侧已按 (form, name) 合并成「一个元素」，其 selector 指向该组的容器，每个选项的定位信息在 options[].selector 中 —— 因为协议里一个 field 只能有一个 selector，不这样做 A 无法逐项勾选。",
+          "items": { "$ref": "#/$defs/elementOption" }
+        },
         "order": {
           "type": "integer",
           "minimum": 0,
           "description": "DOM 文档序索引，从 0 开始。B 排序、A 渲染都以此为准。"
+        }
+      }
+    },
+    "elementOption": {
+      "type": "object",
+      "required": ["label", "value", "selected", "selector"],
+      "additionalProperties": false,
+      "properties": {
+        "label": {
+          "type": "string",
+          "description": "给老人看的选项文字，如「内科」。select 取自 <option> 文本；radio/checkbox 取自该控件的 label，取不到回落为 value。"
+        },
+        "value": {
+          "type": "string",
+          "description": "提交值。select 取自 <option value>（缺省回落为文本）；radio/checkbox 取自控件的 value。"
+        },
+        "selected": {
+          "type": "boolean",
+          "description": "解析时刻是否已选中（<option selected> 或控件的 checked）。"
+        },
+        "selector": {
+          "type": ["string", "null"],
+          "description": "该选项自身的 CSS 选择器。radio/checkbox 必填 —— A 靠它逐项勾选并触发 input/change。select 固定为 null，因为 A 按 value 匹配 <option> 即可，无需逐项定位。"
+        },
+        "element_id": {
+          "type": ["string", "null"],
+          "description": "该选项的稳定 ID（el_ + sha1(selector)[:8]），仅 radio/checkbox 有值。用途是跨模块追溯与去重：A 不持有 elements.json，不得用它定位 DOM，必须用 selector。select 的 <option> 不是独立采集的元素，固定为 null。"
         }
       }
     },

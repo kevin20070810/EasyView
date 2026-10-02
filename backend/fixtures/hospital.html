@@ -119,6 +119,22 @@
             <input id="date" name="date" type="date"><br>
             <label for="doctor">指定医生</label>
             <input id="doctor" name="doctor" type="text" placeholder="不填则由系统分配"><br>
+
+            <!-- radio / checkbox 组：用于验证「一个 field 对应多个 DOM 控件」的定位语义 -->
+            <fieldset style="border:0;padding:0;margin:0 0 9px 0">
+              <legend>就诊时段</legend>
+              <label><input type="radio" name="period" value="am" checked> 上午（8:00 - 12:00）</label>
+              <label><input type="radio" name="period" value="pm"> 下午（13:30 - 17:00）</label>
+              <label><input type="radio" name="period" value="night"> 夜间门诊（18:00 - 21:00）</label>
+            </fieldset>
+            <fieldset style="border:0;padding:0;margin:0 0 9px 0">
+              <legend>需要的提醒方式</legend>
+              <label><input type="checkbox" name="notify" value="sms" checked> 短信提醒</label>
+              <label><input type="checkbox" name="notify" value="phone"> 电话提醒</label>
+              <label><input type="checkbox" name="notify" value="wechat"> 微信提醒</label>
+            </fieldset>
+            <label><input type="checkbox" name="agree" value="yes" required> 我已阅读并同意《预约须知》</label><br>
+
             <button type="submit" class="btn">提交预约</button>
             <button type="reset" class="btn" style="background:#9e9e9e">重置</button>
           </fieldset>

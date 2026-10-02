@@ -1,12 +1,12 @@
 {
-  "schema_version": "1.0.0",
+  "schema_version": "1.1.0",
   "page_url": "https://demo.easyview.local/traffic/",
   "final_url": "snapshot://traffic",
   "page_title": "市交通运输局 · 出行服务（本地快照）",
   "lang": "zh-CN",
   "source": "fallback",
   "fallback_reason": "requested",
-  "extracted_at": "2026-10-02T09:40:06+08:00",
+  "extracted_at": "2026-10-02T12:37:06+08:00",
   "stats": {
     "total": 81,
     "visible": 81,
@@ -50,6 +50,7 @@
       "required": null,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 0
     },
     {
@@ -77,6 +78,7 @@
       "required": null,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 1
     },
     {
@@ -104,6 +106,7 @@
       "required": null,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 2
     },
     {
@@ -131,6 +134,7 @@
       "required": null,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 3
     },
     {
@@ -158,6 +162,7 @@
       "required": null,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 4
     },
     {
@@ -185,6 +190,7 @@
       "required": null,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 5
     },
     {
@@ -212,6 +218,7 @@
       "required": null,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 6
     },
     {
@@ -239,6 +246,7 @@
       "required": null,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 7
     },
     {
@@ -266,6 +274,7 @@
       "required": null,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 8
     },
     {
@@ -293,6 +302,7 @@
       "required": null,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 9
     },
     {
@@ -320,6 +330,7 @@
       "required": null,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 10
     },
     {
@@ -347,6 +358,7 @@
       "required": null,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 11
     },
     {
@@ -374,6 +386,7 @@
       "required": null,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 12
     },
     {
@@ -401,6 +414,7 @@
       "required": null,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 13
     },
     {
@@ -428,6 +442,7 @@
       "required": null,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 14
     },
     {
@@ -455,6 +470,7 @@
       "required": null,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 15
     },
     {
@@ -482,6 +498,7 @@
       "required": null,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 16
     },
     {
@@ -509,6 +526,7 @@
       "required": null,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 17
     },
     {
@@ -536,6 +554,7 @@
       "required": null,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 18
     },
     {
@@ -563,6 +582,7 @@
       "required": null,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 19
     },
     {
@@ -590,6 +610,7 @@
       "required": null,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 20
     },
     {
@@ -617,6 +638,7 @@
       "required": null,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 21
     },
     {
@@ -644,6 +666,7 @@
       "required": null,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 22
     },
     {
@@ -671,6 +694,7 @@
       "required": null,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 23
     },
     {
@@ -698,6 +722,7 @@
       "required": null,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 24
     },
     {
@@ -725,6 +750,7 @@
       "required": null,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 25
     },
     {
@@ -752,6 +778,7 @@
       "required": true,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 26
     },
     {
@@ -779,6 +806,7 @@
       "required": null,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 27
     },
     {
@@ -806,6 +834,7 @@
       "required": true,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 28
     },
     {
@@ -833,6 +862,7 @@
       "required": null,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 29
     },
     {
@@ -860,6 +890,29 @@
       "required": false,
       "disabled": false,
       "level": null,
+      "options": [
+        {
+          "label": "小型汽车",
+          "value": "small",
+          "selected": true,
+          "selector": null,
+          "element_id": null
+        },
+        {
+          "label": "大型汽车",
+          "value": "large",
+          "selected": false,
+          "selector": null,
+          "element_id": null
+        },
+        {
+          "label": "摩托车",
+          "value": "motor",
+          "selected": false,
+          "selector": null,
+          "element_id": null
+        }
+      ],
       "order": 30
     },
     {
@@ -887,6 +940,7 @@
       "required": null,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 31
     },
     {
@@ -914,6 +968,7 @@
       "required": null,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 32
     },
     {
@@ -941,6 +996,7 @@
       "required": null,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 33
     },
     {
@@ -968,6 +1024,7 @@
       "required": null,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 34
     },
     {
@@ -995,6 +1052,7 @@
       "required": null,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 35
     },
     {
@@ -1022,6 +1080,7 @@
       "required": null,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 36
     },
     {
@@ -1049,6 +1108,7 @@
       "required": null,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 37
     },
     {
@@ -1076,6 +1136,7 @@
       "required": null,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 38
     },
     {
@@ -1103,6 +1164,7 @@
       "required": null,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 39
     },
     {
@@ -1130,6 +1192,7 @@
       "required": null,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 40
     },
     {
@@ -1157,6 +1220,7 @@
       "required": null,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 41
     },
     {
@@ -1184,6 +1248,7 @@
       "required": null,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 42
     },
     {
@@ -1211,6 +1276,7 @@
       "required": null,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 43
     },
     {
@@ -1238,6 +1304,7 @@
       "required": null,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 44
     },
     {
@@ -1265,6 +1332,7 @@
       "required": null,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 45
     },
     {
@@ -1292,6 +1360,7 @@
       "required": null,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 46
     },
     {
@@ -1319,6 +1388,7 @@
       "required": null,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 47
     },
     {
@@ -1346,6 +1416,7 @@
       "required": null,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 48
     },
     {
@@ -1373,6 +1444,7 @@
       "required": null,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 49
     },
     {
@@ -1400,6 +1472,7 @@
       "required": null,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 50
     },
     {
@@ -1427,6 +1500,7 @@
       "required": null,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 51
     },
     {
@@ -1454,6 +1528,7 @@
       "required": null,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 52
     },
     {
@@ -1481,6 +1556,7 @@
       "required": null,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 53
     },
     {
@@ -1508,6 +1584,7 @@
       "required": null,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 54
     },
     {
@@ -1535,6 +1612,7 @@
       "required": null,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 55
     },
     {
@@ -1562,6 +1640,7 @@
       "required": null,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 56
     },
     {
@@ -1589,6 +1668,7 @@
       "required": null,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 57
     },
     {
@@ -1616,6 +1696,7 @@
       "required": null,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 58
     },
     {
@@ -1643,6 +1724,7 @@
       "required": null,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 59
     },
     {
@@ -1670,6 +1752,7 @@
       "required": null,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 60
     },
     {
@@ -1697,6 +1780,7 @@
       "required": true,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 61
     },
     {
@@ -1724,6 +1808,7 @@
       "required": null,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 62
     },
     {
@@ -1751,6 +1836,7 @@
       "required": true,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 63
     },
     {
@@ -1778,6 +1864,7 @@
       "required": null,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 64
     },
     {
@@ -1805,6 +1892,7 @@
       "required": null,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 65
     },
     {
@@ -1832,6 +1920,7 @@
       "required": null,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 66
     },
     {
@@ -1859,6 +1948,7 @@
       "required": null,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 67
     },
     {
@@ -1886,6 +1976,7 @@
       "required": null,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 68
     },
     {
@@ -1913,6 +2004,7 @@
       "required": null,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 69
     },
     {
@@ -1940,6 +2032,7 @@
       "required": null,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 70
     },
     {
@@ -1967,6 +2060,7 @@
       "required": null,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 71
     },
     {
@@ -1994,6 +2088,7 @@
       "required": null,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 72
     },
     {
@@ -2021,6 +2116,7 @@
       "required": null,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 73
     },
     {
@@ -2048,6 +2144,7 @@
       "required": null,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 74
     },
     {
@@ -2075,6 +2172,7 @@
       "required": null,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 75
     },
     {
@@ -2102,6 +2200,7 @@
       "required": null,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 76
     },
     {
@@ -2129,6 +2228,7 @@
       "required": null,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 77
     },
     {
@@ -2156,6 +2256,7 @@
       "required": null,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 78
     },
     {
@@ -2183,6 +2284,7 @@
       "required": null,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 79
     },
     {
@@ -2210,6 +2312,7 @@
       "required": null,
       "disabled": false,
       "level": null,
+      "options": null,
       "order": 80
     }
   ],

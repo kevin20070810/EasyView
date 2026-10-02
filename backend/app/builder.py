@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from . import ids
 from .config import MAX_ELEMENTS, SCHEMA_VERSION
-from .models import BBox, Element, ElementsDocument, Group, Stats
+from .models import BBox, Element, ElementOption, ElementsDocument, Group, Stats
 
 # 截断优先级（由 extract_dom.js 计算）：
 #   0 = 可见的交互/结构元素   1 = 可见文本
@@ -50,6 +50,27 @@ def build_document(
         group_id_by_selector[sel] = gid
         raw_groups.append({"id": gid, "type": g.get("type", "section"), "label": g.get("label", "")})
 
+    def _options(raw_options) -> list[ElementOption] | None:
+        """选项列表。
+
+        radio / checkbox 的每个选项都是独立 DOM 元素，ID 由各自 selector 派生，
+        这样 A 拿到的 selector 与 B 引用的 element_id 指向同一个节点。
+        select 的 <option> 不是独立采集的元素，故 element_id 为 None。
+        """
+        if not raw_options:
+            return None
+        out: list[ElementOption] = []
+        for o in raw_options:
+            o_sel = o.get("selector")
+            out.append(ElementOption(
+                label=o.get("label", "") or "",
+                value=o.get("value", "") or "",
+                selected=bool(o.get("selected", False)),
+                selector=o_sel,
+                element_id=ids.element_id(o_sel) if o_sel else None,
+            ))
+        return out
+
     # ---------- 2. 元素 ----------
     seen_ids: set[str] = set()
     built: list[tuple[int, int, Element]] = []   # (rank, dom_order, element)
@@ -89,6 +110,7 @@ def build_document(
                 required=item.get("required"),
                 disabled=bool(item.get("disabled", False)),
                 level=item.get("level"),
+                options=_options(item.get("options")),
                 order=0,  # 截断后统一编号
             ),
         ))

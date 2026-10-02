@@ -3,7 +3,7 @@
 > **角色**：AI Engineer
 > **你负责**：读懂 `elements.json`，产出 `ui_schema.json`
 > **交接人**：C 组（后端）　**交接时间**：项目启动阶段
-> **本文件对应协议版本**：`elements.schema.json` v1.0.0 / `ui.schema.json` v0.1.0-draft
+> **本文件对应协议版本**：`elements.schema.json` v1.1.0 / `ui.schema.json` v0.2.0-draft
 
 ---
 
@@ -27,8 +27,8 @@
 | 模块 | 状态 | 说明 |
 |---|---|---|
 | **C 后端** | ✅ **已完成并通过验证** | 网页解析服务，113 项协议自检通过，真实站点（gov.cn / 12306 / 协和医院）实测可用 |
-| **协议** `docs/elements.schema.json` | 🟡 **待三人确认** | v1.0.0，C 已起草并实现。**你的输入格式已经稳定** |
-| **协议** `docs/ui.schema.json` | 🟡 **待你和 A 确认** | v0.1.0-draft。**原两份项目文档里从未定义过这个文件**，C 代拟以保证 A 能开工 |
+| **协议** `docs/elements.schema.json` | ✅ **v1.1.0 已确认并实施** | 新增 `element.options`。**你的输入格式已稳定** |
+| **协议** `docs/ui.schema.json` | ✅ **v0.2.0-draft 已确认并实施** | 新增元素定位与选项字段。**你的输出需要同步改** |
 | **A 前端** | ⬜ **未开始** | 仓库暂无 `frontend/` 目录 |
 | **B AI** | ⬜ **未开始** | 仓库暂无 `ai-service/` 目录 |
 
@@ -58,7 +58,7 @@
 
 | 字段 | 类型 | 必填 | 说明 |
 |---|---|---|---|
-| `schema_version` | string | ✅ | 固定 `"1.0.0"` |
+| `schema_version` | string | ✅ | 固定 `"1.1.0"` |
 | `page_url` | string | ✅ | 调用方请求的原始 URL |
 | `final_url` | string | ✅ | 浏览器实际落地 URL（可能因重定向不同）。`snapshot://xxx` 表示走的是本地快照 |
 | `page_title` | string | ✅ | 网页标题 |
@@ -199,8 +199,8 @@ docs/examples/ui_schema.hospital.json
 
 | 字段 | 类型 | 必填 | 说明 |
 |---|---|---|---|
-| `schema_version` | string | ✅ | 固定 `"0.1.0-draft"`。A/B 双方必须实现同一版本 |
-| `source_elements_schema_version` | string | ✅ | 生成时消费的 `elements.schema_version`，应为 `"1.0.0"` |
+| `schema_version` | string | ✅ | 固定 `"0.2.0-draft"`。A/B 双方必须实现同一版本 |
+| `source_elements_schema_version` | string | ✅ | 生成时消费的 `elements.schema_version`，应为 `"1.1.0"` |
 | `page_url` | string | ✅ | 必须与对应 `elements.json` 的 `page_url` 完全一致 |
 | `page_title` | string | ✅ | 原网页标题 |
 | `source` | `"live"` \| `"fallback"` | ✅ | **必须原样透传自 `elements.json`**。为 `fallback` 时 A 必须显示降级提示 |
@@ -233,20 +233,35 @@ docs/examples/ui_schema.hospital.json
 | 字段 | 类型 | 必填 | 说明 |
 |---|---|---|---|
 | `kind` | `navigate` \| `form` \| `scroll` \| `external` | ✅ | 行为类型 |
-| `target_element_id` | string \| null | 条件必填 | `kind` 为 `navigate`/`form`/`scroll` 时必填。**必须是 `elements[].id`（`el_` 前缀）**，不能填 `groups[].id`（`grp_`/`form_` 前缀）—— 分组 ID 不在 `elements[]` 中，A 查不到 |
+| `target_element_id` | string \| null | 条件必填 | `kind` 为 `navigate`/`form`/`scroll` 时必填。**必须是 `elements[].id`（`el_` 前缀）**，不能填 `groups[].id`（`grp_`/`form_` 前缀）。⚠️ 它是 `sha1(selector)` 派生哈希，**不是 DOM 的 id 属性**，严禁用 `getElementById` 定位，仅供追溯 |
+| `target_selector` | string \| null | 条件必填 | `kind` 为 `navigate`/`form`/`scroll` 时必填。**A 必须用 `querySelector(target_selector)` 定位 —— 这是唯一可行的手段**。`kind=external` 时为 null |
+| `target_xpath` | string \| null | ❌ | 可选兜底。`target_selector` 匹配失败时可尝试用它定位 |
 | `href` | string \| null | 条件必填 | `kind=external` 时必填，绝对 URL |
 
 ### `form`
 
 | 字段 | 类型 | 必填 | 说明 |
 |---|---|---|---|
-| `submit_element_id` | string | ✅ | 提交按钮元素 ID，该元素 `type` 应为 `submit` 或 `button` |
+| `submit_element_id` | string | ✅ | 提交按钮元素 ID，该元素 `type` 应为 `submit` 或 `button`。仅作追溯，定位用 `submit_selector` |
+| `submit_selector` | string | ✅ | 提交按钮的 CSS 选择器。A 靠它 `click()` 提交 |
 | `fields` | array | ✅ | 至少 1 个字段 |
-| `fields[].element_id` | string | ✅ | 对应 `elements[].id`，该元素 `type` 应为 `input`/`select`/`textarea` |
+| `fields[].element_id` | string | ✅ | 对应 `elements[].id`，该元素 `type` 应为 `input`/`select`/`textarea`/`radio`/`checkbox`。仅作追溯与去重，定位用 `selector` |
+| `fields[].selector` | string | ✅ | 该字段元素的选择器。`input`/`textarea`/`select` 指向控件本身；`radio`/`checkbox` 指向该**选项组的容器**（逐项定位见 `options[].selector`） |
 | `fields[].label` | string | ✅ | 给老人看的大字标签，如「身份证号」。应优先取自元素的 `label`，取不到再用 `placeholder` |
 | `fields[].input_type` | enum | ✅ | 见下 |
 | `fields[].placeholder` | string \| null | ❌ | 占位提示 |
 | `fields[].required` | boolean | ✅ | 应透传自元素的 `required`（为 null 时按 false） |
+| `fields[].options` | array \| null | 条件必填 | `input_type` 为 `select`/`radio`/`checkbox` 时必填，其他类型必须为 `null` |
+
+### `options[]`（`select` / `radio` / `checkbox` 的选项）
+
+| 字段 | 类型 | 必填 | 说明 |
+|---|---|---|---|
+| `label` | string | ✅ | 选项文字，如「内科」 |
+| `value` | string | ✅ | 提交值。`input_type=select` 时，A 用它匹配 `<option value>` |
+| `selected` | boolean | ✅ | 当前是否已选中 |
+| `selector` | string \| null | 条件必填 | **`radio`/`checkbox` 时必填** —— A 靠它逐项勾选并触发 `input`/`change`。`select` 时为 `null` |
+| `element_id` | string \| null | ❌ | 仅 `radio`/`checkbox` 有值。仅供追溯与去重：A 不持有 `elements.json`，**不得用它定位** |
 
 ### `input_type` 取值
 
@@ -358,17 +373,38 @@ hospital  government  warning  info  help  back
 
 ---
 
-## 十、待你和 A 确认的事项（规范 §7 要求三人确认）
+## 十、协议状态与你要做的改动
 
-`docs/ui.schema.json` 是 C 代拟的，**它需要你和 A 真正认可才能冻结**：
+`docs/ui.schema.json` 已升到 **v0.2.0-draft**，A / B 双方均已确认。
+`cards` 结构、`action.kind`、`input_type`、页面文案形态在确认过程中没有异议。
 
-1. `cards` + `priority` 这个结构，够不够表达"老人最需要的几个功能"？
-2. `action.kind` 的四个取值够用吗？
-3. `input_type` 的 9 个取值覆盖了你需要标注的表单类型吗？
-4. `page.greeting` / `page.summary` 这两段文案，作为你的生成目标合适吗？
-5. 是否同意把 `schema_version` 从 `0.1.0-draft` 升为 `1.0.0` 并冻结？
+**v0.1.0-draft → v0.2.0-draft 需要你改三处：**
 
-确认后由发起人改 `docs/ui.schema.json` 的 `const` 值并在 `docs/PROTOCOL.md` 追加变更记录。
+| 改动 | 说明 |
+|---|---|
+| 透传 `target_selector` / `target_xpath` | 从 `elements[].selector` / `.xpath` 原样搬运。`kind != "external"` 时必填 |
+| 透传 `submit_selector` 与 `field.selector` | 从对应元素的 `selector` 原样搬运 |
+| 透传 `field.options` | `input_type` 为 `select`/`radio`/`checkbox` 时，从 `elements[].options` 原样搬运 |
+
+**这三项都不涉及任何判断**，是纯粹的字段搬运 —— C 的 `selector` / `xpath` / `options` 本来就已经产出。
+
+**为什么必须改**：A 靠 `document.getElementById(target_element_id)` 定位不到任何元素
+（`el_xxx` 是 `sha1(selector)` 派生哈希，不是 DOM 的 `id` 属性，实测 6/6 失败）。
+A 只持有 `ui_schema.json`，拿不到 `elements.json`，所以定位信息必须由你透传。
+详见 [`ui_schema.proposal_C.md`](ui_schema.proposal_C.md)。
+
+**另外**：`source_elements_schema_version` 现在应为 `"1.1.0"`（不再是 `"1.0.0"`）。
+
+**验收**：`docs/examples/ui_schema.hospital.json` 已升级到新协议（16 项校验全通过），
+照它改即可。改完请跑：
+
+```bash
+cd backend
+python -m tools.check_ui --elements ..\docs\examples\elements.hospital.json --ui <你的产出>
+```
+
+该工具现在会强制校验：`target_selector` 与 `elements[].selector` 完全一致、
+radio/checkbox 每个选项都有独立 `selector`、`select`/`radio`/`checkbox` 都带 `options`。
 
 ---
 

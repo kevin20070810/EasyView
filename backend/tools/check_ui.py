@@ -31,10 +31,14 @@ from app.config import DOCS_DIR  # noqa: E402
 EXAMPLES_DIR = DOCS_DIR / "examples"
 UI_SCHEMA = json.loads((DOCS_DIR / "ui.schema.json").read_text(encoding="utf-8-sig"))
 
-# 可作为表单输入项的元素类型
-INPUT_TYPES = {"input", "select", "textarea"}
+# 可作为表单输入项的元素类型（radio / checkbox 在 elements.json 里代表整个选项组）
+INPUT_TYPES = {"input", "select", "textarea", "radio", "checkbox"}
 # 可作为表单提交按钮的元素类型
 SUBMIT_TYPES = {"submit", "button"}
+# 必须有 options 的 input_type
+OPTION_REQUIRED_INPUT_TYPES = {"select", "radio", "checkbox"}
+# 这些 input_type 的每个选项都必须自带 selector（A 靠它逐项勾选）
+PER_OPTION_SELECTOR_REQUIRED = {"radio", "checkbox"}
 
 # 协议里 ID 的形态。用于区分「引用了真实 ID」和「随手写的字符串」。
 ID_PATTERN = re.compile(r"^(el|grp|form)_[0-9a-f]{8}$")
@@ -121,6 +125,22 @@ def check_pair(ui: dict, elements: dict, label: str) -> None:
     missing_fields: list[str] = []
     bad_fields: list[str] = []
     form_mismatch: list[str] = []
+    bad_selectors: list[str] = []
+    bad_options: list[str] = []
+
+    def check_selector(path: str, selector, element: dict) -> None:
+        """断言 selector 与 elements.json 中该元素的 selector 完全一致。
+
+        这是「A 能不能定位到 DOM」的核心保证：A 只有 ui_schema，
+        必须靠 selector 找到节点，对不上就等于点不动。
+        """
+        if not selector:
+            bad_selectors.append(f"{path}: 缺少 selector（A 无法定位 DOM）")
+        elif selector != element.get("selector"):
+            bad_selectors.append(
+                f"{path}: selector 与 elements.json 不一致\n"
+                f"            ui: {selector}\n"
+                f"            el: {element.get('selector')}")
 
     for card in cards:
         action = card["action"]
@@ -141,6 +161,9 @@ def check_pair(ui: dict, elements: dict, label: str) -> None:
                 hint = " ← 这是分组 ID，不在 elements[] 中，请改用该表单/区块元素自身的 el_ id" \
                     if tid in group_ids else ""
                 missing_targets.append(f'{card["id"]} -> {tid} 不存在{hint}')
+            else:
+                check_selector(f'{card["id"]}.action.target_selector',
+                               action.get("target_selector"), by_id[tid])
 
         # 表单引用必须存在且类型正确
         form = card.get("form")
@@ -151,6 +174,9 @@ def check_pair(ui: dict, elements: dict, label: str) -> None:
             elif by_id[sid]["type"] not in SUBMIT_TYPES:
                 bad_submits.append(
                     f'{card["id"]} -> {sid} 类型为 {by_id[sid]["type"]}，应为 {SUBMIT_TYPES}')
+            else:
+                check_selector(f'{card["id"]}.form.submit_selector',
+                               form.get("submit_selector"), by_id[sid])
 
             seen_fields: set[str] = set()
             for f in form["fields"]:
@@ -160,18 +186,45 @@ def check_pair(ui: dict, elements: dict, label: str) -> None:
                 seen_fields.add(fid)
                 if fid not in by_id:
                     missing_fields.append(f'{card["id"]} -> {fid} 不存在')
-                elif by_id[fid]["type"] not in INPUT_TYPES:
+                    continue
+                el = by_id[fid]
+                if el["type"] not in INPUT_TYPES:
                     bad_fields.append(
-                        f'{card["id"]} -> {fid} 类型为 {by_id[fid]["type"]}，应为 {INPUT_TYPES}')
+                        f'{card["id"]} -> {fid} 类型为 {el["type"]}，应为 {INPUT_TYPES}')
+
+                check_selector(f'{card["id"]}.field[{fid}].selector',
+                               f.get("selector"), el)
+
+                # 选项：类型要求 + 逐项定位能力
+                itype = f.get("input_type")
+                opts = f.get("options")
+                if itype in OPTION_REQUIRED_INPUT_TYPES:
+                    if not opts:
+                        bad_options.append(
+                            f'{card["id"]} -> {fid} input_type={itype} 但缺 options')
+                        continue
+                    if itype in PER_OPTION_SELECTOR_REQUIRED:
+                        for i, o in enumerate(opts):
+                            if not o.get("selector"):
+                                bad_options.append(
+                                    f'{card["id"]} -> {fid} options[{i}]「{o.get("label")}」'
+                                    f' 缺 selector —— A 无法勾选这一项')
+                elif opts:
+                    bad_options.append(
+                        f'{card["id"]} -> {fid} input_type={itype} 不该有 options')
 
     check("所有 action.target_element_id 均存在于 elements.json",
           not missing_targets, f"\n        {missing_targets}")
     check("所有 form.submit_element_id 均存在", not missing_submits, f"\n        {missing_submits}")
     check("提交按钮类型正确（submit / button）", not bad_submits, f"\n        {bad_submits}")
     check("所有 form.field.element_id 均存在", not missing_fields, f"\n        {missing_fields}")
-    check("表单字段类型正确且不重复（input / select / textarea）",
+    check("表单字段类型正确且不重复（input/select/textarea/radio/checkbox）",
           not bad_fields, f"\n        {bad_fields}")
     check("action.kind 与 form 字段配套", not form_mismatch, f"\n        {form_mismatch}")
+    check("所有 selector 与 elements.json 完全一致（A 靠它定位 DOM）",
+          not bad_selectors, f"\n        {bad_selectors}")
+    check("radio/checkbox 每个选项都有独立 selector；select 带 options",
+          not bad_options, f"\n        {bad_options}")
 
     # ---- 5. 覆盖率信息（不判定失败，供 B 自查是否漏了关键入口）----
     referenced = {

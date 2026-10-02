@@ -23,7 +23,7 @@ DOC_A = DOCS_DIR / "A_前端交接.md"
 DOC_B = DOCS_DIR / "B_AI交接.md"
 
 # 两份文档中必须逐字一致的章节（由 docs/ui.schema.json 派生）
-CONTRACT_SECTIONS = ["根对象", "page", "cards[]", "action", "form"]
+CONTRACT_SECTIONS = ["根对象", "page", "cards[]", "action", "form", "options[]"]
 
 # ui_schema.json 里冻结的图标集
 EXPECTED_ICONS = {

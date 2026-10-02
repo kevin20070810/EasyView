@@ -31,6 +31,24 @@ class BBox(BaseModel):
     height: float
 
 
+class ElementOption(BaseModel):
+    """一个选项。
+
+    - select：对应一个 <option>，A 按 value 匹配，selector 为 null。
+    - radio / checkbox：对应组内的一个独立控件，selector 必填 ——
+      A 靠它逐项勾选并触发 input/change。element_id 仅作跨模块追溯：
+      A 不持有 elements.json，不能靠它定位。
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    label: str
+    value: str
+    selected: bool = False
+    selector: str | None = None
+    element_id: str | None = None
+
+
 class Element(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -53,6 +71,7 @@ class Element(BaseModel):
     required: bool | None = None
     disabled: bool = False
     level: int | None = None
+    options: list[ElementOption] | None = None
     order: int = Field(ge=0)
 
 
@@ -78,7 +97,7 @@ class ElementsDocument(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    schema_version: Literal["1.0.0"] = "1.0.0"
+    schema_version: Literal["1.1.0"] = "1.1.0"
     page_url: str
     final_url: str
     page_title: str

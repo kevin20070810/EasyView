@@ -3,7 +3,7 @@
 > **角色**：Frontend Engineer
 > **你负责**：把 `ui_schema.json` 渲染成老人能用的页面
 > **交接人**：C 组（后端）　**交接时间**：项目启动阶段
-> **本文件对应协议版本**：`ui.schema.json` v0.1.0-draft / `elements.schema.json` v1.0.0
+> **本文件对应协议版本**：`ui.schema.json` v0.2.0-draft / `elements.schema.json` v1.1.0
 
 ---
 
@@ -27,8 +27,8 @@
 | 模块 | 状态 | 说明 |
 |---|---|---|
 | **C 后端** | ✅ **已完成并通过验证** | 网页解析服务，113 项协议自检通过，真实站点（gov.cn / 12306 / 协和医院）实测可用 |
-| **协议** `docs/elements.schema.json` | 🟡 **待三人确认** | v1.0.0，C 已起草并实现，等 A/B 确认后冻结 |
-| **协议** `docs/ui.schema.json` | 🟡 **待你和 B 确认** | v0.1.0-draft。**原两份项目文档里从未定义过这个文件**，C 代拟以保证你能开工 |
+| **协议** `docs/elements.schema.json` | ✅ **v1.1.0 已确认并实施** | 新增 `element.options`（select / radio / checkbox 的选项），C 已实现 |
+| **协议** `docs/ui.schema.json` | ✅ **v0.2.0-draft 已确认并实施** | 新增元素定位与选项字段，修复 `target_element_id` 无法定位 DOM 的断点。**这是一次破坏性变更，你的渲染器需要改** |
 | **A 前端** | ⬜ **未开始** | 仓库暂无 `frontend/` 目录 |
 | **B AI** | ⬜ **未开始** | 仓库暂无 `ai-service/` 目录 |
 
@@ -57,8 +57,8 @@
 
 | 字段 | 类型 | 必填 | 说明 |
 |---|---|---|---|
-| `schema_version` | string | ✅ | 固定 `"0.1.0-draft"`。A/B 双方必须实现同一版本 |
-| `source_elements_schema_version` | string | ✅ | 生成时消费的 `elements.schema_version`，应为 `"1.0.0"` |
+| `schema_version` | string | ✅ | 固定 `"0.2.0-draft"`。A/B 双方必须实现同一版本 |
+| `source_elements_schema_version` | string | ✅ | 生成时消费的 `elements.schema_version`，应为 `"1.1.0"` |
 | `page_url` | string | ✅ | 必须与对应 `elements.json` 的 `page_url` 完全一致 |
 | `page_title` | string | ✅ | 原网页标题 |
 | `source` | `"live"` \| `"fallback"` | ✅ | **必须原样透传自 `elements.json`**。为 `fallback` 时 A 必须显示降级提示 |
@@ -91,29 +91,44 @@
 | 字段 | 类型 | 必填 | 说明 |
 |---|---|---|---|
 | `kind` | `navigate` \| `form` \| `scroll` \| `external` | ✅ | 行为类型 |
-| `target_element_id` | string \| null | 条件必填 | `kind` 为 `navigate`/`form`/`scroll` 时必填。**必须是 `elements[].id`（`el_` 前缀）**，不能填 `groups[].id`（`grp_`/`form_` 前缀）—— 分组 ID 不在 `elements[]` 中，A 查不到 |
+| `target_element_id` | string \| null | 条件必填 | `kind` 为 `navigate`/`form`/`scroll` 时必填。**必须是 `elements[].id`（`el_` 前缀）**，不能填 `groups[].id`（`grp_`/`form_` 前缀）。⚠️ 它是 `sha1(selector)` 派生哈希，**不是 DOM 的 id 属性**，严禁用 `getElementById` 定位，仅供追溯 |
+| `target_selector` | string \| null | 条件必填 | `kind` 为 `navigate`/`form`/`scroll` 时必填。**A 必须用 `querySelector(target_selector)` 定位 —— 这是唯一可行的手段**。`kind=external` 时为 null |
+| `target_xpath` | string \| null | ❌ | 可选兜底。`target_selector` 匹配失败时可尝试用它定位 |
 | `href` | string \| null | 条件必填 | `kind=external` 时必填，绝对 URL |
 
 ### 四种 kind 的渲染行为（A 专用）
 
 | kind | 你的行为 |
 |---|---|
-| `navigate` | 点击后跳转到原网页对应元素处（可用 `elements[].selector` 定位） |
+| `navigate` | 点击后用 `target_selector` 定位原网页元素并跳转/高亮 |
 | `form` | 展开 `form` 描述的填写界面 |
-| `scroll` | 滚动定位到 `target_element_id` 对应元素，不跳转 |
+| `scroll` | 用 `target_selector` 定位并滚动过去，不跳转 |
 | `external` | 直接打开 `href` |
 
 ### `form`
 
 | 字段 | 类型 | 必填 | 说明 |
 |---|---|---|---|
-| `submit_element_id` | string | ✅ | 提交按钮元素 ID，该元素 `type` 应为 `submit` 或 `button` |
+| `submit_element_id` | string | ✅ | 提交按钮元素 ID，该元素 `type` 应为 `submit` 或 `button`。仅作追溯，定位用 `submit_selector` |
+| `submit_selector` | string | ✅ | 提交按钮的 CSS 选择器。A 靠它 `click()` 提交 |
 | `fields` | array | ✅ | 至少 1 个字段 |
-| `fields[].element_id` | string | ✅ | 对应 `elements[].id`，该元素 `type` 应为 `input`/`select`/`textarea` |
+| `fields[].element_id` | string | ✅ | 对应 `elements[].id`，该元素 `type` 应为 `input`/`select`/`textarea`/`radio`/`checkbox`。仅作追溯与去重，定位用 `selector` |
+| `fields[].selector` | string | ✅ | 该字段元素的选择器。`input`/`textarea`/`select` 指向控件本身；`radio`/`checkbox` 指向该**选项组的容器**（逐项定位见 `options[].selector`） |
 | `fields[].label` | string | ✅ | 给老人看的大字标签，如「身份证号」。应优先取自元素的 `label`，取不到再用 `placeholder` |
 | `fields[].input_type` | enum | ✅ | 见下 |
 | `fields[].placeholder` | string \| null | ❌ | 占位提示 |
 | `fields[].required` | boolean | ✅ | 应透传自元素的 `required`（为 null 时按 false） |
+| `fields[].options` | array \| null | 条件必填 | `input_type` 为 `select`/`radio`/`checkbox` 时必填，其他类型必须为 `null` |
+
+### `options[]`（`select` / `radio` / `checkbox` 的选项）
+
+| 字段 | 类型 | 必填 | 说明 |
+|---|---|---|---|
+| `label` | string | ✅ | 选项文字，如「内科」 |
+| `value` | string | ✅ | 提交值。`input_type=select` 时，A 用它匹配 `<option value>` |
+| `selected` | boolean | ✅ | 当前是否已选中 |
+| `selector` | string \| null | 条件必填 | **`radio`/`checkbox` 时必填** —— A 靠它逐项勾选并触发 `input`/`change`。`select` 时为 `null` |
+| `element_id` | string \| null | ❌ | 仅 `radio`/`checkbox` 有值。仅供追溯与去重：A 不持有 `elements.json`，**不得用它定位** |
 
 ### `input_type` 取值
 
@@ -247,18 +262,36 @@ docs/examples/ui_schema.hospital.json
 
 ---
 
-## 九、待你和 B 确认的事项（规范 §7 要求三人确认）
+## 九、协议状态与你要做的改动
 
-`docs/ui.schema.json` 是 C 代拟的，**它需要你和 B 真正认可才能冻结**：
+`docs/ui.schema.json` 已升到 **v0.2.0-draft**，A / B 双方均已确认。前六项结构性问题
+（卡片结构、`action.kind`、`input_type`、图标集、页面文案形态）在确认过程中没有异议。
 
-1. `cards` + `priority` 这个"大按钮卡片列表"结构，够不够表达你需要的界面？
-2. `action.kind` 的四个取值够用吗？需要 `input`（就地填值）之类的吗？
-3. `input_type` 的 9 个取值覆盖了你要做的输入组件吗？
-4. 冻结图标集的 16 个图标，作为起步集合适吗？
-5. `page.greeting` / `page.summary` 的文案形态符合你的视觉设计吗？
-6. 是否同意把 `schema_version` 从 `0.1.0-draft` 升为 `1.0.0` 并冻结？
+**v0.1.0-draft → v0.2.0-draft 是一次破坏性变更，你的渲染器需要改一处：**
 
-确认后由发起人改 `docs/ui.schema.json` 的 `const` 值并在 `docs/PROTOCOL.md` 追加变更记录。
+| 改动 | 原实现 | 新实现 |
+|---|---|---|
+| 元素定位 | `document.getElementById(el_xxx)` | **`document.querySelector(target_selector)`** |
+| 版本常量 | `PROTOCOL_VERSION = "0.1.0-draft"`<br>`ELEMENTS_VERSION = "1.0.0"` | `"0.2.0-draft"`<br>`"1.1.0"` |
+| 表单字段定位 | 无（原先只能靠 ID） | `field.selector` |
+| 提交按钮 | 无 | `form.submit_selector` |
+| select/radio/checkbox | 退化为文本输入 | `field.options[]`，radio/checkbox 逐项用 `option.selector` |
+
+**为什么必须改**：`el_xxx` 是 `sha1(selector)` 派生哈希，不是 DOM 的 `id` 属性。
+实测 6/6 个 `target_element_id` 用 `getElementById` 全部找不到（成功率 0%），
+而这不是 B 的数据问题 —— 是原协议没给出定位手段。详见
+[`ui_schema.proposal_C.md`](ui_schema.proposal_C.md)。
+
+你的实施顺序（你已确认）：
+
+1. `target_selector` 定位动作元素
+2. `selector` 回填普通字段
+3. `select` 按 `value` 匹配选项
+4. `radio` / `checkbox` 按每个 `option.selector` 写回
+5. `submit_selector` 点击提交按钮
+
+**验收**：`docs/examples/ui_schema.hospital.json` 已升级到新协议（16 项校验全通过），
+可以直接拿它回归。
 
 ---
 

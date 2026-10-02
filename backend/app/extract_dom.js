@@ -219,10 +219,107 @@
     return null;
   }
 
+  /* ---------- select 的选项 ---------- */
+  function selectOptionsOf(selectEl) {
+    return Array.prototype.map.call(selectEl.options || [], (opt) => ({
+      label: norm(opt.text) || norm(opt.value) || '',
+      value: norm(opt.value) || norm(opt.text) || '',
+      selected: !!opt.selected,
+      // select 的选项由 A 按 value 匹配 <option>，不需要逐项 selector（A 组已确认）
+      selector: null
+    }));
+  }
+
+  /* ---------- radio / checkbox 分组 ----------
+   * 一个 radio/checkbox 组在语义上是「一个问题 + N 个选项」，但在 DOM 上是 N 个独立元素。
+   * 协议里一个 field 只能带一个 selector，所以必须在 C 侧就把它们合并成「一个元素」，
+   * 再在 options[] 里给出每个选项各自的 selector —— 否则 A 无法逐项勾选。
+   */
+  function commonAncestor(nodes) {
+    if (!nodes.length) return null;
+    let anc = nodes[0].parentElement;
+    while (anc && anc !== document.documentElement) {
+      let covers = true;
+      for (let i = 0; i < nodes.length; i += 1) {
+        if (!anc.contains(nodes[i])) { covers = false; break; }
+      }
+      if (covers) return anc;
+      anc = anc.parentElement;
+    }
+    return document.body;
+  }
+
+  function choiceGroupLabel(container) {
+    if (!container) return '';
+    const fs = container.closest ? container.closest('fieldset') : null;
+    if (fs) {
+      const lg = fs.querySelector('legend');
+      if (lg) { const t = norm(lg.innerText); if (t) return t.slice(0, MAX_TEXT); }
+    }
+    const rg = container.closest
+      ? container.closest('[role="radiogroup"], [role="group"]') : null;
+    if (rg) {
+      const t = norm(rg.getAttribute('aria-label'));
+      if (t) return t.slice(0, MAX_TEXT);
+    }
+    let prev = container.previousElementSibling;
+    let hops = 0;
+    while (prev && hops < 2) {
+      if (prev.tagName === 'LABEL' || /^h[1-6]$/.test(prev.tagName)) {
+        const t = norm(prev.innerText); if (t) return t.slice(0, MAX_TEXT);
+      }
+      prev = prev.previousElementSibling;
+      hops += 1;
+    }
+    return '';
+  }
+
+  function choiceOptionLabel(input) {
+    const own = labelOf(input);
+    if (own) return own;
+    const v = norm(input.value);
+    if (v) return v.slice(0, MAX_TEXT);
+    const al = norm(input.getAttribute('aria-label'));
+    return al ? al.slice(0, MAX_TEXT) : '';
+  }
+
+  function choiceGroups() {
+    const inputs = Array.prototype.slice.call(
+      document.querySelectorAll('input[type="radio"], input[type="checkbox"]')
+    );
+    const buckets = new Map();
+    inputs.forEach((el) => {
+      const form = el.form || (el.closest ? el.closest('form') : null);
+      const formKey = form ? cssPath(form) : '__noform__';
+      const nm = norm(el.getAttribute('name'));
+      // 没有 name 的控件无法成组，按每个控件独立处理
+      const key = nm
+        ? (formKey + '::' + nm)
+        : (formKey + '::__anon__' + (DOC_ORDER.has(el) ? DOC_ORDER.get(el) : 0));
+      if (!buckets.has(key)) buckets.set(key, []);
+      buckets.get(key).push(el);
+    });
+    return buckets;
+  }
+
   /* ---------- 采集候选元素 ---------- */
+  // radio / checkbox 不按单元素采集，改为按 name 合并成「选项组」。
+  // 组容器本身也一并排除：否则容器（常常是个 <label> 或 <fieldset>）会作为普通元素
+  // 再次被采集，两者 selector 相同 -> ID 相同 -> 被 builder 的去重逻辑丢弃，
+  // 结果就是「选项组整个消失」。由组元素代表容器是语义上更正确的选择。
+  const choiceBuckets = choiceGroups();
+  const choiceMember = new Set();
+  const choiceContainers = new Set();
+  choiceBuckets.forEach((list) => {
+    list.forEach((el) => choiceMember.add(el));
+    const c = commonAncestor(list);
+    if (c) choiceContainers.add(c);
+  });
+
   const candidates = [];
   const seenEl = new Set();
   function addCandidate(el, rank) {
+    if (choiceContainers.has(el)) return;
     if (seenEl.has(el)) {
       const rec = candidates.find((c) => c.el === el);
       if (rec && rank < rec.rank) rec.rank = rank;
@@ -232,7 +329,10 @@
     candidates.push({ el: el, rank: rank });
   }
 
-  Array.prototype.forEach.call(document.querySelectorAll(INTERACTIVE), (el) => addCandidate(el, 0));
+  Array.prototype.forEach.call(document.querySelectorAll(INTERACTIVE), (el) => {
+    if (choiceMember.has(el)) return;
+    addCandidate(el, 0);
+  });
   Array.prototype.forEach.call(document.querySelectorAll(STRUCTURAL), (el) => addCandidate(el, 0));
 
   // 可见文本：跳过「文本已完全包含在祖先文本块里」的嵌套节点，避免同一句话重复出现
@@ -288,11 +388,67 @@
         ? !!el.required : null,
       disabled: !!el.disabled,
       level: /^h[1-6]$/.test(el.tagName) ? parseInt(el.tagName[1], 10) : null,
+      options: type === 'select' ? selectOptionsOf(el) : null,
       // 截断优先级：可见交互元素(0) > 可见文本(1) > 隐藏交互元素(2) > 隐藏文本(3)。
       // 实测 12306 首页 400 个元素里仅 107 个可见，若不按可见性分级，
       // 隐藏元素会把 B 的预算吃光，导致 B 拿到的几乎全是页面上根本看不到的东西。
       _rank: c.rank + (visible ? 0 : 2),
       _order: DOC_ORDER.has(el) ? DOC_ORDER.get(el) : 0
+    });
+  });
+
+  // ---------- radio / checkbox 组：合并为一个「选项组」元素 ----------
+  choiceBuckets.forEach((members) => {
+    if (!members.length) return;
+    const sample = members[0];
+    const container = commonAncestor(members);
+    if (!container) return;
+    const selector = cssPath(container);
+    if (!selector) return;
+
+    const isRadio = norm(sample.getAttribute('type')).toLowerCase() === 'radio';
+    const visible = members.some(isVisible);
+    const rect = visible ? container.getBoundingClientRect() : null;
+    const gNode = groupOf(sample);
+    const formNode = sample.form || (sample.closest ? sample.closest('form') : null);
+    const groupText = members.length === 1
+      // 单成员组（如一个「同意条款」复选框）没有独立的组标题，
+      // 它的标签就是控件自己的标签；向上找 fieldset legend 会串成整张表单的名字。
+      ? choiceOptionLabel(members[0])
+      : choiceGroupLabel(container);
+
+    rawElements.push({
+      type: isRadio ? 'radio' : 'checkbox',
+      text: groupText,
+      label: groupText || null,
+      aria_label: norm(container.getAttribute('aria-label')) || null,
+      placeholder: null,
+      name: norm(sample.getAttribute('name')) || null,
+      value: null,
+      href: null,
+      selector: selector,
+      xpath: xpathOf(container),
+      visible: visible,
+      bbox: rect ? {
+        x: Math.round(rect.x), y: Math.round(rect.y),
+        width: Math.round(rect.width), height: Math.round(rect.height)
+      } : null,
+      group_selector: gNode ? cssPath(gNode) : null,
+      in_form: !!formNode,
+      form_selector: formNode ? cssPath(formNode) : null,
+      required: members.some((m) => !!m.required),
+      disabled: members.every((m) => !!m.disabled),
+      level: null,
+      // 每个选项自带 selector —— A 靠它逐项勾选并触发 input/change。
+      // 只给 element_id 不够：A 不持有 elements.json，无法用它定位 DOM。
+      options: members.map((m) => ({
+        label: choiceOptionLabel(m),
+        value: norm(m.value),
+        selected: !!m.checked,
+        selector: cssPath(m)
+      })),
+      _rank: 0 + (visible ? 0 : 2),
+      _order: DOC_ORDER.has(container) ? DOC_ORDER.get(container) : 0
     });
   });
 

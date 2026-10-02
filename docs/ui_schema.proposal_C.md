@@ -1,7 +1,9 @@
 # ui_schema.json 协议修订提案（C 组提出）
 
-> 状态：**待 A / B 确认**。依据规范 §7，冻结协议的修改必须三人确认。
+> 状态：**✅ A / B 双方已确认，已进入实施**（见文末「确认结论」）
+> 依据规范 §7，冻结协议的修改必须三人确认。
 > 提出人：C 组（后端）　针对版本：`ui.schema.json v0.1.0-draft` / `elements.schema.json v1.0.0`
+> 实施后版本：`ui.schema.json v0.2.0-draft` / `elements.schema.json v1.1.0`
 > 关联：A 组的 [`ui_schema.proposal.md`](ui_schema.proposal.md)（v0.1 早期结构提案）
 
 ---
@@ -234,10 +236,63 @@ C 把选项**当纯文本拼进了 `text`**，结构化信息在提取阶段就�
 
 **给 C（后端，即我）**
 
-- [ ] 确认后实施 `extract_dom.js` 的 `<option>` 提取
-- [ ] 提升两个 schema 版本号并在 `docs/PROTOCOL.md` 追加变更记录
-- [ ] 给 `check_ui.py` 增加「`target_selector` 必须能在 elements.json 中找到对应元素」的校验项
-- [ ] 回归全部自检（selfcheck / check_ui / check_docs）
+- [x] 实施 `extract_dom.js` 的 `<option>` 提取
+- [x] 提升两个 schema 版本号并在 `docs/PROTOCOL.md` 追加变更记录
+- [x] 给 `check_ui.py` 增加 selector 一致性与逐项 selector 校验（14 → 16 项）
+- [x] 回归全部自检（selfcheck / check_ui / check_docs）
+
+---
+
+## 确认结论
+
+**A 组与 B 组均已确认本提案方向，A 组补充了一处必要条件 —— radio / checkbox 的每个选项需要自己的定位信息。**
+
+A 组原话：
+
+> 两边都确认了必须补一处：radio / checkbox 的每个选项需要自己的定位信息。
+> 建议在 `options[]` 中增加 `selector`。
+> - `select`：`field.selector` 指向 `<select>`，`options[].selector` 可以没有。
+> - `radio` / `checkbox`：每个 `option.selector` 必填，A 才能逐项勾选和触发 `input`/`change`。
+> - `option.element_id` 可以保留作追溯，但 A 不持有 `elements.json`，不能靠它定位。
+
+### 该补充为什么必须，以及它牵出的更根本问题
+
+A 指出的是**表层**：`options[]` 缺 `selector`。
+但要落实它，必须先解决一个**建模问题**：
+
+> 一个 radio/checkbox 组在语义上是「一个问题 + N 个选项」，
+> 但在 DOM 上是 **N 个独立元素**，而协议里一个 `field` 只能带一个 `selector`。
+
+若 C 仍按「每个 `<input type=radio>` 是一个元素」输出，B 就得自己判断
+哪些元素同属一组、该选哪一个当代表 —— 这正是最容易出错的地方。
+
+因此 **C 侧在提取阶段就按 `(form, name)` 把同组控件合并成一个「选项组」元素**：
+元素自身的 `selector` 指向组容器，每个选项的定位信息放在 `options[].selector`。
+问题在源头消除，B 只需透传。
+
+> 实施时踩到的坑：组容器（常是 `<label>` 或 `<fieldset>`）本身也会被普通采集命中，
+> 两者 `selector` 相同 → 生成相同 ID → 被 builder 的去重逻辑丢弃，
+> 结果是「选项组整个消失」。因此容器节点必须由组元素代表，不再单独采集。
+
+### A 组的实施顺序（已确认）
+
+1. `target_selector` 定位动作元素
+2. `selector` 回填普通字段
+3. `select` 按 `value` 匹配选项
+4. `radio` / `checkbox` 按每个 `option.selector` 写回
+5. `submit_selector` 点击提交按钮
+
+### 实施状态
+
+| 项 | 状态 |
+|---|---|
+| `docs/elements.schema.json` → 1.1.0（新增 `element.options`） | ✅ 已实施 |
+| `docs/ui.schema.json` → 0.2.0-draft（新增定位与选项字段） | ✅ 已实施 |
+| C：提取 `<option>`、按 (form, name) 合并 radio/checkbox 组 | ✅ 已实施 |
+| C：`check_ui.py` 新增校验项 | ✅ 已实施（14 → 16 项，反向验证可抓到错误） |
+| C：医院快照补 radio/checkbox 用例 | ✅ 已实施 |
+| A：`resolveTargetElement` 改用 `target_selector`，`ELEMENTS_VERSION` → `1.1.0` | ⏳ 待 A 实施 |
+| B：透传 `selector` / `xpath` / `options` | ⏳ 待 B 实施 |
 
 ---
 
@@ -248,3 +303,4 @@ C 把选项**当纯文本拼进了 `text`**，结构化信息在提取阶段就�
 | A 同时接收 `elements.json`，自行按 ID 查 `selector` | 数据流变成两文档，A 需做 join；payload 翻倍；B 的 `/analyze` 契约要改 |
 | 定义「ID → DOM」的标准算法，A 重算 sha1 匹配 | A 必须复刻 C 的选择器生成算法，两处实现必然漂移；且查找是 O(n) 全页扫描 |
 | 让 C 把 ID 直接写成 DOM 的 `id` 属性（改页面） | 违反规范 §3「C 禁止修改网页」；且会污染宿主页面 |
+| 每个 `<input type=radio>` 仍作为独立元素输出 | B 需自行分组并选代表，容易出错；且 `field` 只能带一个 `selector`，逐项定位无处安放 |
