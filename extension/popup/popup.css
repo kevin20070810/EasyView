@@ -1,0 +1,153 @@
+:root {
+  color-scheme: light;
+}
+
+body {
+  width: 320px;
+  margin: 0;
+  background: #f6f8fb;
+  color: #14181f;
+  font-family: "Microsoft YaHei", "PingFang SC", system-ui, sans-serif;
+  font-size: 15px;
+}
+
+.pop-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 14px 16px;
+  background: #0b5cad;
+  color: #ffffff;
+}
+
+.pop-brand {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.pop-sub {
+  font-size: 12px;
+  opacity: 0.9;
+}
+
+.pop-main {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px;
+}
+
+.pop-toggle {
+  min-height: 58px;
+  border: 0;
+  border-radius: 8px;
+  background: #0b5cad;
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.pop-toggle[aria-pressed="true"] {
+  background: #137a4a;
+}
+
+.pop-status {
+  margin: 0;
+  color: #4a5568;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.pop-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 40px;
+}
+
+.pop-row select {
+  min-height: 36px;
+  padding: 4px 10px;
+  border: 1px solid #cfd8e3;
+  border-radius: 6px;
+  background: #ffffff;
+  font: inherit;
+}
+
+.pop-row-switch input {
+  width: 22px;
+  height: 22px;
+}
+
+.pop-privacy {
+  padding: 12px 14px;
+  border: 2px solid #b45309;
+  border-radius: 8px;
+  background: #fff4e4;
+}
+
+.pop-privacy[hidden] {
+  display: none;
+}
+
+.pop-privacy h2 {
+  margin: 0 0 6px;
+  font-size: 15px;
+}
+
+.pop-privacy p {
+  margin: 0 0 12px;
+  color: #6b3300;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.pop-privacy-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.pop-btn {
+  flex: 1 1 0;
+  min-height: 40px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  font: inherit;
+  cursor: pointer;
+}
+
+.pop-btn.primary {
+  background: #0b5cad;
+  color: #ffffff;
+}
+
+.pop-btn.ghost {
+  background: #ffffff;
+  border-color: #cfd8e3;
+}
+
+.pop-hint {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: #eef2f7;
+  color: #4a5568;
+  font-size: 13px;
+}
+
+.pop-hint[hidden] {
+  display: none;
+}
+
+.pop-link {
+  align-self: flex-start;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #0b5cad;
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}

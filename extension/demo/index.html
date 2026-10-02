@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EasyView 插件前端 Demo</title>
+  <link rel="stylesheet" href="../src/styles.css">
+  <style>
+    :root { color-scheme: light; }
+    body.demo-page {
+      margin: 0;
+      background: #f6f8fb;
+      color: #14181f;
+      font-family: "Microsoft YaHei", "PingFang SC", system-ui, sans-serif;
+    }
+    .demo-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 14px;
+      padding: 12px 20px;
+      background: #14181f;
+      color: #ffffff;
+    }
+    .demo-bar h1 {
+      margin: 0 8px 0 0;
+      font-size: 17px;
+      font-weight: 700;
+    }
+    .demo-bar label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+    }
+    .demo-bar select,
+    .demo-bar button {
+      min-height: 34px;
+      padding: 6px 12px;
+      border: 1px solid #3d4653;
+      border-radius: 6px;
+      background: #232a34;
+      color: #ffffff;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .demo-bar button[aria-pressed="true"] {
+      background: #0b5cad;
+      border-color: #0b5cad;
+    }
+    .demo-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 20px;
+      padding: 20px;
+      align-items: start;
+    }
+    .demo-col > h2 {
+      margin: 0 0 10px;
+      font-size: 15px;
+      color: #4a5568;
+      font-weight: 700;
+    }
+    .demo-stage {
+      border: 1px solid #cfd8e3;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #eef2f7;
+    }
+    .demo-source {
+      padding: 18px;
+      border: 1px solid #cfd8e3;
+      border-radius: 8px;
+      background: #ffffff;
+      font-size: 15px;
+      line-height: 1.7;
+    }
+    .demo-source h3 {
+      margin: 0 0 8px;
+      font-size: 17px;
+    }
+    .demo-source p {
+      margin: 0 0 14px;
+      color: #4a5568;
+    }
+    .demo-source [data-source-block] {
+      padding: 10px 12px;
+      border: 1px dashed #cfd8e3;
+      border-radius: 6px;
+      margin-bottom: 10px;
+    }
+    .demo-report {
+      margin: 0 20px 24px;
+      padding: 14px 18px;
+      border: 1px solid #cfd8e3;
+      border-radius: 8px;
+      background: #ffffff;
+      font-size: 14px;
+    }
+    .demo-report pre {
+      margin: 8px 0 0;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-size: 12px;
+      color: #4a5568;
+    }
+    @media (max-width: 1000px) {
+      .demo-layout { grid-template-columns: minmax(0, 1fr); }
+    }
+  </style>
+</head>
+<body class="demo-page">
+  <div class="demo-bar">
+    <h1>EasyView 插件前端 Demo</h1>
+    <label>示例
+      <select id="demo-schema">
+        <option value="hospital">医院挂号</option>
+        <option value="gov">政务通知</option>
+        <option value="edge">协议边界</option>
+      </select>
+    </label>
+    <button id="demo-source-mode" type="button" aria-pressed="false">降级快照</button>
+    <button id="demo-contrast" type="button" aria-pressed="false">高对比</button>
+  </div>
+
+  <div class="demo-layout">
+    <div class="demo-col">
+      <h2>适老渲染结果（插件注入层）</h2>
+      <div id="easyview-stage" class="demo-stage"></div>
+    </div>
+
+    <div class="demo-col">
+      <h2>模拟原网页（插件不改动它）</h2>
+      <div class="demo-source">
+        <h3 id="el_report">市第一人民医院 · 原网页</h3>
+        <p id="el_appointment">门诊预约：请填写就诊人信息后提交预约。</p>
+        <div data-source-block id="el_payment">门诊缴费窗口 / 在线缴费入口</div>
+        <div data-source-block id="el_insurance">医保查询：绑定医保电子凭证后查询余额</div>
+        <div data-source-block id="el_pay_period">集中缴费期：2026年10月1日至2026年12月31日</div>
+        <div data-source-block id="el_pay_standard">个人缴费标准：每人每年380元</div>
+        <div data-source-block id="el_pay_channel">办理方式：微信小程序、街道便民服务中心、社区医保服务站</div>
+
+        <form id="el_pay_form" data-source-block>
+          <label for="el_patient_name">姓名</label>
+          <input id="el_patient_name" name="patient_name">
+          <label for="el_patient_idcard">身份证号</label>
+          <input id="el_patient_idcard" name="patient_idcard">
+          <label for="el_patient_phone">手机号</label>
+          <input id="el_patient_phone" name="patient_phone">
+          <label for="el_visit_date">就诊日期</label>
+          <input id="el_visit_date" name="visit_date" type="date">
+          <label for="el_department">科室</label>
+          <input id="el_department" name="department">
+          <button id="el_appointment_submit" type="button">提交预约</button>
+        </form>
+
+        <form id="el_pay" data-source-block>
+          <label for="el_pay_name">参保人姓名</label>
+          <input id="el_pay_name" name="pay_name">
+          <label for="el_pay_idcard">身份证号</label>
+          <input id="el_pay_idcard" name="pay_idcard">
+          <label for="el_pay_phone">手机号</label>
+          <input id="el_pay_phone" name="pay_phone">
+          <label for="el_pay_amount">缴费金额</label>
+          <input id="el_pay_amount" name="pay_amount">
+          <button id="el_pay_submit" type="button">确认缴费</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="demo-report">
+    <strong>协议校验</strong>
+    <pre id="demo-report-text">等待渲染…</pre>
+  </div>
+
+  <script src="../src/icons.js"></script>
+  <script src="../src/renderer.js"></script>
+  <script src="../data/schemas.js"></script>
+  <script src="demo.js"></script>
+</body>
+</html>

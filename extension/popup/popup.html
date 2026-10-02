@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>EasyView 适老助手</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header class="pop-head">
+    <span class="pop-brand">EasyView</span>
+    <span class="pop-sub">适老助手 · A 组前端</span>
+  </header>
+
+  <main class="pop-main">
+    <button id="pop-toggle" class="pop-toggle" type="button" aria-pressed="false">进入适老模式</button>
+    <p id="pop-status" class="pop-status">正在读取当前页面…</p>
+
+    <label class="pop-row" for="pop-schema">
+      <span>示例数据</span>
+      <select id="pop-schema">
+        <option value="hospital">医院挂号</option>
+        <option value="gov">政务通知</option>
+        <option value="edge">协议边界</option>
+      </select>
+    </label>
+
+    <label class="pop-row pop-row-switch" for="pop-contrast">
+      <span>高对比</span>
+      <input id="pop-contrast" type="checkbox">
+    </label>
+
+    <section id="pop-privacy" class="pop-privacy" hidden>
+      <h2>隐私提示</h2>
+      <p>适老模式开关、字号和高对比偏好只保存在本机浏览器，不上传网络。页面内容仅在本地渲染。</p>
+      <div class="pop-privacy-actions">
+        <button id="pop-privacy-decline" class="pop-btn ghost" type="button">暂不同意</button>
+        <button id="pop-privacy-accept" class="pop-btn primary" type="button">同意并继续</button>
+      </div>
+    </section>
+
+    <p id="pop-hint" class="pop-hint" hidden></p>
+
+    <button id="pop-demo" class="pop-link" type="button">打开本地 Demo 预览页</button>
+  </main>
+
+  <script src="popup.js"></script>
+</body>
+</html>

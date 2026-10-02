@@ -1,0 +1,63 @@
+{
+  "pageType": "operation",
+  "title": "市第一人民医院",
+  "subtitle": "您好，请按提示完成预约挂号",
+  "intro": "我会带您一步步完成挂号，每一步都会给出语音提示。",
+  "flow": {
+    "steps": [
+      {
+        "id": "dept",
+        "title": "选择科室",
+        "prompt": "请选择您要挂号的科室",
+        "description": "如果不确定，可以直接告诉助手您的症状。",
+        "options": [
+          { "label": "内科", "value": "内科" },
+          { "label": "外科", "value": "外科" },
+          { "label": "儿科", "value": "儿科" },
+          { "label": "耳鼻喉科", "value": "耳鼻喉科" }
+        ]
+      },
+      {
+        "id": "symptom",
+        "title": "选择症状",
+        "prompt": "请选择您的主要症状",
+        "description": "症状仅用于帮助医生了解情况，不会上传。",
+        "options": [
+          { "label": "发热", "value": "发热" },
+          { "label": "咳嗽", "value": "咳嗽" },
+          { "label": "头晕", "value": "头晕" },
+          { "label": "腹痛", "value": "腹痛" }
+        ]
+      },
+      {
+        "id": "doctor",
+        "title": "选择医生",
+        "prompt": "请选择接诊医生",
+        "description": "建议选择有号源的医生。",
+        "options": [
+          { "label": "王医生（主任医师）", "value": "王医生" },
+          { "label": "李医生（副主任医师）", "value": "李医生" },
+          { "label": "张医生（主治医师）", "value": "张医生" }
+        ]
+      },
+      {
+        "id": "time",
+        "title": "选择就诊时间",
+        "prompt": "请选择就诊时间",
+        "description": "请合理安排到院时间。",
+        "options": [
+          { "label": "今天 10:30", "value": "今天 10:30" },
+          { "label": "今天 14:00", "value": "今天 14:00" },
+          { "label": "明天 09:00", "value": "明天 09:00" }
+        ]
+      },
+      {
+        "id": "confirm",
+        "title": "确认预约",
+        "prompt": "请确认以下预约信息",
+        "description": "确认后将生成挂号单。",
+        "isFinal": true
+      }
+    ]
+  }
+}

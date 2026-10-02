@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EasyView 适老化界面</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">EV</span>
+      <span class="brand-name">EasyView</span>
+    </div>
+    <nav class="demo-bar" aria-label="演示流程切换">
+      <button class="demo-tab" data-demo="hospital" type="button">医院挂号</button>
+      <button class="demo-tab" data-demo="gov" type="button">政务通知</button>
+    </nav>
+    <button id="elder-toggle" class="elder-toggle" type="button" aria-pressed="false">
+      适老模式
+    </button>
+  </header>
+
+  <main id="app"></main>
+
+  <button id="assistant-toggle" class="assistant-fab" type="button" aria-label="打开智能助手">
+    AI
+  </button>
+
+  <section id="assistant-panel" class="assistant-panel" hidden>
+    <header class="assistant-header">
+      <div>
+        <strong>智能助手</strong>
+        <span class="assistant-mode">本地规则兜底</span>
+      </div>
+      <button id="assistant-close" class="icon-btn" type="button" aria-label="关闭助手">关闭</button>
+    </header>
+    <div id="assistant-messages" class="assistant-messages" aria-live="polite"></div>
+    <div id="assistant-prompts" class="assistant-prompts"></div>
+    <form id="assistant-form" class="assistant-form">
+      <label class="sr-only" for="assistant-input">输入问题</label>
+      <input id="assistant-input" type="text" autocomplete="off" placeholder="问我当前页面怎么操作">
+      <button class="send-btn" type="submit">发送</button>
+    </form>
+  </section>
+
+  <div id="modal-overlay" class="modal-overlay" hidden>
+    <div id="privacy-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="privacy-title" hidden>
+      <h2 id="privacy-title">隐私提示</h2>
+      <p>EasyView 会将适老模式、字号和高对比等偏好保存在您的本机浏览器中，不会上传到网络。语音朗读由设备本地完成。</p>
+      <p>同意后，您才能保存偏好设置。</p>
+      <div class="modal-actions">
+        <button id="privacy-decline" class="ghost-btn" type="button">暂不同意</button>
+        <button id="privacy-accept" class="primary-btn" type="button">同意并继续</button>
+      </div>
+    </div>
+    <div id="confirm-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="confirm-title" hidden>
+      <h2 id="confirm-title">请确认</h2>
+      <p id="confirm-message"></p>
+      <div class="modal-actions">
+        <button id="confirm-cancel" class="ghost-btn" type="button">取消</button>
+        <button id="confirm-ok" class="primary-btn" type="button">确认</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" role="status" hidden></div>
+
+  <script src="samples.js"></script>
+  <script src="agent.js"></script>
+  <script src="renderer.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

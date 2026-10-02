@@ -1,0 +1,73 @@
+{
+  "schema_version": "0.1.0-draft",
+  "source_elements_schema_version": "1.0.0",
+  "page_url": "https://demo.easyview.local/h",
+  "page_title": "市第一人民医院网上服务",
+  "source": "live",
+  "generated_at": "2026-10-02T02:35:00Z",
+  "page": {
+    "greeting": "您好，这里是市第一人民医院网上服务",
+    "summary": "可以预约挂号、查看报告、在线缴费，也可以联系人工客服"
+  },
+  "cards": [
+    {
+      "id": "grp_appointment",
+      "title": "我要挂号",
+      "subtitle": "门诊预约登记",
+      "icon": "calendar",
+      "priority": 1,
+      "action": { "kind": "form", "target_element_id": "el_appointment", "href": null },
+      "form": {
+        "submit_element_id": "el_appointment_submit",
+        "fields": [
+          { "element_id": "el_patient_name", "label": "就诊人姓名", "input_type": "text", "placeholder": "请输入姓名", "required": true },
+          { "element_id": "el_patient_idcard", "label": "身份证号", "input_type": "idcard", "placeholder": "18 位身份证号", "required": true },
+          { "element_id": "el_patient_phone", "label": "手机号", "input_type": "tel", "placeholder": "用于接收预约短信", "required": true },
+          { "element_id": "el_visit_date", "label": "就诊日期", "input_type": "date", "placeholder": null, "required": false },
+          { "element_id": "el_department", "label": "就诊科室", "input_type": "select", "placeholder": "请选择科室", "required": false }
+        ]
+      }
+    },
+    {
+      "id": "el_report",
+      "title": "查看报告",
+      "subtitle": "查询检验检查结果",
+      "icon": "document",
+      "priority": 2,
+      "action": { "kind": "navigate", "target_element_id": "el_report", "href": null },
+      "form": null
+    },
+    {
+      "id": "el_payment",
+      "title": "缴费",
+      "subtitle": "在线缴纳门诊费用",
+      "icon": "payment",
+      "priority": 3,
+      "action": { "kind": "scroll", "target_element_id": "el_payment", "href": null },
+      "form": null
+    },
+    {
+      "id": "el_service_phone",
+      "title": "联系客服",
+      "subtitle": "工作时间 08:00 - 20:00",
+      "icon": "phone",
+      "priority": 4,
+      "action": { "kind": "external", "target_element_id": null, "href": "tel:0755-12345678" },
+      "form": null
+    },
+    {
+      "id": "el_insurance",
+      "title": "医保查询",
+      "subtitle": null,
+      "icon": "info",
+      "priority": 5,
+      "action": { "kind": "navigate", "target_element_id": "el_insurance", "href": null },
+      "form": null
+    }
+  ],
+  "extensions": {
+    "experimental_theme": "ignored",
+    "junk": [1, 2, 3],
+    "unknown_flag": true
+  }
+}

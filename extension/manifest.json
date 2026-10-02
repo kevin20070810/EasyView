@@ -1,0 +1,26 @@
+{
+  "manifest_version": 3,
+  "name": "EasyView 适老助手（A 组前端 Demo）",
+  "version": "0.1.0",
+  "description": "把 ui_schema.json 渲染成老人能用的页面：大字号、大按钮、降级提示、表单填写。",
+  "permissions": ["storage", "activeTab", "scripting"],
+  "host_permissions": ["http://*/*", "https://*/*"],
+  "background": { "service_worker": "background.js" },
+  "action": {
+    "default_title": "EasyView 适老助手",
+    "default_popup": "popup/popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["src/icons.js", "src/renderer.js", "data/schemas.js", "content/content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["src/styles.css", "src/shell.css"],
+      "matches": ["http://*/*", "https://*/*"]
+    }
+  ]
+}
