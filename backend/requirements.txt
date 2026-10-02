@@ -1,0 +1,6 @@
+# EasyView C 组后端依赖
+# 任务书 §4 指定技术方案：FastAPI + Playwright
+fastapi>=0.115
+uvicorn[standard]>=0.30
+playwright>=1.48
+pydantic>=2.9
