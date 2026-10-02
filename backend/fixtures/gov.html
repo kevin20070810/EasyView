@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>示例市政务服务中心 - 网上办事大厅</title>
+<!--
+  EasyView 本地演示快照（政务类），用于规范 §9 的降级兜底。
+  刻意保留真实政务网站的典型结构：多级导航、办事指南、表格、通知公告。
+  本页面为虚构演示素材，与任何真实机构无关。
+-->
+<style>
+  body{font-family:"Microsoft YaHei",sans-serif;margin:0;color:#333;font-size:14px}
+  .govhead{background:#c00;color:#fff;padding:6px 20px;font-size:12px}
+  .govhead a{color:#ffdada;text-decoration:none;margin-right:16px}
+  .banner{padding:16px 20px;border-bottom:2px solid #c00;display:flex;align-items:center}
+  .banner .name{font-size:25px;font-weight:bold;color:#c00}
+  .banner .sub{font-size:12px;color:#888;margin-top:5px}
+  nav{background:#8c0b0b;padding:0 20px}
+  nav a{display:inline-block;color:#fff;text-decoration:none;padding:13px 20px;font-size:15px}
+  .breadcrumb{padding:10px 20px;font-size:12px;color:#888;background:#fafafa;border-bottom:1px solid #eee}
+  .cols{display:flex;gap:18px;padding:18px 20px}
+  .left{flex:1}
+  .right{width:300px}
+  .panel{border:1px solid #e5e5e5;margin-bottom:16px}
+  .panel h3{margin:0;padding:10px 14px;background:#fdf0f0;border-bottom:1px solid #e5e5e5;
+            font-size:15px;color:#8c0b0b}
+  .panel .in{padding:14px}
+  .service-grid a{display:inline-block;width:130px;padding:18px 0;margin:6px;text-align:center;
+                  background:#f7f7f7;border:1px solid #e0e0e0;color:#8c0b0b;text-decoration:none;font-size:14px}
+  .service-grid a:hover{background:#fdf0f0}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{border:1px solid #e5e5e5;padding:9px}
+  th{background:#fafafa;text-align:left}
+  ul.list li{line-height:2.1;font-size:13px}
+  .formrow{margin-bottom:11px}
+  .formrow label{display:block;font-size:13px;margin-bottom:4px;color:#555}
+  .formrow input,.formrow select{width:100%;padding:8px;border:1px solid #ccc;box-sizing:border-box}
+  .btn{background:#c00;color:#fff;border:0;padding:10px 26px;cursor:pointer;font-size:14px;border-radius:2px}
+  .notice{background:#fffbe6;border-left:4px solid #faad14;padding:11px 14px;font-size:13px;line-height:1.9}
+  footer{background:#f5f5f5;border-top:1px solid #ddd;padding:18px 20px;text-align:center;
+         font-size:12px;color:#888;line-height:2}
+</style>
+</head>
+<body>
+
+<div class="govhead">
+  <a href="/">网站首页</a>
+  <a href="/zwgk">政务公开</a>
+  <a href="/bsfw">办事服务</a>
+  <a href="/hdjl">互动交流</a>
+  <a href="/zjfw">中介服务</a>
+  <span style="float:right">无障碍 | 长辈版 | 繁體 | 登录</span>
+</div>
+
+<div class="banner">
+  <div>
+    <div class="name">示例市政务服务中心</div>
+    <div class="sub">网上办事大厅 · 一网通办 · 服务热线 0000-12345</div>
+  </div>
+</div>
+
+<nav aria-label="办事分类导航">
+  <a href="/bsfw/gr">个人办事</a>
+  <a href="/bsfw/fr">法人办事</a>
+  <a href="/bsfw/sb">社保医保</a>
+  <a href="/bsfw/hj">户籍身份</a>
+  <a href="/bsfw/zf">住房保障</a>
+  <a href="/bsfw/jy">教育就业</a>
+  <a href="/bsfw/yl">养老助残</a>
+</nav>
+
+<div class="breadcrumb">当前位置：首页 &gt; 网上办事大厅 &gt; 个人办事</div>
+
+<div class="cols">
+  <div class="left">
+
+    <div class="notice">
+      <strong>系统公告：</strong>因系统升级，本周六 00:00-06:00 网上办事大厅暂停服务，请提前安排办理时间。
+    </div>
+
+    <div class="panel">
+      <h3>热门办事事项</h3>
+      <div class="in service-grid">
+        <a href="/item/yb">医保参保登记</a>
+        <a href="/item/gjj">公积金查询</a>
+        <a href="/item/hj">户籍证明开具</a>
+        <a href="/item/shebao">社保缴费记录</a>
+        <a href="/item/tuixiu">退休待遇申请</a>
+        <a href="/item/canjian">残疾人补贴</a>
+        <a href="/item/jiuye">就业困难认定</a>
+        <a href="/item/zhufang">公租房申请</a>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>办事指南查询</h3>
+      <div class="in">
+        <form action="/search" method="get">
+          <div class="formrow">
+            <label for="kw">事项名称关键字</label>
+            <input id="kw" name="kw" type="text" placeholder="例如：医保、公积金、户籍" required>
+          </div>
+          <div class="formrow">
+            <label for="area">办理区域</label>
+            <select id="area" name="area">
+              <option value="">全部区域</option>
+              <option value="a">示例区</option>
+              <option value="b">演示区</option>
+              <option value="c">测试区</option>
+            </select>
+          </div>
+          <div class="formrow">
+            <label for="type">事项类型</label>
+            <select id="type" name="type">
+              <option value="gr">个人事项</option>
+              <option value="fr">法人事项</option>
+            </select>
+          </div>
+          <button type="submit" class="btn">查询办事指南</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>高频事项办理材料</h3>
+      <div class="in">
+        <table>
+          <tr><th>事项名称</th><th>所需材料</th><th>办理时限</th><th>是否收费</th></tr>
+          <tr><td>医保参保登记</td><td>身份证、户口簿</td><td>3 个工作日</td><td>不收费</td></tr>
+          <tr><td>公积金提取</td><td>身份证、购房合同</td><td>5 个工作日</td><td>不收费</td></tr>
+          <tr><td>户籍证明开具</td><td>身份证</td><td>当场办结</td><td>不收费</td></tr>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="right">
+    <div class="panel">
+      <h3>用户登录</h3>
+      <div class="in">
+        <form action="/login" method="post">
+          <div class="formrow"><label for="u">账号 / 身份证号</label>
+            <input id="u" name="username" type="text" required></div>
+          <div class="formrow"><label for="p">密码</label>
+            <input id="p" name="password" type="password" required></div>
+          <button type="submit" class="btn" style="width:100%">登 录</button>
+        </form>
+        <div style="font-size:12px;margin-top:10px">
+          <a href="/reg">注册</a> | <a href="/reset">找回密码</a> | <a href="/help">登录帮助</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>通知公告</h3>
+      <div class="in">
+        <ul class="list">
+          <li><a href="/gg/88">关于调整政务服务大厅工作时间的通知</a></li>
+          <li><a href="/gg/87">医保年度缴费基数申报开始了</a></li>
+          <li><a href="/gg/86">老年人办事绿色通道服务指引</a></li>
+          <li><a href="/gg/85">网上办事大厅操作手册</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>便民服务</h3>
+      <div class="in">
+        <ul class="list">
+          <li><a href="/map">办事大厅位置导航</a></li>
+          <li><a href="/progress">办件进度查询</a></li>
+          <li><a href="/phone">各部门咨询电话</a></li>
+          <li><a href="/feedback">意见建议</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  示例市政务服务中心（演示快照） 主办<br>
+  地址：示例市示例区政务路 1 号 &nbsp;|&nbsp; 服务热线：0000-12345<br>
+  备案号：示例ICP备00000000号 &nbsp;|&nbsp; 网站标识码：0000000000<br>
+  <a href="/statement">网站声明</a> | <a href="/contact">联系我们</a> | <a href="/sitemap">网站地图</a>
+</footer>
+
+</body>
+</html>

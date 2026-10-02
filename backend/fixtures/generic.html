@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>本地演示快照 - 通用兜底页面</title>
+<!--
+  EasyView 本地演示快照（通用兜底）。
+  当 URL 无法归类、真实抓取又失败时使用，保证 /extract 永远能返回结构完整的数据。
+  本页面为虚构演示素材，与任何真实机构无关。
+-->
+<style>
+  body{font-family:"Microsoft YaHei",sans-serif;margin:0;color:#333;font-size:14px}
+  header{background:#37474f;color:#fff;padding:16px 20px}
+  header h1{margin:0;font-size:22px}
+  header .sub{font-size:12px;color:#b0bec5;margin-top:5px}
+  nav{background:#455a64;padding:0 20px}
+  nav a{display:inline-block;color:#fff;text-decoration:none;padding:12px 18px;font-size:15px}
+  main{padding:20px}
+  .box{border:1px solid #e0e0e0;margin-bottom:16px}
+  .box h3{margin:0;padding:10px 13px;background:#f5f5f5;border-bottom:1px solid #e0e0e0;font-size:15px}
+  .box .in{padding:14px}
+  .entry a{display:inline-block;width:132px;padding:16px 0;margin:5px;text-align:center;
+           background:#546e7a;color:#fff;text-decoration:none;border-radius:3px;font-size:14px}
+  .field{margin-bottom:10px}
+  .field label{display:block;font-size:13px;color:#555;margin-bottom:4px}
+  .field input{width:260px;padding:8px;border:1px solid #ccc;box-sizing:border-box}
+  .btn{background:#546e7a;color:#fff;border:0;padding:10px 24px;cursor:pointer;font-size:14px;border-radius:3px}
+  ul.l li{line-height:2.1;font-size:13px}
+  footer{background:#f5f5f5;border-top:1px solid #ddd;padding:18px 20px;text-align:center;
+         font-size:12px;color:#888;line-height:2}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>本地演示快照</h1>
+  <div class="sub">通用兜底页面 · 真实网页解析失败时由 C 组服务自动启用</div>
+</header>
+
+<nav aria-label="通用导航">
+  <a href="/">首页</a>
+  <a href="/service">在线服务</a>
+  <a href="/notice">通知公告</a>
+  <a href="/help">使用帮助</a>
+  <a href="/contact">联系我们</a>
+</nav>
+
+<main>
+
+  <div class="box">
+    <h3>常用服务</h3>
+    <div class="in entry">
+      <a href="/service/apply">在线申请</a>
+      <a href="/service/query">进度查询</a>
+      <a href="/service/pay">在线缴费</a>
+      <a href="/service/report">结果查询</a>
+      <a href="/help">帮助中心</a>
+      <a href="/contact">联系人工客服</a>
+    </div>
+  </div>
+
+  <div class="box">
+    <h3>在线查询</h3>
+    <div class="in">
+      <form action="/query" method="get">
+        <div class="field">
+          <label for="keyword">查询关键字</label>
+          <input id="keyword" name="keyword" type="text" placeholder="请输入要查询的内容" required>
+        </div>
+        <button type="submit" class="btn">开始查询</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="box">
+    <h3>通知公告</h3>
+    <div class="in">
+      <ul class="l">
+        <li><a href="/notice/1">系统维护通知</a></li>
+        <li><a href="/notice/2">服务指南更新说明</a></li>
+        <li><a href="/notice/3">常见问题汇总</a></li>
+      </ul>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  本地演示快照（虚构素材） · 仅用于 EasyView 项目演示<br>
+  <a href="/statement">网站声明</a> | <a href="/contact">联系我们</a>
+</footer>
+
+</body>
+</html>

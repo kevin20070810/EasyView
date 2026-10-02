@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>示例市第一人民医院 - 网上服务大厅</title>
+<!--
+  EasyView 本地演示快照（医院类），用于规范 §9 的降级兜底。
+  刻意保留真实医院网站的典型噪声：公告栏、新闻列表、广告位、复杂入口，
+  以便演示「原网页 -> 适老化重构」的对比效果。
+  本页面为虚构演示素材，与任何真实机构无关。
+-->
+<style>
+  body{font-family:"Microsoft YaHei",sans-serif;margin:0;color:#333;font-size:14px}
+  .top{background:#1a5fb4;color:#fff;padding:8px 20px;font-size:12px}
+  .top a{color:#cfe2ff;text-decoration:none;margin-right:14px}
+  header{display:flex;align-items:center;padding:14px 20px;border-bottom:3px solid #1a5fb4}
+  header img{width:56px;height:56px;margin-right:12px}
+  .sitename{font-size:24px;font-weight:bold;color:#1a5fb4}
+  .slogan{font-size:12px;color:#888;margin-top:4px}
+  nav{background:#0d47a1;padding:0 20px}
+  nav a{display:inline-block;color:#fff;text-decoration:none;padding:12px 18px;font-size:15px}
+  nav a:hover{background:#1565c0}
+  .wrap{display:flex;padding:16px 20px;gap:16px}
+  .main-col{flex:1}
+  .side-col{width:280px}
+  .notice{background:#fff8e1;border:1px solid #ffe082;padding:10px;font-size:13px;line-height:1.9}
+  .ad{background:#e3f2fd;border:1px dashed #90caf9;padding:10px;text-align:center;font-size:12px;color:#1565c0;margin:10px 0}
+  .card{border:1px solid #e0e0e0;margin-bottom:14px}
+  .card h3{margin:0;background:#f5f5f5;padding:9px 12px;font-size:15px;border-bottom:1px solid #e0e0e0}
+  .card .body{padding:12px}
+  .quick a{display:inline-block;width:106px;padding:14px 0;margin:5px;text-align:center;
+           background:#1976d2;color:#fff;text-decoration:none;border-radius:3px;font-size:14px}
+  .news li{line-height:2;font-size:13px;color:#555}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{border:1px solid #e0e0e0;padding:8px;text-align:left}
+  th{background:#fafafa}
+  .login input{width:100%;padding:7px;margin-bottom:9px;border:1px solid #ccc;box-sizing:border-box}
+  .regform label{display:inline-block;width:88px;font-size:13px}
+  .regform input,.regform select{padding:6px;margin-bottom:9px;border:1px solid #ccc;width:220px}
+  .btn{background:#1976d2;color:#fff;border:0;padding:9px 22px;cursor:pointer;border-radius:3px}
+  footer{background:#f5f5f5;border-top:1px solid #ddd;padding:18px 20px;font-size:12px;color:#888;text-align:center;line-height:2}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <a href="/">返回首页</a>
+  <a href="/sitemap">网站地图</a>
+  <a href="/help">使用帮助</a>
+  <a href="/en">English</a>
+  <a href="/admin">管理入口</a>
+  <span style="float:right">无障碍浏览 | 长辈版 | 简体 | 繁體</span>
+</div>
+
+<header>
+  <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="示例市第一人民医院院徽">
+  <div>
+    <div class="sitename">示例市第一人民医院</div>
+    <div class="slogan">三级甲等 · 网上服务大厅 · 24小时咨询电话 0000-1234567</div>
+  </div>
+</header>
+
+<nav aria-label="主导航">
+  <a href="/">网站首页</a>
+  <a href="/guide">就医指南</a>
+  <a href="/dept">科室导航</a>
+  <a href="/expert">专家介绍</a>
+  <a href="/news">新闻动态</a>
+  <a href="/notice">院务公开</a>
+  <a href="/contact">联系我们</a>
+</nav>
+
+<div class="wrap">
+  <div class="main-col">
+
+    <div class="notice">
+      <strong>停诊公告：</strong>因设备检修，心内科 3 月 18 日（周三）下午门诊暂停，请已预约患者改期。<br>
+      <strong>系统通知：</strong>医保结算系统于每日 23:00-24:00 维护，期间线上缴费功能暂停使用。
+    </div>
+
+    <div class="ad">【广告位】xx 健康体检中心 春季特惠套餐 点击咨询</div>
+
+    <div class="card">
+      <h3>便民服务入口</h3>
+      <div class="body quick">
+        <a href="/guahao">预约挂号</a>
+        <a href="/report">查看报告</a>
+        <a href="/pay">在线缴费</a>
+        <a href="/appointment">门诊预约</a>
+        <a href="/inpatient">住院服务</a>
+        <a href="/insurance">医保查询</a>
+        <a href="/medicine">药品查询</a>
+        <a href="/feedback">投诉建议</a>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>预约挂号</h3>
+      <div class="body">
+        <form class="regform" action="/guahao/submit" method="post">
+          <fieldset style="border:0;padding:0;margin:0">
+            <legend>门诊预约登记</legend>
+            <label for="name">就诊人姓名</label>
+            <input id="name" name="name" type="text" placeholder="请输入就诊人真实姓名" required><br>
+            <label for="idcard">身份证号</label>
+            <input id="idcard" name="idcard" type="text" placeholder="请输入18位身份证号" required><br>
+            <label for="phone">手机号码</label>
+            <input id="phone" name="phone" type="tel" placeholder="接收预约短信的手机号" required><br>
+            <label for="dept">就诊科室</label>
+            <select id="dept" name="dept">
+              <option value="">请选择科室</option>
+              <option value="nk">内科</option>
+              <option value="wk">外科</option>
+              <option value="ek">儿科</option>
+              <option value="fk">妇科</option>
+              <option value="gk">骨科</option>
+            </select><br>
+            <label for="date">就诊日期</label>
+            <input id="date" name="date" type="date"><br>
+            <label for="doctor">指定医生</label>
+            <input id="doctor" name="doctor" type="text" placeholder="不填则由系统分配"><br>
+            <button type="submit" class="btn">提交预约</button>
+            <button type="reset" class="btn" style="background:#9e9e9e">重置</button>
+          </fieldset>
+        </form>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>门诊排班一览</h3>
+      <div class="body">
+        <table>
+          <tr><th>科室</th><th>医生</th><th>职称</th><th>出诊时间</th><th>剩余号源</th></tr>
+          <tr><td>内科</td><td>张医生</td><td>主任医师</td><td>周一至周五 上午</td><td>12</td></tr>
+          <tr><td>外科</td><td>李医生</td><td>副主任医师</td><td>周二、周四 全天</td><td>5</td></tr>
+          <tr><td>儿科</td><td>王医生</td><td>主治医师</td><td>周一、周三、周五 下午</td><td>8</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>医院新闻</h3>
+      <div class="body">
+        <ul class="news">
+          <li><a href="/news/1024">我院举办春季健康义诊活动</a> <span style="color:#aaa">2025-03-10</span></li>
+          <li><a href="/news/1023">关于开展适老化就医服务的通知</a> <span style="color:#aaa">2025-03-08</span></li>
+          <li><a href="/news/1022">新增夜间门诊科室的公告</a> <span style="color:#aaa">2025-03-05</span></li>
+          <li><a href="/news/1021">医保报销比例调整说明</a> <span style="color:#aaa">2025-03-01</span></li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="side-col">
+    <div class="card login">
+      <h3>用户登录</h3>
+      <div class="body">
+        <form action="/login" method="post">
+          <input name="username" type="text" placeholder="用户名 / 手机号" required>
+          <input name="password" type="password" placeholder="密码" required>
+          <button type="submit" class="btn" style="width:100%">登 录</button>
+        </form>
+        <div style="font-size:12px;margin-top:9px">
+          <a href="/register">注册账号</a> |
+          <a href="/forgot">忘记密码</a> |
+          <a href="/smssignin">短信登录</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="ad">【广告位】xx 大药房 慢病用药配送上门</div>
+
+    <div class="card">
+      <h3>快捷链接</h3>
+      <div class="body">
+        <ul class="news">
+          <li><a href="/price">医疗服务价格公示</a></li>
+          <li><a href="/map">院内导航地图</a></li>
+          <li><a href="/parking">停车指引</a></li>
+          <li><a href="/canteen">食堂订餐</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>在线客服</h3>
+      <div class="body">
+        <p>工作时间：每日 08:00 - 20:00</p>
+        <button type="button" class="btn" style="width:100%">联系在线客服</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  示例市第一人民医院（演示快照） 版权所有<br>
+  地址：示例市示例区示例路 1 号 &nbsp;|&nbsp; 邮编：000000 &nbsp;|&nbsp; 电话：0000-1234567<br>
+  备案号：示例ICP备00000000号 &nbsp;|&nbsp; 网站标识码：0000000000<br>
+  <a href="/privacy">隐私政策</a> | <a href="/terms">使用条款</a> | <a href="/statement">版权声明</a>
+</footer>
+
+</body>
+</html>

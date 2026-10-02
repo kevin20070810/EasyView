@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>示例市交通运输局 - 公众出行服务平台</title>
+<!--
+  EasyView 本地演示快照（交通类），用于规范 §9 的降级兜底。
+  刻意保留真实交通网站的典型结构：查询表单、线路表格、路况滚动信息。
+  本页面为虚构演示素材，与任何真实机构无关。
+-->
+<style>
+  body{font-family:"Microsoft YaHei",sans-serif;margin:0;color:#333;font-size:14px}
+  .top{background:#004d40;color:#fff;padding:7px 20px;font-size:12px}
+  .top a{color:#b2dfdb;text-decoration:none;margin-right:15px}
+  header{padding:15px 20px;border-bottom:3px solid #00796b;display:flex;align-items:center}
+  header .logo{width:52px;height:52px;margin-right:13px}
+  header .name{font-size:24px;font-weight:bold;color:#00796b}
+  header .sub{font-size:12px;color:#888;margin-top:4px}
+  nav{background:#00695c;padding:0 20px}
+  nav a{display:inline-block;color:#fff;text-decoration:none;padding:12px 19px;font-size:15px}
+  .ticker{background:#fff3e0;border-bottom:1px solid #ffcc80;padding:9px 20px;font-size:13px;color:#e65100}
+  .layout{display:flex;gap:18px;padding:18px 20px}
+  .main{flex:1}
+  .aside{width:290px}
+  .box{border:1px solid #e0e0e0;margin-bottom:15px}
+  .box h3{margin:0;padding:10px 13px;background:#e0f2f1;border-bottom:1px solid #e0e0e0;
+          font-size:15px;color:#00695c}
+  .box .in{padding:13px}
+  .entry a{display:inline-block;width:124px;padding:16px 0;margin:5px;text-align:center;
+           background:#00897b;color:#fff;text-decoration:none;border-radius:3px;font-size:14px}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{border:1px solid #e0e0e0;padding:8px}
+  th{background:#f5f5f5;text-align:left}
+  .field{margin-bottom:10px}
+  .field label{display:block;font-size:13px;color:#555;margin-bottom:4px}
+  .field input,.field select{width:100%;padding:8px;border:1px solid #ccc;box-sizing:border-box}
+  .btn{background:#00796b;color:#fff;border:0;padding:10px 24px;cursor:pointer;font-size:14px;border-radius:3px}
+  ul.l li{line-height:2.1;font-size:13px}
+  footer{background:#f5f5f5;border-top:1px solid #ddd;padding:18px 20px;text-align:center;
+         font-size:12px;color:#888;line-height:2}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <a href="/">首页</a>
+  <a href="/gk">政务公开</a>
+  <a href="/fw">网上服务</a>
+  <a href="/hd">互动交流</a>
+  <a href="/zt">专题专栏</a>
+  <span style="float:right">无障碍浏览 | 长辈版 | 登录 | 注册</span>
+</div>
+
+<header>
+  <img class="logo" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="示例市交通运输局标识">
+  <div>
+    <div class="name">示例市交通运输局</div>
+    <div class="sub">公众出行服务平台 · 服务热线 0000-12328</div>
+  </div>
+</header>
+
+<nav aria-label="交通服务导航">
+  <a href="/bus">公交查询</a>
+  <a href="/metro">地铁出行</a>
+  <a href="/taxi">出租网约</a>
+  <a href="/etc">ETC 服务</a>
+  <a href="/violation">违章查询</a>
+  <a href="/road">实时路况</a>
+  <a href="/license">证照办理</a>
+</nav>
+
+<div class="ticker">
+  <strong>实时路况：</strong>示例大道东段车流量大，通行缓慢；演示大桥双向畅通；测试路口信号灯故障，请绕行。
+</div>
+
+<div class="layout">
+  <div class="main">
+
+    <div class="box">
+      <h3>出行服务入口</h3>
+      <div class="in entry">
+        <a href="/bus/query">公交线路查询</a>
+        <a href="/metro/map">地铁线路图</a>
+        <a href="/violation/query">违章记录查询</a>
+        <a href="/etc/recharge">ETC 充值</a>
+        <a href="/road/live">实时路况</a>
+        <a href="/park">停车场查询</a>
+        <a href="/lost">失物招领</a>
+        <a href="/complaint">服务投诉</a>
+      </div>
+    </div>
+
+    <div class="box">
+      <h3>违章记录查询</h3>
+      <div class="in">
+        <form action="/violation/query" method="post">
+          <div class="field">
+            <label for="plate">车牌号码</label>
+            <input id="plate" name="plate" type="text" placeholder="例如：示例A12345" required>
+          </div>
+          <div class="field">
+            <label for="vin">车架号后六位</label>
+            <input id="vin" name="vin" type="text" placeholder="行驶证上的车辆识别代号后六位" required>
+          </div>
+          <div class="field">
+            <label for="vtype">车辆类型</label>
+            <select id="vtype" name="vtype">
+              <option value="small">小型汽车</option>
+              <option value="large">大型汽车</option>
+              <option value="motor">摩托车</option>
+            </select>
+          </div>
+          <button type="submit" class="btn">查询违章记录</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="box">
+      <h3>公交线路时刻</h3>
+      <div class="in">
+        <table>
+          <tr><th>线路</th><th>起点</th><th>终点</th><th>首班</th><th>末班</th><th>票价</th></tr>
+          <tr><td>示例 1 路</td><td>火车站</td><td>市民广场</td><td>05:30</td><td>22:30</td><td>2 元</td></tr>
+          <tr><td>示例 5 路</td><td>第一医院</td><td>大学城</td><td>06:00</td><td>21:00</td><td>2 元</td></tr>
+          <tr><td>示例 12 路</td><td>政务中心</td><td>高铁站</td><td>06:30</td><td>23:00</td><td>3 元</td></tr>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="aside">
+    <div class="box">
+      <h3>用户登录</h3>
+      <div class="in">
+        <form action="/login" method="post">
+          <div class="field"><label for="acct">手机号 / 证件号</label>
+            <input id="acct" name="username" type="text" required></div>
+          <div class="field"><label for="pwd">密码</label>
+            <input id="pwd" name="password" type="password" required></div>
+          <button type="submit" class="btn" style="width:100%">登 录</button>
+        </form>
+        <div style="font-size:12px;margin-top:9px">
+          <a href="/reg">注册</a> | <a href="/reset">忘记密码</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="box">
+      <h3>出行公告</h3>
+      <div class="in">
+        <ul class="l">
+          <li><a href="/n/301">示例大道施工期间公交线路临时调整</a></li>
+          <li><a href="/n/300">地铁 2 号线延长运营时间通告</a></li>
+          <li><a href="/n/299">老年乘客乘车优惠政策说明</a></li>
+          <li><a href="/n/298">ETC 设备免费安装网点名单</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="box">
+      <h3>在线客服</h3>
+      <div class="in">
+        <p>服务时间：每日 07:00 - 22:00</p>
+        <button type="button" class="btn" style="width:100%">联系在线客服</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  示例市交通运输局（演示快照） 主办<br>
+  地址：示例市示例区交通路 1 号 &nbsp;|&nbsp; 服务热线：0000-12328<br>
+  备案号：示例ICP备00000000号 &nbsp;|&nbsp; 网站标识码：0000000000<br>
+  <a href="/statement">网站声明</a> | <a href="/contact">联系我们</a>
+</footer>
+
+</body>
+</html>
