@@ -1,8 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-label="暖龄 EasyView">
-  <!-- 小尺寸专用（<=48px）：留暖阳、卡片、大字块、圆按钮，16px 仍可辨认 -->
+  <!-- 小尺寸专用（<=48px）：留暖阳与捧手，16px 仍可辨认 -->
   <rect width="128" height="128" rx="32" fill="#FFF8EC" stroke="#F3E0BA" stroke-width="3"/>
-  <circle cx="64" cy="50" r="24" fill="#EE6C2D"/>
-  <rect x="24" y="58" width="80" height="50" rx="12" fill="#FFFDF8"/>
-  <rect x="34" y="75" width="26" height="12" rx="6" fill="#0E6068"/>
-  <circle cx="84" cy="81" r="10" fill="#EE6C2D"/>
+  <circle cx="64" cy="56" r="26" fill="#EE6C2D"/>
+  <path d="M32 58 C28 88 44 102 64 102 C84 102 100 88 96 58" fill="none" stroke="#EE6C2D" stroke-width="10" stroke-linecap="round"/>
 </svg>
