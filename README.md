@@ -101,6 +101,8 @@ python -m tools.check_docs             # A/B 两份交接文件的契约表格�
 
 **约定**：B 产出 `ui_schema.json` 后放进 `docs/examples/`，`check_ui` 全绿再叫 A 联调。
 
+**新版评审材料**：[ui_schema 0.3 草案与人工标准样例](docs/drafts/ui-schema-0.3/README.md)补充意图、来源追溯、内容保真、风险和生成来源。它使用独立文件与校验入口，尚未替换当前协议或接入 Chrome 扩展。
+
 ---
 
 ## Git 协作规则

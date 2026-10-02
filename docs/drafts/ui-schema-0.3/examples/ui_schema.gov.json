@@ -1,0 +1,528 @@
+{
+  "schema_version": "0.3.0-draft",
+  "artifact_kind": "reference",
+  "source_elements_schema_version": "1.1.0",
+  "page_url": "https://demo.easyview.local/gov/",
+  "final_url": "snapshot://gov",
+  "page_title": "市政务服务中心 · 办事大厅（本地快照）",
+  "source": "fallback",
+  "generated_at": "2026-10-02T12:23:21Z",
+  "input_snapshot": {
+    "sha256": "c3e8fbfd7c7995a94512a80b4f3880dd0724a6bff2875a8c3bda4b0ec76695bf",
+    "extracted_at": "2026-10-02T12:37:05+08:00"
+  },
+  "generator": null,
+  "user_goal": null,
+  "state": "ready",
+  "empty_reason": null,
+  "page": {
+    "greeting": "您好，这里可以查办事信息",
+    "summary": "可以查办事指南、材料和进度，也可以找办事大厅或咨询电话。"
+  },
+  "stats": {
+    "input_elements": 80,
+    "visible_elements": 80,
+    "input_truncated": false,
+    "referenced_elements": 11,
+    "task_cards": 7
+  },
+  "cards": [
+    {
+      "id": "card_gov_guide",
+      "title": "查办事指南",
+      "subtitle": "按事项名称和办理区域查指南",
+      "icon": "search",
+      "priority": 1,
+      "intent": "query",
+      "provenance": {
+        "source_element_ids": [
+          "el_c86b7096",
+          "el_2c5f6c9a",
+          "el_5e702390",
+          "el_3f024afa"
+        ],
+        "evidence": [
+          {
+            "id": "ev_1",
+            "element_id": "el_c86b7096",
+            "field": "text",
+            "quote": "事项名称关键字 办理区域 全部区域 示例区 演示区 测试区 事项类型 个人事项 法人事项 查询办事指南"
+          },
+          {
+            "id": "ev_2",
+            "element_id": "el_2c5f6c9a",
+            "field": "label",
+            "quote": "事项名称关键字"
+          },
+          {
+            "id": "ev_3",
+            "element_id": "el_5e702390",
+            "field": "label",
+            "quote": "办理区域"
+          },
+          {
+            "id": "ev_4",
+            "element_id": "el_3f024afa",
+            "field": "text",
+            "quote": "查询办事指南"
+          }
+        ]
+      },
+      "content_meta": {
+        "title": {
+          "mode": "rewritten",
+          "evidence_ids": [
+            "ev_1"
+          ]
+        },
+        "subtitle": {
+          "mode": "rewritten",
+          "evidence_ids": [
+            "ev_1",
+            "ev_2",
+            "ev_3",
+            "ev_4"
+          ]
+        }
+      },
+      "facts": [],
+      "ranking": {
+        "reason_codes": [
+          "main_service"
+        ],
+        "explanation": "人工标准以个人办事为场景，把同一查询表单归为一张任务卡，只定位原表单。",
+        "evidence_ids": [
+          "ev_1",
+          "ev_2",
+          "ev_3",
+          "ev_4"
+        ]
+      },
+      "risk": {
+        "level": "normal",
+        "domains": [],
+        "reason_codes": [
+          "read_only"
+        ],
+        "evidence_ids": [
+          "ev_1",
+          "ev_2",
+          "ev_3",
+          "ev_4"
+        ]
+      },
+      "action": {
+        "kind": "form",
+        "target_element_id": "el_c86b7096",
+        "target_selector": "div:nth-of-type(3) > div > form",
+        "target_xpath": "/html[1]/body[1]/div[4]/div[1]/div[3]/div[1]/form[1]",
+        "href": null,
+        "confirmation": null
+      }
+    },
+    {
+      "id": "card_gov_retirement",
+      "title": "申请退休待遇",
+      "subtitle": "打开退休待遇的申请入口",
+      "icon": "government",
+      "priority": 2,
+      "intent": "apply",
+      "provenance": {
+        "source_element_ids": [
+          "el_60301a4a"
+        ],
+        "evidence": [
+          {
+            "id": "ev_1",
+            "element_id": "el_60301a4a",
+            "field": "text",
+            "quote": "退休待遇申请"
+          }
+        ]
+      },
+      "content_meta": {
+        "title": {
+          "mode": "rewritten",
+          "evidence_ids": [
+            "ev_1"
+          ]
+        },
+        "subtitle": {
+          "mode": "rewritten",
+          "evidence_ids": [
+            "ev_1"
+          ]
+        }
+      },
+      "facts": [],
+      "ranking": {
+        "reason_codes": [
+          "main_service"
+        ],
+        "explanation": "保留来源中明确面向退休事项的入口；快照没有资格或金额说明，不能补写。",
+        "evidence_ids": [
+          "ev_1"
+        ]
+      },
+      "risk": {
+        "level": "blocked",
+        "domains": [
+          "identity"
+        ],
+        "reason_codes": [
+          "identity_submission"
+        ],
+        "evidence_ids": [
+          "ev_1"
+        ]
+      },
+      "action": {
+        "kind": "external",
+        "target_element_id": "el_60301a4a",
+        "target_selector": "div:nth-of-type(2) > div > a:nth-of-type(5)",
+        "target_xpath": "/html[1]/body[1]/div[4]/div[1]/div[2]/div[1]/a[5]",
+        "href": "https://demo.easyview.local/item/tuixiu",
+        "confirmation": null
+      }
+    },
+    {
+      "id": "card_gov_progress",
+      "title": "查办理进度",
+      "subtitle": "查看已提交事项的办理进度入口",
+      "icon": "document",
+      "priority": 3,
+      "intent": "query",
+      "provenance": {
+        "source_element_ids": [
+          "el_e98a9ff2"
+        ],
+        "evidence": [
+          {
+            "id": "ev_1",
+            "element_id": "el_e98a9ff2",
+            "field": "text",
+            "quote": "办件进度查询"
+          }
+        ]
+      },
+      "content_meta": {
+        "title": {
+          "mode": "rewritten",
+          "evidence_ids": [
+            "ev_1"
+          ]
+        },
+        "subtitle": {
+          "mode": "rewritten",
+          "evidence_ids": [
+            "ev_1"
+          ]
+        }
+      },
+      "facts": [],
+      "ranking": {
+        "reason_codes": [
+          "main_service"
+        ],
+        "explanation": "与个人事项后续查询相关；不推断具体查询字段或办理结果。",
+        "evidence_ids": [
+          "ev_1"
+        ]
+      },
+      "risk": {
+        "level": "sensitive",
+        "domains": [
+          "identity"
+        ],
+        "reason_codes": [
+          "personal_data"
+        ],
+        "evidence_ids": [
+          "ev_1"
+        ]
+      },
+      "action": {
+        "kind": "external",
+        "target_element_id": "el_e98a9ff2",
+        "target_selector": "div:nth-of-type(3) > div > ul > li:nth-of-type(2) > a",
+        "target_xpath": "/html[1]/body[1]/div[4]/div[2]/div[3]/div[1]/ul[1]/li[2]/a[1]",
+        "href": "https://demo.easyview.local/progress",
+        "confirmation": {
+          "message": "将打开办件进度查询入口，个人信息请在原网页填写。",
+          "confirm_label": "打开原网页",
+          "cancel_label": "先不打开"
+        }
+      }
+    },
+    {
+      "id": "card_gov_materials",
+      "title": "查所需材料",
+      "subtitle": "查看事项所需材料和办理时限",
+      "icon": "document",
+      "priority": 4,
+      "intent": "learn",
+      "provenance": {
+        "source_element_ids": [
+          "el_4e01039c",
+          "el_c3ee137d"
+        ],
+        "evidence": [
+          {
+            "id": "ev_1",
+            "element_id": "el_4e01039c",
+            "field": "text",
+            "quote": "高频事项办理材料"
+          },
+          {
+            "id": "ev_2",
+            "element_id": "el_c3ee137d",
+            "field": "text",
+            "quote": "事项名称 所需材料 办理时限 是否收费 医保参保登记 身份证、户口簿 3 个工作日 不收费 公积金提取 身份证、购房合同 5 个工作日 不收费 户籍证明开具 身份证 当场办结 不收费"
+          }
+        ]
+      },
+      "content_meta": {
+        "title": {
+          "mode": "rewritten",
+          "evidence_ids": [
+            "ev_1"
+          ]
+        },
+        "subtitle": {
+          "mode": "rewritten",
+          "evidence_ids": [
+            "ev_1",
+            "ev_2"
+          ]
+        }
+      },
+      "facts": [
+        {
+          "text": "事项名称 所需材料 办理时限 是否收费 医保参保登记 身份证、户口簿 3 个工作日 不收费 公积金提取 身份证、购房合同 5 个工作日 不收费 户籍证明开具 身份证 当场办结 不收费",
+          "content_mode": "verbatim",
+          "evidence_ids": [
+            "ev_2"
+          ]
+        }
+      ],
+      "ranking": {
+        "reason_codes": [
+          "supporting_information"
+        ],
+        "explanation": "保留完整材料表原文，避免把不同事项的材料、时限和收费拼错。",
+        "evidence_ids": [
+          "ev_1",
+          "ev_2"
+        ]
+      },
+      "risk": {
+        "level": "normal",
+        "domains": [],
+        "reason_codes": [
+          "read_only"
+        ],
+        "evidence_ids": [
+          "ev_1",
+          "ev_2"
+        ]
+      },
+      "action": {
+        "kind": "scroll",
+        "target_element_id": "el_4e01039c",
+        "target_selector": "div:nth-of-type(4) > h3",
+        "target_xpath": "/html[1]/body[1]/div[4]/div[1]/div[4]/h3[1]",
+        "href": null,
+        "confirmation": null
+      }
+    },
+    {
+      "id": "card_gov_senior_help",
+      "title": "看便民指引",
+      "subtitle": "了解老年人办事绿色通道服务",
+      "icon": "help",
+      "priority": 5,
+      "intent": "help",
+      "provenance": {
+        "source_element_ids": [
+          "el_d3a824ae"
+        ],
+        "evidence": [
+          {
+            "id": "ev_1",
+            "element_id": "el_d3a824ae",
+            "field": "text",
+            "quote": "老年人办事绿色通道服务指引"
+          }
+        ]
+      },
+      "content_meta": {
+        "title": {
+          "mode": "rewritten",
+          "evidence_ids": [
+            "ev_1"
+          ]
+        },
+        "subtitle": {
+          "mode": "rewritten",
+          "evidence_ids": [
+            "ev_1"
+          ]
+        }
+      },
+      "facts": [],
+      "ranking": {
+        "reason_codes": [
+          "assistance"
+        ],
+        "explanation": "来源中明确有老年人服务指引；仅提供该入口，不推断适用条件。",
+        "evidence_ids": [
+          "ev_1"
+        ]
+      },
+      "risk": {
+        "level": "normal",
+        "domains": [],
+        "reason_codes": [
+          "read_only"
+        ],
+        "evidence_ids": [
+          "ev_1"
+        ]
+      },
+      "action": {
+        "kind": "navigate",
+        "target_element_id": "el_d3a824ae",
+        "target_selector": "div:nth-of-type(2) > div > ul > li:nth-of-type(3) > a",
+        "target_xpath": "/html[1]/body[1]/div[4]/div[2]/div[2]/div[1]/ul[1]/li[3]/a[1]",
+        "href": "https://demo.easyview.local/gg/86",
+        "confirmation": null
+      }
+    },
+    {
+      "id": "card_gov_hall",
+      "title": "找办事大厅",
+      "subtitle": "查看办事大厅的位置入口",
+      "icon": "location",
+      "priority": 6,
+      "intent": "query",
+      "provenance": {
+        "source_element_ids": [
+          "el_86973f25"
+        ],
+        "evidence": [
+          {
+            "id": "ev_1",
+            "element_id": "el_86973f25",
+            "field": "text",
+            "quote": "办事大厅位置导航"
+          }
+        ]
+      },
+      "content_meta": {
+        "title": {
+          "mode": "rewritten",
+          "evidence_ids": [
+            "ev_1"
+          ]
+        },
+        "subtitle": {
+          "mode": "rewritten",
+          "evidence_ids": [
+            "ev_1"
+          ]
+        }
+      },
+      "facts": [],
+      "ranking": {
+        "reason_codes": [
+          "supporting_information"
+        ],
+        "explanation": "为需要线下办理的用户保留位置入口，不计算距离或推测营业时间。",
+        "evidence_ids": [
+          "ev_1"
+        ]
+      },
+      "risk": {
+        "level": "normal",
+        "domains": [],
+        "reason_codes": [
+          "read_only"
+        ],
+        "evidence_ids": [
+          "ev_1"
+        ]
+      },
+      "action": {
+        "kind": "navigate",
+        "target_element_id": "el_86973f25",
+        "target_selector": "div:nth-of-type(3) > div > ul > li:nth-of-type(1) > a",
+        "target_xpath": "/html[1]/body[1]/div[4]/div[2]/div[3]/div[1]/ul[1]/li[1]/a[1]",
+        "href": "https://demo.easyview.local/map",
+        "confirmation": null
+      }
+    },
+    {
+      "id": "card_gov_phone",
+      "title": "查咨询电话",
+      "subtitle": "查看各部门的咨询电话",
+      "icon": "phone",
+      "priority": 7,
+      "intent": "contact",
+      "provenance": {
+        "source_element_ids": [
+          "el_2d67ec34"
+        ],
+        "evidence": [
+          {
+            "id": "ev_1",
+            "element_id": "el_2d67ec34",
+            "field": "text",
+            "quote": "各部门咨询电话"
+          }
+        ]
+      },
+      "content_meta": {
+        "title": {
+          "mode": "rewritten",
+          "evidence_ids": [
+            "ev_1"
+          ]
+        },
+        "subtitle": {
+          "mode": "rewritten",
+          "evidence_ids": [
+            "ev_1"
+          ]
+        }
+      },
+      "facts": [],
+      "ranking": {
+        "reason_codes": [
+          "assistance"
+        ],
+        "explanation": "保留人工咨询出口；具体号码须到来源页面查看。",
+        "evidence_ids": [
+          "ev_1"
+        ]
+      },
+      "risk": {
+        "level": "normal",
+        "domains": [],
+        "reason_codes": [
+          "read_only"
+        ],
+        "evidence_ids": [
+          "ev_1"
+        ]
+      },
+      "action": {
+        "kind": "navigate",
+        "target_element_id": "el_2d67ec34",
+        "target_selector": "div:nth-of-type(3) > div > ul > li:nth-of-type(3) > a",
+        "target_xpath": "/html[1]/body[1]/div[4]/div[2]/div[3]/div[1]/ul[1]/li[3]/a[1]",
+        "href": "https://demo.easyview.local/phone",
+        "confirmation": null
+      }
+    }
+  ]
+}

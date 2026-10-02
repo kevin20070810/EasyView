@@ -1,0 +1,58 @@
+{
+  "manifest_version": 3,
+  "name": "EasyView 简界 · 敬老版",
+  "version": "0.8.0",
+  "description": "为常用网站提供敬老版，并可在当前网页生成候选敬老版。",
+  "permissions": ["activeTab", "scripting"],
+  "background": { "service_worker": "src/background.js" },
+  "action": { "default_title": "为当前网页生成敬老版" },
+  "content_scripts": [
+    {
+      "matches": ["https://*.12306.cn/*"],
+      "js": [
+        "src/site/12306.js",
+        "src/ui/ticket-flow.js",
+        "src/ui/overlay.js",
+        "src/content.js"
+      ],
+      "css": [],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://www.10086.cn/*", "https://shop.10086.cn/*"],
+      "js": [
+        "src/site/10086.js",
+        "src/ui/mobile-overlay.js",
+        "src/mobile-content.js"
+      ],
+      "css": [],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://www.weather.com.cn/*"],
+      "js": [
+        "src/site/weather.js",
+        "src/ui/weather-overlay.js",
+        "src/weather-content.js"
+      ],
+      "css": [],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://11185.cn/*", "https://www.11185.cn/*"],
+      "js": [
+        "src/site/postal.js",
+        "src/ui/postal-overlay.js",
+        "src/postal-content.js"
+      ],
+      "css": [],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["src/styles.css"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}

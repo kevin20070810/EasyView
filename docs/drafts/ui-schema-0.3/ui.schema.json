@@ -1,0 +1,869 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://easyview.local/drafts/ui-schema/0.3.0",
+  "title": "EasyView ui_schema 0.3.0-draft",
+  "description": "评审草案；不替换 docs/ui.schema.json。由 B 生成草稿、绑定器核实来源与策略后交 A。人工标准样例 artifact_kind=reference、generator=null。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "artifact_kind",
+    "source_elements_schema_version",
+    "page_url",
+    "final_url",
+    "page_title",
+    "source",
+    "generated_at",
+    "input_snapshot",
+    "generator",
+    "user_goal",
+    "state",
+    "empty_reason",
+    "page",
+    "stats",
+    "cards"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "0.3.0-draft"
+    },
+    "artifact_kind": {
+      "enum": [
+        "reference",
+        "runtime"
+      ]
+    },
+    "source_elements_schema_version": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 30
+    },
+    "page_url": {
+      "type": "string",
+      "format": "uri"
+    },
+    "final_url": {
+      "type": "string",
+      "format": "uri"
+    },
+    "page_title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "source": {
+      "enum": [
+        "live",
+        "fallback"
+      ]
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "input_snapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sha256",
+        "extracted_at"
+      ],
+      "properties": {
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "extracted_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "generator": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/generator"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "user_goal": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "minLength": 1,
+      "maxLength": 100
+    },
+    "state": {
+      "enum": [
+        "ready",
+        "empty"
+      ]
+    },
+    "empty_reason": {
+      "enum": [
+        null,
+        "no_reliable_tasks",
+        "unsupported_page"
+      ]
+    },
+    "page": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "greeting",
+        "summary"
+      ],
+      "properties": {
+        "greeting": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        }
+      }
+    },
+    "stats": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "input_elements",
+        "visible_elements",
+        "input_truncated",
+        "referenced_elements",
+        "task_cards"
+      ],
+      "properties": {
+        "input_elements": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "visible_elements": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "input_truncated": {
+          "type": "boolean"
+        },
+        "referenced_elements": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "task_cards": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 7
+        }
+      }
+    },
+    "cards": {
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 7,
+      "items": {
+        "$ref": "#/$defs/card"
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "artifact_kind": {
+            "const": "reference"
+          }
+        },
+        "required": [
+          "artifact_kind"
+        ]
+      },
+      "then": {
+        "properties": {
+          "generator": {
+            "type": "null"
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "generator": {
+            "$ref": "#/$defs/generator"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "state": {
+            "const": "empty"
+          }
+        },
+        "required": [
+          "state"
+        ]
+      },
+      "then": {
+        "properties": {
+          "cards": {
+            "maxItems": 0
+          },
+          "empty_reason": {
+            "enum": [
+              "no_reliable_tasks",
+              "unsupported_page"
+            ]
+          },
+          "stats": {
+            "properties": {
+              "task_cards": {
+                "const": 0
+              }
+            }
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "cards": {
+            "minItems": 1
+          },
+          "empty_reason": {
+            "type": "null"
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "generator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mode",
+        "policy_version",
+        "prompt_version",
+        "fallback_reason"
+      ],
+      "properties": {
+        "mode": {
+          "enum": [
+            "model",
+            "rules",
+            "hybrid"
+          ]
+        },
+        "policy_version": {
+          "const": "senior-v0.3"
+        },
+        "prompt_version": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 50
+        },
+        "fallback_reason": {
+          "enum": [
+            null,
+            "timeout",
+            "network_error",
+            "invalid_output",
+            "policy_rejected"
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "mode": {
+                "enum": [
+                  "model",
+                  "hybrid"
+                ]
+              }
+            },
+            "required": [
+              "mode"
+            ]
+          },
+          "then": {
+            "properties": {
+              "prompt_version": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 50
+              }
+            }
+          }
+        }
+      ]
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "element_id",
+        "field",
+        "quote"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^ev_[a-z0-9_]+$"
+        },
+        "element_id": {
+          "type": "string",
+          "pattern": "^el_[0-9a-f]{8}$"
+        },
+        "field": {
+          "enum": [
+            "text",
+            "label",
+            "aria_label",
+            "placeholder"
+          ]
+        },
+        "quote": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        }
+      }
+    },
+    "contentMeta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mode",
+        "evidence_ids"
+      ],
+      "properties": {
+        "mode": {
+          "enum": [
+            "verbatim",
+            "rewritten",
+            "generated"
+          ]
+        },
+        "evidence_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^ev_[a-z0-9_]+$"
+          },
+          "minItems": 1,
+          "maxItems": 20,
+          "uniqueItems": true
+        }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_element_ids",
+        "evidence"
+      ],
+      "properties": {
+        "source_element_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^el_[0-9a-f]{8}$"
+          },
+          "minItems": 1,
+          "maxItems": 40,
+          "uniqueItems": true
+        },
+        "evidence": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 30,
+          "items": {
+            "$ref": "#/$defs/evidence"
+          }
+        }
+      }
+    },
+    "ranking": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "reason_codes",
+        "explanation",
+        "evidence_ids"
+      ],
+      "properties": {
+        "reason_codes": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "user_goal_match",
+              "main_service",
+              "assistance",
+              "source_warning",
+              "supporting_information"
+            ]
+          },
+          "minItems": 1,
+          "maxItems": 5,
+          "uniqueItems": true
+        },
+        "explanation": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "evidence_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^ev_[a-z0-9_]+$"
+          },
+          "minItems": 1,
+          "maxItems": 20,
+          "uniqueItems": true
+        }
+      }
+    },
+    "risk": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "level",
+        "domains",
+        "reason_codes",
+        "evidence_ids"
+      ],
+      "properties": {
+        "level": {
+          "enum": [
+            "normal",
+            "sensitive",
+            "blocked"
+          ]
+        },
+        "domains": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "healthcare",
+              "money",
+              "identity",
+              "external_handler"
+            ]
+          },
+          "minItems": 0,
+          "maxItems": 4,
+          "uniqueItems": true
+        },
+        "reason_codes": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "read_only",
+              "personal_data",
+              "payment",
+              "medical_submission",
+              "identity_submission",
+              "unknown_effect",
+              "external_handler"
+            ]
+          },
+          "minItems": 1,
+          "maxItems": 7,
+          "uniqueItems": true
+        },
+        "evidence_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^ev_[a-z0-9_]+$"
+          },
+          "minItems": 1,
+          "maxItems": 20,
+          "uniqueItems": true
+        }
+      }
+    },
+    "action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "target_element_id",
+        "target_selector",
+        "target_xpath",
+        "href",
+        "confirmation"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "navigate",
+            "scroll",
+            "form",
+            "external"
+          ]
+        },
+        "target_element_id": {
+          "type": "string",
+          "pattern": "^el_[0-9a-f]{8}$"
+        },
+        "target_selector": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000
+        },
+        "target_xpath": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 2000
+        },
+        "href": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 2048
+        },
+        "confirmation": {
+          "anyOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "message",
+                "confirm_label",
+                "cancel_label"
+              ],
+              "properties": {
+                "message": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 80
+                },
+                "confirm_label": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 12
+                },
+                "cancel_label": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 12
+                }
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "enum": [
+                  "navigate",
+                  "external"
+                ]
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "properties": {
+              "href": {
+                "type": "string",
+                "pattern": "^(https?://|tel:)",
+                "maxLength": 2048
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "href": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "fact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "text",
+        "content_mode",
+        "evidence_ids"
+      ],
+      "properties": {
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        },
+        "content_mode": {
+          "const": "verbatim"
+        },
+        "evidence_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^ev_[a-z0-9_]+$"
+          },
+          "minItems": 1,
+          "maxItems": 20,
+          "uniqueItems": true
+        }
+      }
+    },
+    "card": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "title",
+        "subtitle",
+        "icon",
+        "priority",
+        "intent",
+        "provenance",
+        "content_meta",
+        "facts",
+        "ranking",
+        "risk",
+        "action"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^card_[a-z0-9_]+$"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 12
+        },
+        "subtitle": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 48
+        },
+        "icon": {
+          "enum": [
+            "home",
+            "calendar",
+            "document",
+            "payment",
+            "phone",
+            "user",
+            "search",
+            "location",
+            "bus",
+            "train",
+            "hospital",
+            "government",
+            "warning",
+            "info",
+            "help",
+            "back"
+          ]
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 7
+        },
+        "intent": {
+          "enum": [
+            "query",
+            "apply",
+            "book",
+            "pay",
+            "contact",
+            "learn",
+            "help",
+            "warning"
+          ]
+        },
+        "provenance": {
+          "$ref": "#/$defs/provenance"
+        },
+        "content_meta": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "title",
+            "subtitle"
+          ],
+          "properties": {
+            "title": {
+              "$ref": "#/$defs/contentMeta"
+            },
+            "subtitle": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/contentMeta"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        },
+        "facts": {
+          "type": "array",
+          "maxItems": 4,
+          "items": {
+            "$ref": "#/$defs/fact"
+          }
+        },
+        "ranking": {
+          "$ref": "#/$defs/ranking"
+        },
+        "risk": {
+          "$ref": "#/$defs/risk"
+        },
+        "action": {
+          "$ref": "#/$defs/action"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "subtitle": {
+                "type": "null"
+              }
+            },
+            "required": [
+              "subtitle"
+            ]
+          },
+          "then": {
+            "properties": {
+              "content_meta": {
+                "properties": {
+                  "subtitle": {
+                    "type": "null"
+                  }
+                }
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "content_meta": {
+                "properties": {
+                  "subtitle": {
+                    "$ref": "#/$defs/contentMeta"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "risk": {
+                "properties": {
+                  "level": {
+                    "const": "sensitive"
+                  }
+                },
+                "required": [
+                  "level"
+                ]
+              }
+            },
+            "required": [
+              "risk"
+            ]
+          },
+          "then": {
+            "properties": {
+              "action": {
+                "properties": {
+                  "confirmation": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "action": {
+                "properties": {
+                  "confirmation": {
+                    "type": "null"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "risk": {
+                "properties": {
+                  "level": {
+                    "const": "blocked"
+                  }
+                },
+                "required": [
+                  "level"
+                ]
+              }
+            },
+            "required": [
+              "risk"
+            ]
+          },
+          "then": {
+            "properties": {
+              "action": {
+                "properties": {
+                  "kind": {
+                    "enum": [
+                      "navigate",
+                      "external",
+                      "scroll"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

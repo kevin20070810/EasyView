@@ -1,0 +1,498 @@
+{
+  "schema_version": "0.3.0-draft",
+  "artifact_kind": "reference",
+  "source_elements_schema_version": "1.1.0",
+  "page_url": "https://demo.easyview.local/hospital/",
+  "final_url": "snapshot://hospital",
+  "page_title": "市第一人民医院 · 网上服务（本地快照）",
+  "source": "fallback",
+  "generated_at": "2026-10-02T12:23:21Z",
+  "input_snapshot": {
+    "sha256": "4ce5a99e6b694df45b23a5b99e01c87fb23ead29bf79f9b5fae2f67fd3bb9530",
+    "extracted_at": "2026-10-02T12:37:05+08:00"
+  },
+  "generator": null,
+  "user_goal": null,
+  "state": "ready",
+  "empty_reason": null,
+  "page": {
+    "greeting": "您好，这里可以查就医信息",
+    "summary": "可以找挂号、报告和缴费入口，也可以查排班、院内位置或联系医院。"
+  },
+  "stats": {
+    "input_elements": 102,
+    "visible_elements": 102,
+    "input_truncated": false,
+    "referenced_elements": 12,
+    "task_cards": 6
+  },
+  "cards": [
+    {
+      "id": "card_hospital_booking",
+      "title": "去预约挂号",
+      "subtitle": "打开医院的预约挂号入口",
+      "icon": "calendar",
+      "priority": 1,
+      "intent": "book",
+      "provenance": {
+        "source_element_ids": [
+          "el_514efc10",
+          "el_6f230879",
+          "el_1ccf3fbc",
+          "el_3a19b50d",
+          "el_0a5dde7d"
+        ],
+        "evidence": [
+          {
+            "id": "ev_1",
+            "element_id": "el_514efc10",
+            "field": "text",
+            "quote": "预约挂号"
+          },
+          {
+            "id": "ev_2",
+            "element_id": "el_6f230879",
+            "field": "text",
+            "quote": "门诊预约登记"
+          },
+          {
+            "id": "ev_3",
+            "element_id": "el_1ccf3fbc",
+            "field": "label",
+            "quote": "就诊人姓名"
+          },
+          {
+            "id": "ev_4",
+            "element_id": "el_3a19b50d",
+            "field": "label",
+            "quote": "身份证号"
+          },
+          {
+            "id": "ev_5",
+            "element_id": "el_0a5dde7d",
+            "field": "text",
+            "quote": "提交预约"
+          }
+        ]
+      },
+      "content_meta": {
+        "title": {
+          "mode": "rewritten",
+          "evidence_ids": [
+            "ev_1"
+          ]
+        },
+        "subtitle": {
+          "mode": "rewritten",
+          "evidence_ids": [
+            "ev_1",
+            "ev_2",
+            "ev_3",
+            "ev_4",
+            "ev_5"
+          ]
+        }
+      },
+      "facts": [],
+      "ranking": {
+        "reason_codes": [
+          "main_service"
+        ],
+        "explanation": "人工标准以就医办事为场景，先保留已存在的挂号入口；不根据新闻或网页位置排序。",
+        "evidence_ids": [
+          "ev_1",
+          "ev_2",
+          "ev_3",
+          "ev_4",
+          "ev_5"
+        ]
+      },
+      "risk": {
+        "level": "blocked",
+        "domains": [
+          "healthcare",
+          "identity"
+        ],
+        "reason_codes": [
+          "medical_submission"
+        ],
+        "evidence_ids": [
+          "ev_1",
+          "ev_2",
+          "ev_3",
+          "ev_4",
+          "ev_5"
+        ]
+      },
+      "action": {
+        "kind": "external",
+        "target_element_id": "el_514efc10",
+        "target_selector": "div:nth-of-type(3) > div > a:nth-of-type(1)",
+        "target_xpath": "/html[1]/body[1]/div[2]/div[1]/div[3]/div[1]/a[1]",
+        "href": "https://demo.easyview.local/guahao",
+        "confirmation": null
+      }
+    },
+    {
+      "id": "card_hospital_report",
+      "title": "查看报告",
+      "subtitle": "打开医院的报告查询入口",
+      "icon": "document",
+      "priority": 2,
+      "intent": "query",
+      "provenance": {
+        "source_element_ids": [
+          "el_816c3fc2"
+        ],
+        "evidence": [
+          {
+            "id": "ev_1",
+            "element_id": "el_816c3fc2",
+            "field": "text",
+            "quote": "查看报告"
+          }
+        ]
+      },
+      "content_meta": {
+        "title": {
+          "mode": "verbatim",
+          "evidence_ids": [
+            "ev_1"
+          ]
+        },
+        "subtitle": {
+          "mode": "rewritten",
+          "evidence_ids": [
+            "ev_1"
+          ]
+        }
+      },
+      "facts": [],
+      "ranking": {
+        "reason_codes": [
+          "main_service"
+        ],
+        "explanation": "与就医办事直接相关，排在挂号之后；只承诺打开来源中的报告入口。",
+        "evidence_ids": [
+          "ev_1"
+        ]
+      },
+      "risk": {
+        "level": "sensitive",
+        "domains": [
+          "healthcare",
+          "identity"
+        ],
+        "reason_codes": [
+          "personal_data"
+        ],
+        "evidence_ids": [
+          "ev_1"
+        ]
+      },
+      "action": {
+        "kind": "external",
+        "target_element_id": "el_816c3fc2",
+        "target_selector": "div:nth-of-type(3) > div > a:nth-of-type(2)",
+        "target_xpath": "/html[1]/body[1]/div[2]/div[1]/div[3]/div[1]/a[2]",
+        "href": "https://demo.easyview.local/report",
+        "confirmation": {
+          "message": "将打开报告查询入口，身份信息请在原网页填写。",
+          "confirm_label": "打开原网页",
+          "cancel_label": "先不打开"
+        }
+      }
+    },
+    {
+      "id": "card_hospital_payment",
+      "title": "缴就医费用",
+      "subtitle": "打开医院的缴费入口",
+      "icon": "payment",
+      "priority": 3,
+      "intent": "pay",
+      "provenance": {
+        "source_element_ids": [
+          "el_d4e15498"
+        ],
+        "evidence": [
+          {
+            "id": "ev_1",
+            "element_id": "el_d4e15498",
+            "field": "text",
+            "quote": "在线缴费"
+          }
+        ]
+      },
+      "content_meta": {
+        "title": {
+          "mode": "rewritten",
+          "evidence_ids": [
+            "ev_1"
+          ]
+        },
+        "subtitle": {
+          "mode": "rewritten",
+          "evidence_ids": [
+            "ev_1"
+          ]
+        }
+      },
+      "facts": [],
+      "ranking": {
+        "reason_codes": [
+          "main_service"
+        ],
+        "explanation": "保留就医费用办理入口，具体金额与付款均交给原网页处理。",
+        "evidence_ids": [
+          "ev_1"
+        ]
+      },
+      "risk": {
+        "level": "blocked",
+        "domains": [
+          "money",
+          "healthcare"
+        ],
+        "reason_codes": [
+          "payment"
+        ],
+        "evidence_ids": [
+          "ev_1"
+        ]
+      },
+      "action": {
+        "kind": "external",
+        "target_element_id": "el_d4e15498",
+        "target_selector": "div:nth-of-type(3) > div > a:nth-of-type(3)",
+        "target_xpath": "/html[1]/body[1]/div[2]/div[1]/div[3]/div[1]/a[3]",
+        "href": "https://demo.easyview.local/pay",
+        "confirmation": null
+      }
+    },
+    {
+      "id": "card_hospital_schedule",
+      "title": "查门诊排班",
+      "subtitle": "查看科室、医生和出诊时间",
+      "icon": "calendar",
+      "priority": 4,
+      "intent": "query",
+      "provenance": {
+        "source_element_ids": [
+          "el_733e3e79",
+          "el_c3ee137d"
+        ],
+        "evidence": [
+          {
+            "id": "ev_1",
+            "element_id": "el_733e3e79",
+            "field": "text",
+            "quote": "门诊排班一览"
+          },
+          {
+            "id": "ev_2",
+            "element_id": "el_c3ee137d",
+            "field": "text",
+            "quote": "科室 医生 职称 出诊时间 剩余号源 内科 张医生 主任医师 周一至周五 上午 12 外科 李医生 副主任医师 周二、周四 全天 5 儿科 王医生 主治医师 周一、周三、周五 下午 8"
+          }
+        ]
+      },
+      "content_meta": {
+        "title": {
+          "mode": "rewritten",
+          "evidence_ids": [
+            "ev_1"
+          ]
+        },
+        "subtitle": {
+          "mode": "rewritten",
+          "evidence_ids": [
+            "ev_1",
+            "ev_2"
+          ]
+        }
+      },
+      "facts": [
+        {
+          "text": "科室 医生 职称 出诊时间 剩余号源 内科 张医生 主任医师 周一至周五 上午 12 外科 李医生 副主任医师 周二、周四 全天 5 儿科 王医生 主治医师 周一、周三、周五 下午 8",
+          "content_mode": "verbatim",
+          "evidence_ids": [
+            "ev_2"
+          ]
+        }
+      ],
+      "ranking": {
+        "reason_codes": [
+          "supporting_information"
+        ],
+        "explanation": "为选择就诊时间提供来源中的排班信息；示例号源只作快照原文展示。",
+        "evidence_ids": [
+          "ev_1",
+          "ev_2"
+        ]
+      },
+      "risk": {
+        "level": "normal",
+        "domains": [],
+        "reason_codes": [
+          "read_only"
+        ],
+        "evidence_ids": [
+          "ev_1",
+          "ev_2"
+        ]
+      },
+      "action": {
+        "kind": "scroll",
+        "target_element_id": "el_733e3e79",
+        "target_selector": "div:nth-of-type(5) > h3",
+        "target_xpath": "/html[1]/body[1]/div[2]/div[1]/div[5]/h3[1]",
+        "href": null,
+        "confirmation": null
+      }
+    },
+    {
+      "id": "card_hospital_map",
+      "title": "找院内位置",
+      "subtitle": "查看医院内的导航地图",
+      "icon": "location",
+      "priority": 5,
+      "intent": "query",
+      "provenance": {
+        "source_element_ids": [
+          "el_e98a9ff2"
+        ],
+        "evidence": [
+          {
+            "id": "ev_1",
+            "element_id": "el_e98a9ff2",
+            "field": "text",
+            "quote": "院内导航地图"
+          }
+        ]
+      },
+      "content_meta": {
+        "title": {
+          "mode": "rewritten",
+          "evidence_ids": [
+            "ev_1"
+          ]
+        },
+        "subtitle": {
+          "mode": "rewritten",
+          "evidence_ids": [
+            "ev_1"
+          ]
+        }
+      },
+      "facts": [],
+      "ranking": {
+        "reason_codes": [
+          "supporting_information"
+        ],
+        "explanation": "在主要线上任务后保留院内导航，帮助到院后的查找。",
+        "evidence_ids": [
+          "ev_1"
+        ]
+      },
+      "risk": {
+        "level": "normal",
+        "domains": [],
+        "reason_codes": [
+          "read_only"
+        ],
+        "evidence_ids": [
+          "ev_1"
+        ]
+      },
+      "action": {
+        "kind": "navigate",
+        "target_element_id": "el_e98a9ff2",
+        "target_selector": "div:nth-of-type(3) > div > ul > li:nth-of-type(2) > a",
+        "target_xpath": "/html[1]/body[1]/div[2]/div[2]/div[3]/div[1]/ul[1]/li[2]/a[1]",
+        "href": "https://demo.easyview.local/map",
+        "confirmation": null
+      }
+    },
+    {
+      "id": "card_hospital_contact",
+      "title": "联系医院",
+      "subtitle": "查看医院的联系入口",
+      "icon": "phone",
+      "priority": 6,
+      "intent": "contact",
+      "provenance": {
+        "source_element_ids": [
+          "el_c8dc41cb",
+          "el_516b9783"
+        ],
+        "evidence": [
+          {
+            "id": "ev_1",
+            "element_id": "el_c8dc41cb",
+            "field": "text",
+            "quote": "联系我们"
+          },
+          {
+            "id": "ev_2",
+            "element_id": "el_516b9783",
+            "field": "text",
+            "quote": "工作时间：每日 08:00 - 20:00"
+          }
+        ]
+      },
+      "content_meta": {
+        "title": {
+          "mode": "rewritten",
+          "evidence_ids": [
+            "ev_1"
+          ]
+        },
+        "subtitle": {
+          "mode": "rewritten",
+          "evidence_ids": [
+            "ev_1",
+            "ev_2"
+          ]
+        }
+      },
+      "facts": [
+        {
+          "text": "工作时间：每日 08:00 - 20:00",
+          "content_mode": "verbatim",
+          "evidence_ids": [
+            "ev_2"
+          ]
+        }
+      ],
+      "ranking": {
+        "reason_codes": [
+          "assistance"
+        ],
+        "explanation": "保留求助渠道；只展示快照给出的工作时间，不编造电话号码。",
+        "evidence_ids": [
+          "ev_1",
+          "ev_2"
+        ]
+      },
+      "risk": {
+        "level": "normal",
+        "domains": [],
+        "reason_codes": [
+          "read_only"
+        ],
+        "evidence_ids": [
+          "ev_1",
+          "ev_2"
+        ]
+      },
+      "action": {
+        "kind": "navigate",
+        "target_element_id": "el_c8dc41cb",
+        "target_selector": "nav > a:nth-of-type(7)",
+        "target_xpath": "/html[1]/body[1]/nav[1]/a[7]",
+        "href": "https://demo.easyview.local/contact",
+        "confirmation": null
+      }
+    }
+  ]
+}

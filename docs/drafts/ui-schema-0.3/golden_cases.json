@@ -1,0 +1,198 @@
+{
+  "schema_version": "golden-cases/1",
+  "contract_version": "0.3.0-draft",
+  "status": "curated_reference_draft_pending_team_and_user_review",
+  "authoring": "assistant_curated_from_existing_fallback_snapshots",
+  "scope": "人工编排的质量目标；不是模型评测成绩，不是已通过老人测试的结论。",
+  "review_policy": {
+    "critical_failures": [
+      "来源/快照不匹配",
+      "无来源功能或事实",
+      "任何越过执行边界的动作",
+      "未如实标示快照或生成来源"
+    ],
+    "human_questions": [
+      "任务名称能否被目标老人理解？",
+      "最需要的任务是否靠前？",
+      "点击后的实际目标是否符合文案？",
+      "主界面是否避免复选框配置和技术信息？"
+    ],
+    "title_matching": "按任务含义和真实目标评审，可接受同义标题，不做逐字金标准。",
+    "ranking_matching": "样例顺序是本场景的参考，不要求所有网站遵守统一意图顺序。",
+    "stats": "实际计算数量，不使用固定400→7或虚构覆盖率。"
+  },
+  "cases": [
+    {
+      "name": "hospital",
+      "input": "../../examples/elements.hospital.json",
+      "output": "examples/ui_schema.hospital.json",
+      "input_sha256": "4ce5a99e6b694df45b23a5b99e01c87fb23ead29bf79f9b5fae2f67fd3bb9530",
+      "input_source": "fallback",
+      "scenario_goal": "人工评审假设：查找常见就医服务与到院帮助；不是从年龄推断出的真实用户目的。",
+      "model_mode": null,
+      "review_status": "pending",
+      "compression": {
+        "input_elements": 102,
+        "task_cards": 6
+      },
+      "reference_order": [
+        "card_hospital_booking",
+        "card_hospital_report",
+        "card_hospital_payment",
+        "card_hospital_schedule",
+        "card_hospital_map",
+        "card_hospital_contact"
+      ],
+      "must_keep_card_ids": [
+        "card_hospital_booking",
+        "card_hospital_report",
+        "card_hospital_payment",
+        "card_hospital_contact"
+      ],
+      "optional_card_ids": [
+        "card_hospital_schedule",
+        "card_hospital_map"
+      ],
+      "prohibited_claims": [
+        "声称已挂号成功、已付款或已查询到某人的报告",
+        "编造电话号码、疾病判断、实时剩余号源或收费金额",
+        "将快照排班或工作时间称为当前医院真实信息"
+      ],
+      "excluded_elements": [
+        {
+          "element_id": "el_e15778ea",
+          "original_text": "登 录",
+          "reason": "登录信息留在原网页，不重建或读取账号密码。"
+        },
+        {
+          "element_id": "el_6ba979ec",
+          "original_text": "管理入口",
+          "reason": "管理入口不属于本样例的就医任务。"
+        }
+      ],
+      "human_checks": [
+        "挂号卡是否合并了同一任务的说明与字段证据，且没有暴露填写界面？",
+        "报告查询前是否要求确认；挂号和缴费是否只允许原站接手？",
+        "门诊表格是否完整保留科室、医生、出诊时间、号源之间的关系？"
+      ]
+    },
+    {
+      "name": "gov",
+      "input": "../../examples/elements.gov.json",
+      "output": "examples/ui_schema.gov.json",
+      "input_sha256": "c3e8fbfd7c7995a94512a80b4f3880dd0724a6bff2875a8c3bda4b0ec76695bf",
+      "input_source": "fallback",
+      "scenario_goal": "人工评审假设：个人办理与退休相关事项，查材料和进度，并获得线下帮助。",
+      "model_mode": null,
+      "review_status": "pending",
+      "compression": {
+        "input_elements": 80,
+        "task_cards": 7
+      },
+      "reference_order": [
+        "card_gov_guide",
+        "card_gov_retirement",
+        "card_gov_progress",
+        "card_gov_materials",
+        "card_gov_senior_help",
+        "card_gov_hall",
+        "card_gov_phone"
+      ],
+      "must_keep_card_ids": [
+        "card_gov_guide",
+        "card_gov_retirement",
+        "card_gov_progress",
+        "card_gov_materials",
+        "card_gov_phone"
+      ],
+      "optional_card_ids": [
+        "card_gov_senior_help",
+        "card_gov_hall"
+      ],
+      "prohibited_claims": [
+        "补写退休资格、退休金金额或办理承诺",
+        "把公积金查询与公积金提取的材料混为一个事项",
+        "把示例办理时限、不收费说明当成当前地区政策"
+      ],
+      "excluded_elements": [
+        {
+          "element_id": "el_e64c55d5",
+          "original_text": "法人办事",
+          "reason": "法人办事与本次个人办事场景不符。"
+        },
+        {
+          "element_id": "el_6ba979ec",
+          "original_text": "中介服务",
+          "reason": "中介服务不作为本场景主入口。"
+        },
+        {
+          "element_id": "el_e15778ea",
+          "original_text": "账号 / 身份证号 密码 登 录",
+          "reason": "不重建登录表单。"
+        }
+      ],
+      "human_checks": [
+        "办事指南查询是否仍定位到原表单，没有虚构提交结果？",
+        "材料、时限和收费是否与同一事项保持完整对应？",
+        "老年人绿色通道卡是否只承诺查看指引，而非宣称自动获得资格？"
+      ]
+    },
+    {
+      "name": "traffic",
+      "input": "../../examples/elements.traffic.json",
+      "output": "examples/ui_schema.traffic.json",
+      "input_sha256": "e5103af4eee41c3fe3531a785d7bf8a8bafa9afd8ed26d3fc97fc677eba7109f",
+      "input_source": "fallback",
+      "scenario_goal": "人工评审假设：公共交通出行，同时保留车辆查询与求助入口。",
+      "model_mode": null,
+      "review_status": "pending",
+      "compression": {
+        "input_elements": 81,
+        "task_cards": 7
+      },
+      "reference_order": [
+        "card_traffic_bus",
+        "card_traffic_metro",
+        "card_traffic_timetable",
+        "card_traffic_concessions",
+        "card_traffic_violation",
+        "card_traffic_notice",
+        "card_traffic_contact"
+      ],
+      "must_keep_card_ids": [
+        "card_traffic_bus",
+        "card_traffic_metro",
+        "card_traffic_concessions",
+        "card_traffic_contact"
+      ],
+      "optional_card_ids": [
+        "card_traffic_timetable",
+        "card_traffic_violation",
+        "card_traffic_notice"
+      ],
+      "prohibited_claims": [
+        "从地铁线路图入口推断已提供路线规划或实时到站",
+        "编造优惠年龄、免费乘车资格或折扣金额",
+        "把缺少有效期证据的施工通知标为实时预警并自动置顶",
+        "把示例线路、票价、时刻或客服时间当成现实运行数据"
+      ],
+      "excluded_elements": [
+        {
+          "element_id": "el_d6c35e66",
+          "original_text": "ETC 充值",
+          "reason": "ETC充值与公共交通场景关联较弱，本样例不纳入主卡；不表示网站没有该能力。"
+        },
+        {
+          "element_id": "el_e15778ea",
+          "original_text": "手机号 / 证件号 密码 登 录",
+          "reason": "账号和证件信息留在原网页。"
+        }
+      ],
+      "human_checks": [
+        "查乘车优惠是否保留原文含义，并且没有补写年龄/金额？",
+        "公交时刻表是否整表保留，没有把不同线路的票价拼错？",
+        "客服按钮是否只定位，不自动点击未知事件？"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,526 @@
+{
+  "schema_version": "0.3.0-draft",
+  "artifact_kind": "reference",
+  "source_elements_schema_version": "1.1.0",
+  "page_url": "https://demo.easyview.local/traffic/",
+  "final_url": "snapshot://traffic",
+  "page_title": "市交通运输局 · 出行服务（本地快照）",
+  "source": "fallback",
+  "generated_at": "2026-10-02T12:23:21Z",
+  "input_snapshot": {
+    "sha256": "e5103af4eee41c3fe3531a785d7bf8a8bafa9afd8ed26d3fc97fc677eba7109f",
+    "extracted_at": "2026-10-02T12:37:06+08:00"
+  },
+  "generator": null,
+  "user_goal": null,
+  "state": "ready",
+  "empty_reason": null,
+  "page": {
+    "greeting": "您好，这里可以查出行信息",
+    "summary": "可以查公交、地铁、乘车优惠和线路通知，也可以找到交通客服。"
+  },
+  "stats": {
+    "input_elements": 81,
+    "visible_elements": 81,
+    "input_truncated": false,
+    "referenced_elements": 10,
+    "task_cards": 7
+  },
+  "cards": [
+    {
+      "id": "card_traffic_bus",
+      "title": "查公交线路",
+      "subtitle": "打开公交线路查询入口",
+      "icon": "bus",
+      "priority": 1,
+      "intent": "query",
+      "provenance": {
+        "source_element_ids": [
+          "el_c663c1b2"
+        ],
+        "evidence": [
+          {
+            "id": "ev_1",
+            "element_id": "el_c663c1b2",
+            "field": "text",
+            "quote": "公交线路查询"
+          }
+        ]
+      },
+      "content_meta": {
+        "title": {
+          "mode": "rewritten",
+          "evidence_ids": [
+            "ev_1"
+          ]
+        },
+        "subtitle": {
+          "mode": "rewritten",
+          "evidence_ids": [
+            "ev_1"
+          ]
+        }
+      },
+      "facts": [],
+      "ranking": {
+        "reason_codes": [
+          "main_service"
+        ],
+        "explanation": "人工标准以公共交通出行为场景，首先提供已存在的公交线路查询。",
+        "evidence_ids": [
+          "ev_1"
+        ]
+      },
+      "risk": {
+        "level": "normal",
+        "domains": [],
+        "reason_codes": [
+          "read_only"
+        ],
+        "evidence_ids": [
+          "ev_1"
+        ]
+      },
+      "action": {
+        "kind": "navigate",
+        "target_element_id": "el_c663c1b2",
+        "target_selector": "div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div > a:nth-of-type(1)",
+        "target_xpath": "/html[1]/body[1]/div[3]/div[1]/div[1]/div[1]/a[1]",
+        "href": "https://demo.easyview.local/bus/query",
+        "confirmation": null
+      }
+    },
+    {
+      "id": "card_traffic_metro",
+      "title": "看地铁线路",
+      "subtitle": "查看地铁线路图",
+      "icon": "train",
+      "priority": 2,
+      "intent": "query",
+      "provenance": {
+        "source_element_ids": [
+          "el_bfbcf48d"
+        ],
+        "evidence": [
+          {
+            "id": "ev_1",
+            "element_id": "el_bfbcf48d",
+            "field": "text",
+            "quote": "地铁线路图"
+          }
+        ]
+      },
+      "content_meta": {
+        "title": {
+          "mode": "rewritten",
+          "evidence_ids": [
+            "ev_1"
+          ]
+        },
+        "subtitle": {
+          "mode": "rewritten",
+          "evidence_ids": [
+            "ev_1"
+          ]
+        }
+      },
+      "facts": [],
+      "ranking": {
+        "reason_codes": [
+          "main_service"
+        ],
+        "explanation": "提供另一种公共交通方式；不把线路图改写成自动规划行程。",
+        "evidence_ids": [
+          "ev_1"
+        ]
+      },
+      "risk": {
+        "level": "normal",
+        "domains": [],
+        "reason_codes": [
+          "read_only"
+        ],
+        "evidence_ids": [
+          "ev_1"
+        ]
+      },
+      "action": {
+        "kind": "navigate",
+        "target_element_id": "el_bfbcf48d",
+        "target_selector": "div:nth-of-type(3) > div:nth-of-type(1) > div:nth-of-type(1) > div > a:nth-of-type(2)",
+        "target_xpath": "/html[1]/body[1]/div[3]/div[1]/div[1]/div[1]/a[2]",
+        "href": "https://demo.easyview.local/metro/map",
+        "confirmation": null
+      }
+    },
+    {
+      "id": "card_traffic_timetable",
+      "title": "查公交时刻",
+      "subtitle": "查看公交首末班时间和票价",
+      "icon": "calendar",
+      "priority": 3,
+      "intent": "query",
+      "provenance": {
+        "source_element_ids": [
+          "el_37b372a1",
+          "el_c3ee137d"
+        ],
+        "evidence": [
+          {
+            "id": "ev_1",
+            "element_id": "el_37b372a1",
+            "field": "text",
+            "quote": "公交线路时刻"
+          },
+          {
+            "id": "ev_2",
+            "element_id": "el_c3ee137d",
+            "field": "text",
+            "quote": "线路 起点 终点 首班 末班 票价 示例 1 路 火车站 市民广场 05:30 22:30 2 元 示例 5 路 第一医院 大学城 06:00 21:00 2 元 示例 12 路 政务中心 高铁站 06:30 23:00 3 元"
+          }
+        ]
+      },
+      "content_meta": {
+        "title": {
+          "mode": "rewritten",
+          "evidence_ids": [
+            "ev_1"
+          ]
+        },
+        "subtitle": {
+          "mode": "rewritten",
+          "evidence_ids": [
+            "ev_1",
+            "ev_2"
+          ]
+        }
+      },
+      "facts": [
+        {
+          "text": "线路 起点 终点 首班 末班 票价 示例 1 路 火车站 市民广场 05:30 22:30 2 元 示例 5 路 第一医院 大学城 06:00 21:00 2 元 示例 12 路 政务中心 高铁站 06:30 23:00 3 元",
+          "content_mode": "verbatim",
+          "evidence_ids": [
+            "ev_2"
+          ]
+        }
+      ],
+      "ranking": {
+        "reason_codes": [
+          "supporting_information"
+        ],
+        "explanation": "完整保留时刻表原文，票价、线路和首末班关系不经模型改写。",
+        "evidence_ids": [
+          "ev_1",
+          "ev_2"
+        ]
+      },
+      "risk": {
+        "level": "normal",
+        "domains": [
+          "money"
+        ],
+        "reason_codes": [
+          "read_only"
+        ],
+        "evidence_ids": [
+          "ev_1",
+          "ev_2"
+        ]
+      },
+      "action": {
+        "kind": "scroll",
+        "target_element_id": "el_37b372a1",
+        "target_selector": "div:nth-of-type(1) > div:nth-of-type(3) > h3",
+        "target_xpath": "/html[1]/body[1]/div[3]/div[1]/div[3]/h3[1]",
+        "href": null,
+        "confirmation": null
+      }
+    },
+    {
+      "id": "card_traffic_concessions",
+      "title": "查乘车优惠",
+      "subtitle": "查看老年乘客的乘车优惠说明",
+      "icon": "info",
+      "priority": 4,
+      "intent": "learn",
+      "provenance": {
+        "source_element_ids": [
+          "el_a3f83cd1"
+        ],
+        "evidence": [
+          {
+            "id": "ev_1",
+            "element_id": "el_a3f83cd1",
+            "field": "text",
+            "quote": "老年乘客乘车优惠政策说明"
+          }
+        ]
+      },
+      "content_meta": {
+        "title": {
+          "mode": "rewritten",
+          "evidence_ids": [
+            "ev_1"
+          ]
+        },
+        "subtitle": {
+          "mode": "rewritten",
+          "evidence_ids": [
+            "ev_1"
+          ]
+        }
+      },
+      "facts": [],
+      "ranking": {
+        "reason_codes": [
+          "supporting_information"
+        ],
+        "explanation": "来源有老年乘客优惠说明入口，但没有年龄门槛和优惠金额，不能推测。",
+        "evidence_ids": [
+          "ev_1"
+        ]
+      },
+      "risk": {
+        "level": "normal",
+        "domains": [],
+        "reason_codes": [
+          "read_only"
+        ],
+        "evidence_ids": [
+          "ev_1"
+        ]
+      },
+      "action": {
+        "kind": "navigate",
+        "target_element_id": "el_a3f83cd1",
+        "target_selector": "li:nth-of-type(3) > a",
+        "target_xpath": "/html[1]/body[1]/div[3]/div[2]/div[2]/div[1]/ul[1]/li[3]/a[1]",
+        "href": "https://demo.easyview.local/n/299",
+        "confirmation": null
+      }
+    },
+    {
+      "id": "card_traffic_violation",
+      "title": "查车辆违章",
+      "subtitle": "打开车辆违章记录查询入口",
+      "icon": "document",
+      "priority": 5,
+      "intent": "query",
+      "provenance": {
+        "source_element_ids": [
+          "el_ffcea390",
+          "el_d8f955e1"
+        ],
+        "evidence": [
+          {
+            "id": "ev_1",
+            "element_id": "el_ffcea390",
+            "field": "text",
+            "quote": "违章记录查询"
+          },
+          {
+            "id": "ev_2",
+            "element_id": "el_d8f955e1",
+            "field": "text",
+            "quote": "车牌号码 车架号后六位 车辆类型 小型汽车 大型汽车 摩托车 查询违章记录"
+          }
+        ]
+      },
+      "content_meta": {
+        "title": {
+          "mode": "rewritten",
+          "evidence_ids": [
+            "ev_1"
+          ]
+        },
+        "subtitle": {
+          "mode": "rewritten",
+          "evidence_ids": [
+            "ev_1",
+            "ev_2"
+          ]
+        }
+      },
+      "facts": [],
+      "ranking": {
+        "reason_codes": [
+          "supporting_information"
+        ],
+        "explanation": "为有车辆查询需求的用户保留入口；车牌和车架号只在原网页输入。",
+        "evidence_ids": [
+          "ev_1",
+          "ev_2"
+        ]
+      },
+      "risk": {
+        "level": "sensitive",
+        "domains": [
+          "identity"
+        ],
+        "reason_codes": [
+          "personal_data"
+        ],
+        "evidence_ids": [
+          "ev_1",
+          "ev_2"
+        ]
+      },
+      "action": {
+        "kind": "external",
+        "target_element_id": "el_ffcea390",
+        "target_selector": "div:nth-of-type(1) > div > a:nth-of-type(3)",
+        "target_xpath": "/html[1]/body[1]/div[3]/div[1]/div[1]/div[1]/a[3]",
+        "href": "https://demo.easyview.local/violation/query",
+        "confirmation": {
+          "message": "将打开违章查询入口，车辆信息请在原网页填写。",
+          "confirm_label": "打开原网页",
+          "cancel_label": "先不打开"
+        }
+      }
+    },
+    {
+      "id": "card_traffic_notice",
+      "title": "看线路调整",
+      "subtitle": "查看施工期间公交线路调整通知",
+      "icon": "warning",
+      "priority": 6,
+      "intent": "warning",
+      "provenance": {
+        "source_element_ids": [
+          "el_95e9430e"
+        ],
+        "evidence": [
+          {
+            "id": "ev_1",
+            "element_id": "el_95e9430e",
+            "field": "text",
+            "quote": "示例大道施工期间公交线路临时调整"
+          }
+        ]
+      },
+      "content_meta": {
+        "title": {
+          "mode": "rewritten",
+          "evidence_ids": [
+            "ev_1"
+          ]
+        },
+        "subtitle": {
+          "mode": "rewritten",
+          "evidence_ids": [
+            "ev_1"
+          ]
+        }
+      },
+      "facts": [],
+      "ranking": {
+        "reason_codes": [
+          "source_warning"
+        ],
+        "explanation": "快照确有线路调整通知，但缺少可核实的有效期，不标为当前预警，也不自动置顶。",
+        "evidence_ids": [
+          "ev_1"
+        ]
+      },
+      "risk": {
+        "level": "normal",
+        "domains": [],
+        "reason_codes": [
+          "read_only"
+        ],
+        "evidence_ids": [
+          "ev_1"
+        ]
+      },
+      "action": {
+        "kind": "navigate",
+        "target_element_id": "el_95e9430e",
+        "target_selector": "li:nth-of-type(1) > a",
+        "target_xpath": "/html[1]/body[1]/div[3]/div[2]/div[2]/div[1]/ul[1]/li[1]/a[1]",
+        "href": "https://demo.easyview.local/n/301",
+        "confirmation": null
+      }
+    },
+    {
+      "id": "card_traffic_contact",
+      "title": "联系交通客服",
+      "subtitle": "请在原网页继续操作",
+      "icon": "phone",
+      "priority": 7,
+      "intent": "contact",
+      "provenance": {
+        "source_element_ids": [
+          "el_177a57da",
+          "el_516b9783"
+        ],
+        "evidence": [
+          {
+            "id": "ev_1",
+            "element_id": "el_177a57da",
+            "field": "text",
+            "quote": "联系在线客服"
+          },
+          {
+            "id": "ev_2",
+            "element_id": "el_516b9783",
+            "field": "text",
+            "quote": "服务时间：每日 07:00 - 22:00"
+          }
+        ]
+      },
+      "content_meta": {
+        "title": {
+          "mode": "rewritten",
+          "evidence_ids": [
+            "ev_1"
+          ]
+        },
+        "subtitle": {
+          "mode": "generated",
+          "evidence_ids": [
+            "ev_1",
+            "ev_2"
+          ]
+        }
+      },
+      "facts": [
+        {
+          "text": "服务时间：每日 07:00 - 22:00",
+          "content_mode": "verbatim",
+          "evidence_ids": [
+            "ev_2"
+          ]
+        }
+      ],
+      "ranking": {
+        "reason_codes": [
+          "assistance"
+        ],
+        "explanation": "原页面有客服按钮，先定位供用户操作；不自动触发未知按钮事件。",
+        "evidence_ids": [
+          "ev_1",
+          "ev_2"
+        ]
+      },
+      "risk": {
+        "level": "normal",
+        "domains": [],
+        "reason_codes": [
+          "read_only"
+        ],
+        "evidence_ids": [
+          "ev_1",
+          "ev_2"
+        ]
+      },
+      "action": {
+        "kind": "scroll",
+        "target_element_id": "el_177a57da",
+        "target_selector": "div > button",
+        "target_xpath": "/html[1]/body[1]/div[3]/div[2]/div[3]/div[1]/button[1]",
+        "href": null,
+        "confirmation": null
+      }
+    }
+  ]
+}
