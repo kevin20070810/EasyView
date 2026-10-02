@@ -1,12 +1,15 @@
 # -*- coding: utf-8 -*-
-"""EasyView B 模块服务入口。
+"""EasyView AI 服务入口。
 
 HTTP:
     GET  /health
-    POST /analyze        body 直接传 elements.json；加 ?ai=1 可选启用模型增强
+    POST /analyze        body 直接传 elements.json；加 ?ai=1 启用模型
+                         ?debug=1 时额外返回本次生成的诊断信息
 
 CLI:
-    python app.py --file docs/examples/elements.hospital.json --output out.json
+    python app.py --file docs/examples/elements.hospital.json --ai --output out.json
+
+产出是 ui_schema **0.3**。规则引擎与模型走同一个绑定器，所以版本不会漂移。
 """
 
 from __future__ import annotations
@@ -20,12 +23,16 @@ from typing import Any, Mapping
 from urllib.parse import parse_qs, urlparse
 
 try:
-    from pipeline import BuilderError, analyze, load_elements_file, write_json
+    from binder import SCHEMA_VERSION
+    from builder import BuilderError
     from llm_client import AIError, LlmConfig, OpenAICompatibleClient
+    from pipeline import analyze
 except ImportError:  # 允许从仓库根目录以包方式导入
     sys.path.insert(0, str(Path(__file__).resolve().parent))
-    from pipeline import BuilderError, analyze, load_elements_file, write_json
+    from binder import SCHEMA_VERSION
+    from builder import BuilderError
     from llm_client import AIError, LlmConfig, OpenAICompatibleClient
+    from pipeline import analyze
 
 
 MAX_BODY_BYTES = 8 * 1024 * 1024
@@ -39,6 +46,7 @@ def _ai_client() -> OpenAICompatibleClient:
 
 
 def _extract_elements(body: Mapping[str, Any]) -> tuple[Mapping[str, Any], bool]:
+    """支持两种请求体：直接是 elements.json，或包一层 {elements_data, _easyview_ai}。"""
     use_ai = bool(body.get("_easyview_ai"))
     if isinstance(body.get("elements_data"), Mapping):
         return body["elements_data"], use_ai
@@ -47,8 +55,19 @@ def _extract_elements(body: Mapping[str, Any]) -> tuple[Mapping[str, Any], bool]
     raise BuilderError("请求体应为 elements.json，或包含 elements_data 对象")
 
 
+def _as_bytes(elements_data: Mapping[str, Any], raw: bytes, body: Mapping[str, Any]) -> bytes:
+    """拿到 elements 自身的字节，供 input_snapshot.sha256 使用。
+
+    请求体就是 elements.json 时直接用原始字节；包了一层时重新序列化 ——
+    0.3 只要求校验时能反序列化回同一个对象，不要求与磁盘文件逐字节相同。
+    """
+    if elements_data is body:
+        return raw
+    return json.dumps(elements_data, ensure_ascii=False).encode("utf-8")
+
+
 class Handler(BaseHTTPRequestHandler):
-    server_version = "EasyViewAI/0.1"
+    server_version = "EasyViewAI/0.3"
 
     def _headers(self, status: int, content_type: str = "application/json; charset=utf-8") -> None:
         self.send_response(status)
@@ -74,11 +93,14 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self) -> None:  # noqa: N802
         path = urlparse(self.path).path
         if path == "/health":
+            config = LlmConfig.from_env()
             self._json(200, {
                 "ok": True,
                 "service": "easyview-ai",
-                "schema_version": "0.1.0-draft",
-                "ai_configured": LlmConfig.from_env() is not None,
+                "schema_version": SCHEMA_VERSION,
+                "ai_configured": config is not None,
+                "model": config.model if config else None,
+                "reasoning": config.reasoning if config else None,
             })
             return
         self._error(404, "接口不存在", "not_found")
@@ -97,8 +119,9 @@ class Handler(BaseHTTPRequestHandler):
             self._error(413, "请求体为空或超过 8MB")
             return
 
+        raw = self.rfile.read(length)
         try:
-            body = json.loads(self.rfile.read(length).decode("utf-8"))
+            body = json.loads(raw.decode("utf-8-sig"))
         except (UnicodeDecodeError, json.JSONDecodeError) as exc:
             self._error(400, f"请求体不是合法 UTF-8 JSON: {exc}")
             return
@@ -106,12 +129,13 @@ class Handler(BaseHTTPRequestHandler):
             self._error(400, "请求体顶层必须是对象")
             return
 
+        query = parse_qs(parsed.query)
+        debug = query.get("debug", ["0"])[0] == "1"
         try:
             elements_data, body_ai = _extract_elements(body)
-            query = parse_qs(parsed.query)
             use_ai = body_ai or query.get("ai", ["0"])[0] == "1"
             client = _ai_client() if use_ai else None
-            result = analyze(elements_data, ai_client=client)
+            result = analyze(elements_data, _as_bytes(elements_data, raw, body), ai_client=client)
         except AIError as exc:
             self._error(503, str(exc), "ai_unavailable")
             return
@@ -119,10 +143,13 @@ class Handler(BaseHTTPRequestHandler):
             self._error(422, str(exc), "invalid_elements")
             return
         except Exception as exc:  # noqa: BLE001 - HTTP 边界必须返回稳定结构
-            self._error(500, f"内部错误: {type(exc).__name__}", "internal_error")
+            self._error(500, f"内部错误: {type(exc).__name__}: {exc}", "internal_error")
             return
 
-        self._json(200, {"ok": True, "data": result})
+        payload: dict[str, Any] = {"ok": True, "data": result.ui_schema}
+        if debug:
+            payload["meta"] = result.summary()
+        self._json(200, payload)
 
     def log_message(self, fmt: str, *args: Any) -> None:
         sys.stderr.write("[easyview-ai] " + fmt % args + "\n")
@@ -140,10 +167,11 @@ def run_server(host: str, port: int) -> None:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="EasyView B AI service")
+    parser = argparse.ArgumentParser(description="EasyView AI service (ui_schema 0.3)")
     parser.add_argument("--file", help="直接分析一份 elements.json 后退出")
     parser.add_argument("--output", help="配合 --file 将结果写到指定路径")
-    parser.add_argument("--ai", action="store_true", help="启用 AI 语义增强（需环境变量）")
+    parser.add_argument("--ai", action="store_true", help="启用模型（需 EASYVIEW_API_KEY）")
+    parser.add_argument("--debug", action="store_true", help="打印用量与诊断信息")
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8787)
     args = parser.parse_args()
@@ -151,15 +179,27 @@ def main() -> int:
     if args.file:
         try:
             client = _ai_client() if args.ai else None
-            result = analyze(load_elements_file(args.file), ai_client=client)
+            source = Path(args.file)
+            raw = source.read_bytes()
+            result = analyze(json.loads(raw.decode("utf-8-sig")), raw, ai_client=client)
         except (AIError, BuilderError) as exc:
             print(str(exc), file=sys.stderr)
             return 2
+
+        if args.debug:
+            print(json.dumps(result.summary(), ensure_ascii=False, indent=2), file=sys.stderr)
+
+        text = json.dumps(result.ui_schema, ensure_ascii=False, indent=2) + "\n"
         if args.output:
-            write_json(args.output, result)
+            target = Path(args.output)
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text(text, encoding="utf-8", newline="\n")
             print(args.output)
         else:
-            print(json.dumps(result, ensure_ascii=False, indent=2))
+            sys.stdout.write(text)
+        if result.problems:
+            print(f"⚠ 校验仍有 {len(result.problems)} 项问题", file=sys.stderr)
+            return 1
         return 0
 
     run_server(args.host, args.port)

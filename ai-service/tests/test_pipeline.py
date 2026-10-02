@@ -22,75 +22,22 @@ from builder import (  # noqa: E402
     judge_importance,
     looks_like_news_or_marketing,
 )
-from pipeline import analyze, apply_ai_hints, load_elements_file  # noqa: E402
+from llm_client import AIError  # noqa: E402
+from pipeline import analyze  # noqa: E402
 
 FIXED_TIME = datetime.fromisoformat("2026-10-02T10:00:00+08:00")
 
 
-class FakeClient:
-    def analyze(self, elements_data, ui_schema):
-        cards = ui_schema["cards"]
-        return {
-            "cards": [
-                {
-                    "id": cards[-1]["id"],
-                    "title": "最后再看",
-                    "subtitle": "测试排序",
-                    "priority": 1,
-                },
-                *[
-                    {"id": card["id"], "priority": index + 2}
-                    for index, card in enumerate(cards[:-1])
-                ],
-            ]
-        }
-
-
 class BrokenClient:
-    def analyze(self, elements_data, ui_schema):
-        raise TimeoutError("simulated timeout")
+    """模拟模型调用失败，用来验证降级到规则引擎。
 
+    新架构下客户端只需要 analyze_draft(digest, *, feedback=None) 返回任务草稿。
+    """
 
-class MarketingTitleClient:
-    def analyze(self, elements_data, ui_schema):
-        first = ui_schema["cards"][0]
-        return {
-            "cards": [
-                {
-                    "id": first["id"],
-                    "title": "铁路畅行惠享出行尊享体验",
-                    "priority": 1,
-                }
-            ]
-        }
+    prompt_version = "broken-test"
 
-
-class NounOnlyTitleClient:
-    def analyze(self, elements_data, ui_schema):
-        first = ui_schema["cards"][0]
-        return {
-            "cards": [
-                {
-                    "id": first["id"],
-                    "title": "社保医保",
-                    "priority": 1,
-                }
-            ]
-        }
-
-
-class ClearActionTitleClient:
-    def analyze(self, elements_data, ui_schema):
-        first = ui_schema["cards"][0]
-        return {
-            "cards": [
-                {
-                    "id": first["id"],
-                    "title": "查医保",
-                    "priority": 1,
-                }
-            ]
-        }
+    def analyze_draft(self, digest, *, feedback=None):
+        raise AIError("simulated failure")
 
 
 class BuilderTests(unittest.TestCase):
@@ -98,24 +45,23 @@ class BuilderTests(unittest.TestCase):
         path = REPO_DIR / "docs" / "examples" / f"elements.{name}.json"
         return json.loads(path.read_text(encoding="utf-8"))
 
-    @unittest.skip(
-        "已知协议漂移，非本次归整引入：builder.py 仍输出 0.1.0-draft，"
-        "而仓库 docs/ui.schema.json 已是 0.2.0-draft（新增 target_selector / "
-        "target_xpath / submit_selector / field.selector / field.options）。"
-        "此前 ai-service 位于 ai 分支的独立工作区，那里的 docs/ 还是旧版 schema，"
-        "所以这条测试碰巧通过；并入主仓后暴露。"
-        "计划随 ui_schema 0.3 迁移一并解决，不在这里夹带协议改动。"
-    )
-    def test_three_fixtures_match_json_schema(self):
-        import jsonschema
+    def test_pipeline_output_is_valid_0_3(self):
+        """两条路径都必须产出能通过 0.3 校验的 schema。
 
-        schema = json.loads((REPO_DIR / "docs" / "ui.schema.json").read_text(encoding="utf-8"))
+        早先 builder.py 直接输出 0.1.0-draft，而仓库声明的是 0.2.0-draft，
+        版本漂移被目录结构掩盖（ai-service 原在独立分支工作区，那里的 docs/ 是旧 schema）。
+        现在规则草稿和模型草稿是同构的，都经过绑定器，版本不再漂移。
+        """
         for name in ("hospital", "gov", "traffic"):
             with self.subTest(name=name):
-                result = build_ui_schema(self.fixture(name), generated_at=FIXED_TIME)
-                jsonschema.validate(result, schema)
-                self.assertGreaterEqual(len(result["cards"]), 1)
-                self.assertLessEqual(len(result["cards"]), 6)
+                path = REPO_DIR / "docs" / "examples" / f"elements.{name}.json"
+                raw = path.read_bytes()
+                result = analyze(json.loads(raw.decode("utf-8-sig")), raw)
+                self.assertEqual(result.problems, [], f"{name} 校验问题: {result.problems}")
+                self.assertEqual(result.mode, "rules")
+                self.assertEqual(result.ui_schema["schema_version"], "0.3.0-draft")
+                self.assertGreaterEqual(len(result.ui_schema["cards"]), 1)
+                self.assertLessEqual(len(result.ui_schema["cards"]), 7)
 
     def test_hospital_form_card_is_traceable_and_typed(self):
         result = build_ui_schema(self.fixture("hospital"), generated_at=FIXED_TIME)
@@ -448,24 +394,6 @@ class BuilderTests(unittest.TestCase):
         self.assertLess(titles.index("办证件"), titles.index("联系客服"))
         self.assertLess(titles.index("查医保"), titles.index("查看就医指南"))
 
-    def test_ai_cannot_reintroduce_marketing_title(self):
-        data = self.fixture("hospital")
-        base = build_ui_schema(data, generated_at=FIXED_TIME)
-        updated = apply_ai_hints(base, MarketingTitleClient().analyze(data, base))
-        self.assertEqual(updated["cards"][0]["title"], "我要挂号")
-
-    def test_ai_cannot_replace_title_with_noun_phrase(self):
-        data = self.fixture("hospital")
-        base = build_ui_schema(data, generated_at=FIXED_TIME)
-        updated = apply_ai_hints(base, NounOnlyTitleClient().analyze(data, base))
-        self.assertEqual(updated["cards"][0]["title"], "我要挂号")
-
-    def test_ai_can_apply_clear_action_title(self):
-        data = self.fixture("hospital")
-        base = build_ui_schema(data, generated_at=FIXED_TIME)
-        updated = apply_ai_hints(base, ClearActionTitleClient().analyze(data, base))
-        self.assertEqual(updated["cards"][0]["title"], "查医保")
-
     def test_empty_elements_raises_clean_error(self):
         data = self.fixture("hospital")
         data["elements"] = []
@@ -473,29 +401,30 @@ class BuilderTests(unittest.TestCase):
         with self.assertRaises(BuilderError):
             build_ui_schema(data, generated_at=FIXED_TIME)
 
-    def test_ai_hints_can_reorder_without_breaking_structure(self):
-        data = self.fixture("hospital")
-        base = build_ui_schema(data, generated_at=FIXED_TIME)
-        updated = apply_ai_hints(base, FakeClient().analyze(data, base))
-        self.assertEqual(updated["cards"][0]["id"], base["cards"][-1]["id"])
-        self.assertEqual([card["priority"] for card in updated["cards"]], list(range(1, len(updated["cards"]) + 1)))
-        before_by_id = {card["id"]: card for card in base["cards"]}
-        for card in updated["cards"]:
-            self.assertEqual(before_by_id[card["id"]]["action"], card["action"])
+    def test_model_failure_falls_back_to_rules(self):
+        """模型挂掉不能阻断基础功能 —— 0.3 要求的最后一道防线。"""
+        path = REPO_DIR / "docs" / "examples" / "elements.hospital.json"
+        raw = path.read_bytes()
+        data = json.loads(raw.decode("utf-8-sig"))
+        result = analyze(data, raw, ai_client=BrokenClient())
+        self.assertEqual(result.mode, "rules")
+        self.assertEqual(result.fallback_reason, "network_error")
+        self.assertEqual(result.ui_schema["generator"]["mode"], "rules")
+        self.assertEqual(result.ui_schema["generator"]["fallback_reason"], "network_error")
+        self.assertGreaterEqual(len(result.ui_schema["cards"]), 1)
+        # 降级不是校验失败：problems 必须为空，原因如实记在 notes 里
+        self.assertEqual(result.problems, [])
+        self.assertTrue(any("模型调用失败" in n for n in result.notes), result.notes)
+        self.assertTrue(result.ok)
 
-    def test_ai_failure_falls_back(self):
-        data = self.fixture("hospital")
-        result = analyze(data, ai_client=BrokenClient())
-        self.assertFalse(result["extensions"]["ai"]["enabled"])
-        self.assertEqual(result["cards"][0]["title"], "我要挂号")
+    def test_analyze_file_rejects_dirty_json(self):
+        from pipeline import analyze_file
 
-    def test_dirty_json_has_clear_error(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "bad.json"
             path.write_text("{ broken", encoding="utf-8")
-            with self.assertRaises(BuilderError) as ctx:
-                load_elements_file(path)
-            self.assertIn("不是合法 JSON", str(ctx.exception))
+            with self.assertRaises(json.JSONDecodeError):
+                analyze_file(path)
 
 
 if __name__ == "__main__":

@@ -9,6 +9,7 @@ venv/
 # 运行产物
 *.log
 output/
+out/
 _extract/
 
 # 编辑器 / 系统
