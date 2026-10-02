@@ -44,7 +44,7 @@ Invoke-RestMethod -Method Post -Uri http://127.0.0.1:8787/analyze -ContentType a
     "generated_at": "2026-10-02T10:35:00+08:00",
     "page": {
       "greeting": "您好，这里是页面标题",
-      "summary": "这里可以挂号、查看报告、缴费和医保查询"
+      "summary": "这里可以挂号、查看报告、缴费和查医保"
     },
     "cards": [],
     "extensions": {
@@ -54,7 +54,9 @@ Invoke-RestMethod -Method Post -Uri http://127.0.0.1:8787/analyze -ContentType a
         "truncated": false,
         "visible_ratio": 1.0,
         "card_count": 6,
-        "external_count": 0
+        "external_count": 0,
+        "scroll_count": 0,
+        "sparse_fallback_used": false
       }
     }
   }
@@ -110,6 +112,6 @@ python .\ai-service\app.py --file .\docs\examples\elements.hospital.json --ai
 ## 安全边界
 
 - 模型永远不能构造新的元素 ID。
-- AI 返回值由 `pipeline.apply_ai_hints()` 做白名单校验。
+- AI 返回值由 `pipeline.apply_ai_hints()` 做白名单校验；标题只能改成明确的动作短语。
 - 最终 JSON 始终由 `builder.py` 组装。
 - 不生成 HTML/CSS，不控制浏览器，不修改原网页。

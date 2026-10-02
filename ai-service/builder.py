@@ -79,7 +79,7 @@ ACTION_VERBS = (
     "购票", "订票", "退票", "改签", "查询", "查看", "查", "开具",
     "登记", "认证", "报销", "领取", "充值", "缴纳", "联系", "拨打",
     "咨询", "导航", "下载", "打印", "提交", "搜索", "填写", "更新",
-    "变更", "取消", "退订", "找", "办", "买", "坐", "开通",
+    "变更", "取消", "退订", "找", "办", "买", "坐", "打车", "提", "开通",
 )
 
 DOMAIN_TERMS = (
@@ -107,15 +107,29 @@ MARKETING_MARKERS = (
     "火热", "抢购", "秒杀", "品牌", "官方推荐", "钜惠", "惠民",
 )
 
+# 政策、条例、知识攻略等通常是对资讯的阅读，不是老人现在要办的事情。
+# “always” 即使句中夹带动词也按资讯处理；“without_action” 只在缺少动作时处理，
+# 这样“查政策”“医保政策查询”仍能保留为真实查询入口。
+INFORMATIONAL_MARKERS_ALWAYS = (
+    "新政策", "新政", "新规", "条例", "实施方案", "发展规划", "体系建设",
+    "征求意见", "草案", "政策解读", "政策问答", "科普", "知识", "攻略",
+    "百科", "风险提示", "预警", "辟谣",
+)
+INFORMATIONAL_MARKERS_WITHOUT_ACTION = (
+    "政策", "办法", "方案", "规划", "规定", "意见", "最新", "提醒", "解读",
+)
+
 # 这些词也可能出现在正常业务入口里；只有同时具备“动作 + 业务对象”
 # 且标题很短时，才允许覆盖资讯/营销判定。
 NEWS_ACTION_OVERRIDES = ("开通", "发布", "上线", "启动")
 MARKETING_ACTION_OVERRIDES = ("惠民", "无忧", "专属", "福利", "升级")
+ACTION_PREFIXES = ("开户籍", "开证明", "开卡", "开票", "开户")
 
 
 GENERIC_LOW_TEXTS = {
     "更多", "详情", "了解详情", "点击", "进入", "首页", "返回", "菜单",
     "服务", "登录", "注册", "english", "en", "网站首页",
+    "查看页面", "查看页面内容",
 }
 
 # 稀疏页面兜底：只把页面已有标题/章节名改写为可执行入口。
@@ -203,9 +217,9 @@ TITLE_MAP = {
     "缴费记录查询": "查交过的钱",
     "查看报告": "查看报告",
     "报告查询": "查看报告",
-    "医保查询": "医保查询",
+    "医保查询": "查医保",
     "药品查询": "查药品",
-    "住院服务": "住院服务",
+    "住院服务": "查看住院服务",
     "联系我们": "联系客服",
     "联系在线客服": "联系客服",
     "投诉建议": "提建议",
@@ -229,7 +243,7 @@ TITLE_MAP = {
     "公交线路查询": "查公交",
     "地铁出行": "坐地铁",
     "出租网约": "打车",
-    "ETC 服务": "ETC服务",
+    "ETC服务": "查ETC服务",
     "ETC 充值": "ETC充值",
     "停车场查询": "查停车场",
     "实时路况": "查看路况",
@@ -330,7 +344,9 @@ def _normalise_title(text: str) -> str:
 
 
 def _has_action_verb(text: str) -> bool:
-    return any(word in text for word in ACTION_VERBS)
+    return any(text.startswith(prefix) for prefix in ACTION_PREFIXES) or any(
+        word in text for word in ACTION_VERBS
+    )
 
 
 def _has_domain_term(text: str) -> bool:
@@ -365,6 +381,11 @@ def looks_like_news_or_marketing(text: str) -> bool:
             action_entry and all(word in MARKETING_ACTION_OVERRIDES for word in marketing_hits)):
         return True
 
+    if any(word in title for word in INFORMATIONAL_MARKERS_ALWAYS):
+        return True
+    if not has_action and any(word in title for word in INFORMATIONAL_MARKERS_WITHOUT_ACTION):
+        return True
+
     # “2818亿元”“5万人”这类数字通常是新闻正文，不是按钮。
     if _AMOUNT_RE.search(title):
         return True
@@ -391,7 +412,7 @@ def looks_like_news_or_marketing(text: str) -> bool:
 def is_action_like_title(text: str) -> bool:
     """判断文本是否像一个老人可以直接执行的功能入口。"""
     title = _normalise_title(text)
-    if not title or looks_like_news_or_marketing(title):
+    if not title or title.lower() in GENERIC_LOW_TEXTS or looks_like_news_or_marketing(title):
         return False
     if title in TITLE_MAP:
         return True
@@ -439,6 +460,42 @@ def judge_importance(text: str, el_type: str = "") -> str:
     return "low"
 
 
+def is_clear_action_title(text: str) -> bool:
+    """判断标题是否是明确的动作短语，供 AI 回写时做严格校验。"""
+    title = _normalise_title(text)
+    return bool(
+        title
+        and title.lower() not in GENERIC_LOW_TEXTS
+        and len(title) <= MAX_TITLE_LEN
+        and not looks_like_news_or_marketing(title)
+        and _has_action_verb(title)
+    )
+
+
+def _ensure_action_title(title: str) -> str:
+    """让兜底标题也保持“动词 + 对象”，避免只出现业务名词。"""
+    cleaned = _normalise_title(title)
+    if not cleaned:
+        return "查看页面"
+    if _has_action_verb(cleaned):
+        return cleaned[:MAX_TITLE_LEN]
+
+    if any(word in cleaned for word in ("专家", "医生", "科室", "药房")):
+        prefix = "查找"
+    elif any(word in cleaned for word in (
+            "医保", "社保", "公积金", "户籍", "证明", "补贴", "养老金",
+            "退休", "报销", "余额", "记录", "进度", "药品", "报告",
+            "公交", "地铁", "车票", "时刻", "班次", "停车场", "ETC",
+            "路况", "违章")):
+        prefix = "查"
+    else:
+        prefix = "查看"
+
+    available = MAX_TITLE_LEN - len(prefix)
+    body = cleaned[:available] if available > 0 else cleaned[:MAX_TITLE_LEN]
+    return (prefix + body)[:MAX_TITLE_LEN]
+
+
 def simplify_title(text: str) -> str:
     """把网页原文改写成老人一眼能懂的大字标题。"""
     raw = _normalise_title(text)
@@ -450,7 +507,7 @@ def simplify_title(text: str) -> str:
         return "查看页面"
 
     if raw in TITLE_MAP:
-        return TITLE_MAP[raw]
+        return _ensure_action_title(TITLE_MAP[raw])
 
     title = raw
     if "登录" in title or ("账号" in title and "密码" in title):
@@ -465,11 +522,15 @@ def simplify_title(text: str) -> str:
             break
 
     if title in TITLE_MAP:
-        return TITLE_MAP[title]
+        return _ensure_action_title(TITLE_MAP[title])
+
+    # “医保查询 / 报告查询”等后置动词改写成更口语的“查医保 / 查报告”。
+    if title.endswith("查询") and len(title) > 2 and not title.startswith("查询"):
+        title = "查" + title[:-2]
 
     # 链接原文本身就是很短的动作短语时，保持原文。
     if len(title) <= MAX_TITLE_LEN:
-        return title
+        return _ensure_action_title(title)
 
     # 超长标题优先保留“动作 + 对象”，避免截成看不懂的半句话。
     for marker in ("查询", "查看", "办理", "申请", "缴费", "挂号", "预约", "联系"):
@@ -480,7 +541,7 @@ def simplify_title(text: str) -> str:
 
     if len(title) > MAX_TITLE_LEN:
         title = title[:MAX_TITLE_LEN]
-    return title or "查看页面"
+    return _ensure_action_title(title)
 
 
 def build_summary(titles: Sequence[Any]) -> str:

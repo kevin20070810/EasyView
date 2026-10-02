@@ -18,6 +18,7 @@ from builder import (  # noqa: E402
     BuilderError,
     build_summary,
     build_ui_schema,
+    is_clear_action_title,
     judge_importance,
     looks_like_news_or_marketing,
 )
@@ -58,6 +59,34 @@ class MarketingTitleClient:
                 {
                     "id": first["id"],
                     "title": "铁路畅行惠享出行尊享体验",
+                    "priority": 1,
+                }
+            ]
+        }
+
+
+class NounOnlyTitleClient:
+    def analyze(self, elements_data, ui_schema):
+        first = ui_schema["cards"][0]
+        return {
+            "cards": [
+                {
+                    "id": first["id"],
+                    "title": "社保医保",
+                    "priority": 1,
+                }
+            ]
+        }
+
+
+class ClearActionTitleClient:
+    def analyze(self, elements_data, ui_schema):
+        first = ui_schema["cards"][0]
+        return {
+            "cards": [
+                {
+                    "id": first["id"],
+                    "title": "查医保",
                     "priority": 1,
                 }
             ]
@@ -156,14 +185,67 @@ class BuilderTests(unittest.TestCase):
         self.assertEqual(titles, ["我要挂号", "查看报告", "缴费"])
 
     def test_business_entries_are_not_mistaken_for_news(self):
-        for title in ("开通电子医保凭证", "查惠民补贴", "预约挂号"):
+        for title in ("开通电子医保凭证", "查惠民补贴", "预约挂号", "查政策"):
             with self.subTest(title=title):
                 self.assertFalse(looks_like_news_or_marketing(title))
                 self.assertNotEqual(judge_importance(title), "low")
 
+    def test_short_policy_and_knowledge_headlines_are_filtered(self):
+        bad_titles = (
+            "医保新政策",
+            "养老服务体系建设",
+            "购票新规",
+            "健康知识科普",
+            "积分兑换攻略",
+            "个人养老金政策",
+        )
+        for title in bad_titles:
+            with self.subTest(title=title):
+                self.assertTrue(looks_like_news_or_marketing(title))
+                self.assertEqual(judge_importance(title), "low")
+
+        for title in ("查政策", "医保政策查询", "办理医保"):
+            with self.subTest(title=title):
+                self.assertFalse(looks_like_news_or_marketing(title))
+
+    def test_noun_only_entries_become_clear_action_titles(self):
+        texts = ("社保医保", "住院服务", "ETC服务")
+        data = {
+            "schema_version": "1.0.0",
+            "page_url": "https://service.test/",
+            "page_title": "动作标题测试",
+            "source": "live",
+            "stats": {"total": 3, "visible": 3, "by_type": {"link": 3}, "truncated": False},
+            "elements": [
+                {"id": f"el_{index:08x}", "type": "link", "text": value, "visible": True, "order": index}
+                for index, value in enumerate(texts, start=1)
+            ],
+            "groups": [],
+        }
+        result = build_ui_schema(data, generated_at=FIXED_TIME)
+        titles = [card["title"] for card in result["cards"]]
+        self.assertEqual(titles, ["查社保医保", "查看住院服务", "查ETC服务"])
+        self.assertTrue(all(is_clear_action_title(title) for title in titles))
+
+    def test_fixture_titles_are_expected_action_phrases(self):
+        expected = {
+            "hospital": ["我要挂号", "查看报告", "缴费", "查医保", "查看就医指南", "查看住院服务"],
+            "gov": ["查办事指南", "查社保医保", "办医保", "查公积金", "开户籍证明", "查社保缴费"],
+            "traffic": ["查违章", "办证件", "查公交", "坐地铁", "打车", "查ETC服务"],
+        }
+        for name, titles in expected.items():
+            with self.subTest(name=name):
+                result = build_ui_schema(self.fixture(name), generated_at=FIXED_TIME)
+                self.assertEqual([card["title"] for card in result["cards"]], titles)
+                for card in result["cards"]:
+                    self.assertTrue(
+                        is_clear_action_title(card["title"]),
+                        f"{name}: 标题不是明确动作短语: {card['title']}",
+                    )
+
     def test_summary_is_natural_chinese(self):
         result = build_ui_schema(self.fixture("hospital"), generated_at=FIXED_TIME)
-        self.assertEqual(result["page"]["summary"], "这里可以挂号、查看报告、缴费和医保查询")
+        self.assertEqual(result["page"]["summary"], "这里可以挂号、查看报告、缴费和查医保")
         self.assertEqual(build_summary(["我要挂号"]), "这里可以挂号")
 
     def test_truncated_input_prefers_visible_candidates(self):
@@ -356,13 +438,25 @@ class BuilderTests(unittest.TestCase):
         titles = [card["title"] for card in build_ui_schema(data, generated_at=FIXED_TIME)["cards"]]
         self.assertLess(titles.index("查违章"), titles.index("办证件"))
         self.assertLess(titles.index("办证件"), titles.index("联系客服"))
-        self.assertLess(titles.index("医保查询"), titles.index("就医指南"))
+        self.assertLess(titles.index("查医保"), titles.index("查看就医指南"))
 
     def test_ai_cannot_reintroduce_marketing_title(self):
         data = self.fixture("hospital")
         base = build_ui_schema(data, generated_at=FIXED_TIME)
         updated = apply_ai_hints(base, MarketingTitleClient().analyze(data, base))
         self.assertEqual(updated["cards"][0]["title"], "我要挂号")
+
+    def test_ai_cannot_replace_title_with_noun_phrase(self):
+        data = self.fixture("hospital")
+        base = build_ui_schema(data, generated_at=FIXED_TIME)
+        updated = apply_ai_hints(base, NounOnlyTitleClient().analyze(data, base))
+        self.assertEqual(updated["cards"][0]["title"], "我要挂号")
+
+    def test_ai_can_apply_clear_action_title(self):
+        data = self.fixture("hospital")
+        base = build_ui_schema(data, generated_at=FIXED_TIME)
+        updated = apply_ai_hints(base, ClearActionTitleClient().analyze(data, base))
+        self.assertEqual(updated["cards"][0]["title"], "查医保")
 
     def test_empty_elements_raises_clean_error(self):
         data = self.fixture("hospital")

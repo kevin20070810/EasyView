@@ -8,7 +8,13 @@ import json
 from pathlib import Path
 from typing import Any, Mapping, Protocol, Sequence
 
-from builder import BuilderError, build_summary, build_ui_schema, looks_like_news_or_marketing
+from builder import (
+    BuilderError,
+    build_summary,
+    build_ui_schema,
+    is_clear_action_title,
+    looks_like_news_or_marketing,
+)
 
 
 class SemanticClient(Protocol):
@@ -33,7 +39,7 @@ def load_elements_file(path: str | Path) -> dict[str, Any]:
 
 def _clean_title(value: Any) -> str:
     text = " ".join(str(value or "").split()).strip()
-    return text[:24]
+    return text[:16]
 
 
 def _clean_subtitle(value: Any) -> str | None:
@@ -72,8 +78,9 @@ def apply_ai_hints(
             continue
 
         title = _clean_title(item.get("title"))
-        # 模型也可能把真实新闻/营销文案塞回卡片；规则层必须最后把关。
-        if title and not looks_like_news_or_marketing(title):
+        # 模型也可能把新闻、营销文案或纯业务名词塞回卡片；
+        # 只有明确的动作标题才能覆盖规则标题，否则保留规则结果。
+        if title and is_clear_action_title(title) and not looks_like_news_or_marketing(title):
             card["title"] = title
 
         subtitle = _clean_subtitle(item.get("subtitle"))

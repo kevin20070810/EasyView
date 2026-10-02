@@ -4,10 +4,10 @@
   "page_url": "https://demo.easyview.local/gov/",
   "page_title": "市政务服务中心 · 办事大厅（本地快照）",
   "source": "fallback",
-  "generated_at": "2026-10-02T11:35:13+08:00",
+  "generated_at": "2026-10-02T11:40:57+08:00",
   "page": {
     "greeting": "您好，这里是市政务服务中心 办事大厅（本地快照）",
-    "summary": "这里可以查办事指南、社保医保、办医保和查公积金"
+    "summary": "这里可以查办事指南、查社保医保、办医保和查公积金"
   },
   "cards": [
     {
@@ -50,8 +50,8 @@
     },
     {
       "id": "el_f31a6d95",
-      "title": "社保医保",
-      "subtitle": null,
+      "title": "查社保医保",
+      "subtitle": "社保医保",
       "icon": "government",
       "priority": 2,
       "action": {
