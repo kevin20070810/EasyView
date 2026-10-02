@@ -1,0 +1,82 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--ink:#0D5C63;--warm:#E86A33;--soft:#F2A65A;--cream:#FFF8EC;--paper:#FFFDF8}
+body{background:#22343A;font-family:"Microsoft YaHei","Noto Sans SC",sans-serif}
+.s{position:relative;width:1920px;height:1080px;overflow:hidden;background:linear-gradient(150deg,#10565E 0%,#0B3E45 55%,#072B31 100%)}
+.grain{position:absolute;inset:0;opacity:.05;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/></filter><rect width='140' height='140' filter='url(%23n)'/></svg>")}
+.ring{position:absolute;border-radius:50%;border:2px solid rgba(255,248,236,.10)}
+.sun{position:absolute;right:-80px;top:-70px;width:340px;height:340px;border-radius:50%;background:radial-gradient(circle at 40% 40%,#F6A96B,#E86A33 68%);box-shadow:0 0 90px rgba(232,106,51,.42)}
+.sun::after{content:"";position:absolute;inset:-26px;border-radius:50%;border:2.5px solid rgba(255,248,236,.32)}
+.eyebrow{position:absolute;left:110px;top:92px;font-size:26px;letter-spacing:8px;color:var(--soft);font-weight:700}
+h1{position:absolute;left:108px;top:146px;font-size:96px;line-height:1.22;color:var(--cream);font-weight:700;letter-spacing:3px}
+h1 em{font-style:normal;color:var(--warm)}
+.brush{position:absolute;left:262px;top:392px}
+.sub{position:absolute;left:112px;top:446px;font-size:30px;line-height:1.75;color:rgba(255,248,236,.78);letter-spacing:1px}
+.tagline{position:absolute;left:112px;top:606px;font-size:34px;color:var(--soft);letter-spacing:6px;font-weight:700}
+.tagline i{font-style:normal;color:rgba(255,248,236,.45);padding:0 14px}
+.chips{position:absolute;left:110px;top:700px;display:flex;gap:16px}
+.chips span{font-size:24px;color:var(--cream);border:2px solid rgba(255,248,236,.35);border-radius:999px;padding:12px 26px;letter-spacing:2px}
+.stage{position:absolute;left:1010px;top:196px;width:800px;height:640px}
+.frame{position:absolute;left:30px;top:40px;width:640px;height:540px;background:var(--paper);border-radius:26px;transform:rotate(-3deg);box-shadow:0 30px 70px rgba(0,0,0,.42);overflow:hidden}
+.frame .bar{height:46px;background:#EDF0F1;display:flex;align-items:center;gap:8px;padding:0 18px}
+.frame .bar i{width:11px;height:11px;border-radius:50%;background:#C7CFD3}
+.frame .bar u{flex:1;height:15px;border-radius:8px;background:#fff;margin-left:10px;text-decoration:none}
+.frame .body{background:var(--cream);padding:20px;display:flex;flex-direction:column;gap:16px;height:calc(100% - 46px)}
+.card{background:#fff;border-radius:16px;padding:16px 18px;display:flex;align-items:center;gap:16px;box-shadow:0 3px 10px rgba(10,66,73,.08);flex:1}
+.card .ic{width:52px;height:52px;border-radius:13px;flex:none;display:flex;align-items:center;justify-content:center}
+.card .tx{flex:1}.card .tx b{display:block;font-size:31px;color:var(--ink);letter-spacing:1px}
+.card .tx s{display:block;text-decoration:none;font-size:18px;color:#5B6B76;margin-top:5px}
+.card .go{background:var(--warm);color:#fff;font-size:20px;padding:12px 20px;border-radius:999px;flex:none;letter-spacing:1px}
+.pop{position:absolute;right:-64px;top:-16px;width:360px;background:#fff;border-radius:18px;padding:18px 20px;display:flex;align-items:center;gap:14px;transform:rotate(5deg);box-shadow:0 26px 60px rgba(0,0,0,.5)}
+.pop .ic{width:46px;height:46px;border-radius:12px;background:rgba(232,106,51,.14);display:flex;align-items:center;justify-content:center;flex:none}
+.pop b{display:block;font-size:26px;color:var(--ink)}
+.pop s{display:block;text-decoration:none;font-size:15px;color:#5B6B76;margin-top:4px}
+.pop .go{margin-left:auto;background:var(--warm);color:#fff;font-size:16px;padding:9px 14px;border-radius:999px}
+.seal{position:absolute;right:120px;bottom:150px;filter:drop-shadow(0 10px 24px rgba(0,0,0,.35))}
+.foot{position:absolute;left:110px;right:110px;top:930px;display:flex;align-items:center;gap:20px;border-top:1.5px solid rgba(255,248,236,.18);padding-top:30px}
+.foot b{font-size:32px;color:var(--cream);letter-spacing:2px}
+.foot i{font-family:Verdana,sans-serif;font-style:normal;font-size:18px;color:rgba(255,248,236,.6);letter-spacing:2px}
+.foot s{text-decoration:none;margin-left:auto;font-size:18px;color:rgba(255,248,236,.6);letter-spacing:1px}
+</style></head><body>
+<div class="s" data-shot="slide2">
+  <div class="grain"></div>
+  <div class="ring" style="right:-160px;top:-200px;width:620px;height:620px"></div>
+  <div class="ring" style="right:-240px;top:-280px;width:780px;height:780px"></div>
+  <div class="ring" style="left:-220px;bottom:-260px;width:640px;height:640px;border-color:rgba(232,106,51,.16)"></div>
+  <div class="sun"></div>
+  <div class="eyebrow">面向长辈的网页辅助插件 · 48 小时黑客松</div>
+  <h1>网页再乱，<br>也能<em>一眼看懂</em>。</h1>
+<svg class="brush" width="452" height="30" viewBox="0 0 446 30"><path d="M8 21 Q 224 5 438 17" fill="none" stroke="#F2A65A" stroke-width="9" stroke-linecap="round" opacity=".95"/></svg>
+  <div class="sub">医院、政务、购票网站，自动变成大字、大按钮、只留要办的事。</div>
+  <div class="tagline">暖龄相伴<i>·</i>上网不难</div>
+  <div class="chips"><span>看病挂号</span><span>政务办事</span><span>出行购票</span><span>看新闻</span><span>找兴趣</span></div>
+  <div class="stage">
+    <div class="frame">
+      <div class="bar"><i></i><i></i><i></i><u></u></div>
+      <div class="body">
+        <div class="card"><div class="ic" style="background:rgba(13,92,99,.12)"><svg width="27" height="27" viewBox="0 0 24 24"><path d="M12 4v16M4 12h16" stroke="#0D5C63" stroke-width="3.4" stroke-linecap="round"/></svg></div><div class="tx"><b>我要挂号</b><s>协和医院 · 明天上午 有号</s></div><div class="go">去办理</div></div>
+        <div class="card"><div class="ic" style="background:rgba(232,106,51,.13)"><svg width="27" height="27" viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z M9 12h7M9 16h7" fill="none" stroke="#E86A33" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="tx"><b>查看报告</b><s>上周的化验单 已出</s></div><div class="go">去查看</div></div>
+        <div class="card"><div class="ic" style="background:rgba(13,92,99,.12)"><svg width="27" height="27" viewBox="0 0 24 24"><path d="M4 17h16M6 17V9m6 8V5m6 12v-6" fill="none" stroke="#0D5C63" stroke-width="2.6" stroke-linecap="round"/></svg></div><div class="tx"><b>缴纳水电费</b><s>9 月账单 待缴</s></div><div class="go">去缴纳</div></div>
+      </div>
+    </div>
+    <div class="pop"><div class="ic"><svg width="26" height="26" viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z M9 12h7M9 16h7" fill="none" stroke="#E86A33" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div><b>看今日新闻</b><s>已去掉广告，只剩正文</s></div><div class="go">读</div></div>
+  </div>
+  <div class="seal"><svg viewBox="0 0 128 128" width="132" height="132" style="transform:rotate(7deg)" xmlns="http://www.w3.org/2000/svg">
+  <rect x="6" y="6" width="116" height="116" rx="26" fill="#E86A33"/>
+  <rect x="16" y="16" width="96" height="96" rx="18" fill="none" stroke="#FFF8EC" stroke-opacity=".55" stroke-width="2.5"/>
+  <text x="64" y="66" text-anchor="middle" font-family="Microsoft YaHei, Noto Sans SC, sans-serif" font-size="40" font-weight="700" fill="#FFF8EC" letter-spacing="1">暖龄</text>
+  <rect x="36" y="78" width="56" height="10" rx="5" fill="#FFF8EC"/>
+  <circle cx="64" cy="6" r="9" fill="#FFF8EC"/><circle cx="64" cy="6" r="4.5" fill="#0D5C63"/>
+</svg></div>
+  <div class="foot"><div style="width:60px;height:60px"><svg width="100%" height="100%" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+  <defs><linearGradient id="fM" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#14707A"/><stop offset="1" stop-color="#0A4249"/></linearGradient></defs>
+  <rect width="128" height="128" rx="30" fill="url(#fM)"/>
+  <path d="M97 36 A47 47 0 1 1 31 36" fill="none" stroke="#E86A33" stroke-width="7.5" stroke-linecap="round"/>
+  <text x="64" y="31" text-anchor="middle" font-family="Microsoft YaHei, Noto Sans SC, sans-serif" font-size="22" font-weight="700" fill="#FFF8EC" letter-spacing="1">暖龄</text>
+  <rect x="36" y="44" width="56" height="48" rx="9" fill="#FFF8EC"/>
+  <rect x="44" y="52" width="27" height="7" rx="3.5" fill="#0D5C63"/>
+  <rect x="44" y="64.5" width="40" height="5" rx="2.5" fill="#0D5C63" opacity=".26"/>
+  <rect x="44" y="75" width="40" height="12.5" rx="6.25" fill="#E86A33"/>
+</svg></div><b>暖龄</b><i>EasyView</i><s>陪您看清，帮您办妥 · github.com/kevin20070810/EasyView</s></div>
+</div>
+</body></html>
