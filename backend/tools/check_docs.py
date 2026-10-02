@@ -149,7 +149,7 @@ def main() -> int:
 
     # 与 schema 文件三方对齐
     import json
-    ui_schema = json.loads((DOCS_DIR / "ui.schema.json").read_text(encoding="utf-8"))
+    ui_schema = json.loads((DOCS_DIR / "ui.schema.json").read_text(encoding="utf-8-sig"))
     schema_icons = set(
         ui_schema["$defs"]["card"]["properties"]["icon"]["oneOf"][0]["enum"]
     )

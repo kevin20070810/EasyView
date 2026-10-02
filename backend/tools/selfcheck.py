@@ -147,7 +147,7 @@ async def run_case(label: str, title: str, coro) -> dict | None:
     return payload
 
 
-SCHEMA = json.loads((DOCS_DIR / "elements.schema.json").read_text(encoding="utf-8"))
+SCHEMA = json.loads((DOCS_DIR / "elements.schema.json").read_text(encoding="utf-8-sig"))
 
 
 async def main() -> int:

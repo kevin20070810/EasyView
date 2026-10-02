@@ -29,7 +29,7 @@ import jsonschema  # noqa: E402
 from app.config import DOCS_DIR  # noqa: E402
 
 EXAMPLES_DIR = DOCS_DIR / "examples"
-UI_SCHEMA = json.loads((DOCS_DIR / "ui.schema.json").read_text(encoding="utf-8"))
+UI_SCHEMA = json.loads((DOCS_DIR / "ui.schema.json").read_text(encoding="utf-8-sig"))
 
 # 可作为表单输入项的元素类型
 INPUT_TYPES = {"input", "select", "textarea"}
@@ -59,6 +59,16 @@ def _by_id(elements: dict) -> dict:
 
 def check_pair(ui: dict, elements: dict, label: str) -> None:
     print(f"\n=== {label} ===")
+
+    # 顶层形状不对时给出清晰提示，而不是让 KeyError 冒到用户面前
+    if not isinstance(ui, dict) or "cards" not in ui:
+        got = sorted(ui)[:8] if isinstance(ui, dict) else type(ui).__name__
+        check("ui_schema 顶层含 cards 字段", False,
+              "\n        实际顶层字段: " + str(got)
+              + "\n        提示: 若这是 POST /analyze 的原始响应，工具会自动拆 ok/data 信封；"
+                "若仍失败，说明 data 内也不是 ui_schema。")
+        return
+
     by_id = _by_id(elements)
     group_ids = {g["id"] for g in elements["groups"]}
     cards = ui["cards"]
@@ -176,8 +186,39 @@ def check_pair(ui: dict, elements: dict, label: str) -> None:
           f"elements.json 中可见交互元素共 {len(visible_interactive)} 个")
 
 
+def _unwrap_ui(payload):
+    """兼容 HTTP 服务常见的 {ok, data} 信封。
+
+    B 组的 POST /analyze 返回 {"ok": true, "data": {…ui_schema…}}。
+    A 拿到的是这种信封形状，把响应存成文件再校验是很自然的操作，
+    工具应当自动识别，而不是抛一个让人摸不着头脑的 KeyError: 'cards'。
+    """
+    if isinstance(payload, dict) and "cards" not in payload:
+        data = payload.get("data")
+        if isinstance(data, dict) and "cards" in data:
+            return data
+    return payload
+
+
 def load(path: Path) -> dict:
-    return json.loads(path.read_text(encoding="utf-8"))
+    """读取 JSON。
+
+    用 utf-8-sig 而非 utf-8：Windows 上（记事本、PowerShell 5 的 Out-File、
+    某些导出工具）写出的 JSON 常带 BOM，纯 utf-8 解码会在第一个字符就报
+    "Unexpected UTF-8 BOM"，而 utf-8-sig 对有无 BOM 都能正确读取。
+    """
+    try:
+        text = path.read_text(encoding="utf-8-sig")
+    except FileNotFoundError as exc:
+        raise SystemExit(f"找不到文件: {path}") from exc
+    except UnicodeDecodeError as exc:
+        raise SystemExit(f"{path.name} 不是 UTF-8 文本: {exc}") from exc
+    try:
+        return _unwrap_ui(json.loads(text))
+    except json.JSONDecodeError as exc:
+        raise SystemExit(
+            f"{path.name} 不是合法 JSON: {exc.msg}（第 {exc.lineno} 行第 {exc.colno} 列）"
+        ) from exc
 
 
 def main() -> int:
