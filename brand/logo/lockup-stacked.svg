@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 300" width="340" height="300" role="img" aria-label="暖龄 EasyView · 暖龄相伴，上网不难">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 300" width="340" height="300" role="img" aria-label="暖龄 EasyView · 字大心不慌，暖龄帮上忙">
   <defs><linearGradient id="ev-v" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#14707A"/><stop offset="1" stop-color="#0A4249"/></linearGradient></defs>
   <g transform="translate(106,0)">  <rect width="128" height="128" rx="30" fill="url(#ev-v)"/>
   <path d="M97 36 A47 47 0 1 1 31 36" fill="none" stroke="#E86A33" stroke-width="7.5" stroke-linecap="round"/>
@@ -8,6 +8,6 @@
   <rect x="44" y="64.5" width="40" height="5" rx="2.5" fill="#0D5C63" opacity=".26"/>
   <rect x="44" y="75" width="40" height="12.5" rx="6.25" fill="#E86A33"/></g>
   <text x="170" y="196" text-anchor="middle" font-family="Verdana, Segoe UI, sans-serif" font-size="30" font-weight="700" fill="#0D5C63" letter-spacing="2">EasyView</text>
-  <text x="170" y="240" text-anchor="middle" font-family="Microsoft YaHei, Noto Sans SC, sans-serif" font-size="23" fill="#E86A33" letter-spacing="6">暖龄相伴，上网不难</text>
+  <text x="170" y="240" text-anchor="middle" font-family="Microsoft YaHei, Noto Sans SC, sans-serif" font-size="22" fill="#E86A33" letter-spacing="4">字大心不慌，暖龄帮上忙</text>
   <text x="170" y="278" text-anchor="middle" font-family="Microsoft YaHei, Noto Sans SC, sans-serif" font-size="17" fill="#5B6B76" letter-spacing="3">陪您看清，帮您办妥</text>
 </svg>
