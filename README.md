@@ -26,8 +26,16 @@ EasyView：我要挂号 / 查看报告 / 缴费 / 联系客服
 > git push -u origin backend      # remote 已配好，只需在有 GitHub 网络的环境下执行
 > ```
 >
-> 本机 git 协议访问 github.com 被网络阻断（TCP 层可连通、HTTPS 数据传输被重置），
-> 因此推送需要在可访问 GitHub 的网络或代理下完成。
+> **未能推送的原因不是网络，而是缺少 GitHub 凭证：**
+> 实测 `git ls-remote` 可匿名连通（因此也确认了仓库存在且为空），
+> 但 `git push` 需要认证，本机没有缓存任何 GitHub 凭据，
+> 自动化环境也无法完成交互式登录。
+>
+> 请在你自己的终端执行上述命令，Git Credential Manager 会引导你完成授权；
+> 授权后凭据被缓存，后续推送即可自动完成。
+>
+> 另：仓库当前没有任何分支。按规范 §4，C 组只推 `backend` 分支，不直接推 `main`；
+> `main` 由谁创建属团队决定。
 
 ---
 
