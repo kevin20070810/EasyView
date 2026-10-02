@@ -8,7 +8,7 @@ import json
 from pathlib import Path
 from typing import Any, Mapping, Protocol, Sequence
 
-from builder import BuilderError, build_ui_schema
+from builder import BuilderError, build_summary, build_ui_schema, looks_like_news_or_marketing
 
 
 class SemanticClient(Protocol):
@@ -72,7 +72,8 @@ def apply_ai_hints(
             continue
 
         title = _clean_title(item.get("title"))
-        if title:
+        # 模型也可能把真实新闻/营销文案塞回卡片；规则层必须最后把关。
+        if title and not looks_like_news_or_marketing(title):
             card["title"] = title
 
         subtitle = _clean_subtitle(item.get("subtitle"))
@@ -95,7 +96,7 @@ def apply_ai_hints(
     titles = [str(card.get("title") or "").strip() for card in result["cards"][:4]]
     titles = [title for title in titles if title]
     if titles:
-        result["page"]["summary"] = "这里可以" + "、".join(titles)
+        result["page"]["summary"] = build_summary(titles)
     return result
 
 
@@ -114,11 +115,10 @@ def analyze(
         return apply_ai_hints(ui_schema, hints)
     except Exception as exc:  # noqa: BLE001 - 降级必须是最后一道防线
         fallback = copy.deepcopy(ui_schema)
-        fallback["extensions"] = {
-            "ai": {
-                "enabled": False,
-                "fallback_reason": type(exc).__name__,
-            }
+        extensions = fallback.setdefault("extensions", {})
+        extensions["ai"] = {
+            "enabled": False,
+            "fallback_reason": type(exc).__name__,
         }
         return fallback
 

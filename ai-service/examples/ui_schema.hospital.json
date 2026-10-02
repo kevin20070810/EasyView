@@ -4,10 +4,10 @@
   "page_url": "https://demo.easyview.local/hospital/",
   "page_title": "市第一人民医院 · 网上服务（本地快照）",
   "source": "fallback",
-  "generated_at": "2026-10-02T10:35:30+08:00",
+  "generated_at": "2026-10-02T11:21:47+08:00",
   "page": {
     "greeting": "您好，这里是市第一人民医院 网上服务（本地快照）",
-    "summary": "这里可以我要挂号、查看报告、缴费、医保查询"
+    "summary": "这里可以挂号、查看报告、缴费和医保查询"
   },
   "cards": [
     {
@@ -109,30 +109,49 @@
       "form": null
     },
     {
-      "id": "el_c8dc41cb",
-      "title": "联系客服",
-      "subtitle": "联系我们",
-      "icon": "phone",
-      "priority": 5,
-      "action": {
-        "kind": "navigate",
-        "target_element_id": "el_c8dc41cb",
-        "href": null
-      },
-      "form": null
-    },
-    {
       "id": "el_e64c55d5",
       "title": "就医指南",
       "subtitle": null,
       "icon": "info",
-      "priority": 6,
+      "priority": 5,
       "action": {
         "kind": "navigate",
         "target_element_id": "el_e64c55d5",
         "href": null
       },
       "form": null
+    },
+    {
+      "id": "el_c8dc41cb",
+      "title": "联系客服",
+      "subtitle": "联系我们",
+      "icon": "phone",
+      "priority": 6,
+      "action": {
+        "kind": "navigate",
+        "target_element_id": "el_c8dc41cb",
+        "href": null
+      },
+      "form": null
     }
-  ]
+  ],
+  "extensions": {
+    "input_stats": {
+      "total": 93,
+      "visible": 93,
+      "by_type": {
+        "link": 34,
+        "image": 1,
+        "nav": 1,
+        "heading": 7,
+        "form": 2,
+        "text": 35,
+        "input": 7,
+        "select": 1,
+        "button": 4,
+        "table": 1
+      },
+      "truncated": false
+    }
+  }
 }

@@ -36,6 +36,7 @@ FORM_FIELD_TYPES = {"input", "select", "textarea"}
 
 MAX_CARDS = 6
 MAX_TITLE_LEN = 16
+SPARSE_MIN_CARDS = 4
 
 # ---------------------------------------------------------------------------
 # 关键词表：任务书 §4「高=挂号/查询/缴费/办理，低=新闻/广告/介绍」
@@ -64,6 +65,100 @@ LOW_CONTAINS = (
 LOW_SUFFIX = (
     "公告", "通知", "通告", "说明", "活动", "指引", "手册", "开始了", "动态",
     "新闻", "声明", "启事", "招聘", "安排", "调整", "简讯", "快讯", "名单",
+)
+
+# ---------------------------------------------------------------------------
+# 真实站点防退化：新闻标题和营销文案往往含有“办理/预约/养老”等词，
+# 但并不是用户现在可以点击执行的功能。下面的判定先回答
+# “它是不是一个清楚的动作入口”，再用关键词决定优先级。
+# ---------------------------------------------------------------------------
+
+ACTION_VERBS = (
+    "挂号", "预约", "缴费", "交费", "支付", "办理", "申请", "申报",
+    "购票", "订票", "退票", "改签", "查询", "查看", "查", "开具",
+    "登记", "认证", "报销", "领取", "充值", "缴纳", "联系", "拨打",
+    "咨询", "导航", "下载", "打印", "提交", "搜索", "填写", "更新",
+    "变更", "取消", "退订", "找", "办", "买", "坐", "开通",
+)
+
+DOMAIN_TERMS = (
+    "挂号", "预约", "门诊", "就诊", "急诊", "住院", "科室", "医生",
+    "专家", "报告", "缴费", "医保", "社保", "公积金", "办事", "证件",
+    "证明", "补贴", "退休", "养老", "残疾人", "户籍", "违章", "车票",
+    "火车", "公交", "地铁", "出租", "网约", "ETC", "路况", "停车场",
+    "联系", "客服", "电话", "地址", "导航", "地图", "指南", "服务",
+    "药房", "体检", "导医", "大厅",
+)
+
+NEWS_MARKERS = (
+    "新闻", "公告", "通知", "通告", "动态", "要闻", "报道", "记者",
+    "发布", "公示", "公开", "政策解读", "解读", "专题", "聚焦", "科普",
+    "召开", "举行", "调研", "视察", "慰问", "表彰", "荣获", "获奖",
+    "入选", "启动", "上线", "开通", "开售", "讲座", "论坛", "峰会",
+    "签约", "倡议", "喜讯", "简讯", "快讯", "会议", "部署", "强调",
+    "指出", "印发", "出台", "任免", "座谈", "会见",
+)
+
+MARKETING_MARKERS = (
+    "广告", "推广", "畅行", "惠享", "尊享", "乐无忧", "无忧", "专属",
+    "精选", "特惠", "优惠", "折扣", "领券", "限时", "首发", "全新",
+    "焕新", "升级", "匠心", "品质", "尊贵", "重磅", "惊喜", "福利",
+    "火热", "抢购", "秒杀", "品牌", "官方推荐", "钜惠", "惠民",
+)
+
+# 这些词也可能出现在正常业务入口里；只有同时具备“动作 + 业务对象”
+# 且标题很短时，才允许覆盖资讯/营销判定。
+NEWS_ACTION_OVERRIDES = ("开通", "发布", "上线", "启动")
+MARKETING_ACTION_OVERRIDES = ("惠民", "无忧", "专属", "福利", "升级")
+
+
+GENERIC_LOW_TEXTS = {
+    "更多", "详情", "了解详情", "点击", "进入", "首页", "返回", "菜单",
+    "服务", "登录", "注册", "english", "en", "网站首页",
+}
+
+# 稀疏页面兜底：只把页面已有标题/章节名改写为可执行入口。
+SPARSE_TITLE_MAP = (
+    ("预约挂号", "去挂号"),
+    ("挂号", "去挂号"),
+    ("门诊预约", "去挂号"),
+    ("预约", "去预约"),
+    ("科室", "查找科室"),
+    ("医生", "查找医生"),
+    ("专家", "查找专家"),
+    ("门诊", "查看门诊"),
+    ("急诊", "查看急诊"),
+    ("住院", "查看住院服务"),
+    ("体检", "查看体检"),
+    ("药房", "查找药房"),
+    ("就诊指南", "查看就诊指南"),
+    ("就医指南", "查看就医指南"),
+    ("患者服务", "查看患者服务"),
+    ("便民服务", "查看便民服务"),
+    ("特色医疗", "查看特色医疗"),
+    ("护理", "查看护理服务"),
+    ("缴费", "去缴费"),
+    ("报告", "查报告"),
+    ("医保", "查医保"),
+    ("社保", "查社保"),
+    ("公积金", "查公积金"),
+    ("户籍", "查户籍"),
+    ("证件", "办证件"),
+    ("证明", "开证明"),
+    ("补贴", "查补贴"),
+    ("办事大厅", "查找办事大厅"),
+    ("办事", "查看办事服务"),
+    ("地址", "查看地址"),
+    ("交通", "查看交通"),
+    ("公交", "查公交"),
+    ("地铁", "查看地铁"),
+    ("停车", "查看停车"),
+    ("地图", "查看地图"),
+    ("大厅", "查找办事大厅"),
+    ("医院概况", "了解医院"),
+    ("医院介绍", "了解医院"),
+    ("概况", "查看简介"),
+    ("联系我们", "联系客服"),
 )
 
 CATEGORY_ICONS = {
@@ -157,6 +252,9 @@ _STRONG_COMBOS = (
 
 _SPACE_RE = re.compile(r"\s+")
 _MULTI_PUNCT_RE = re.compile(r"[|｜·•]+")
+_AMOUNT_RE = re.compile(r"\d+(?:\.\d+)?\s*(?:亿|万|千)?\s*(?:元|人|人次)")
+_DATE_RE = re.compile(r"(?:19|20)\d{2}\s*年|\d{1,2}\s*月\s*\d{1,2}\s*日|第\s*\d+\s*届")
+_PERCENT_RE = re.compile(r"\d+(?:\.\d+)?\s*%")
 
 
 class BuilderError(ValueError):
@@ -183,6 +281,83 @@ def _normalise_title(text: str) -> str:
     return _clean_text(text).replace(" ", "")
 
 
+def _has_action_verb(text: str) -> bool:
+    return any(word in text for word in ACTION_VERBS)
+
+
+def _has_domain_term(text: str) -> bool:
+    return any(word in text for word in DOMAIN_TERMS)
+
+
+def looks_like_news_or_marketing(text: str) -> bool:
+    """判断一段文本是否更像新闻/公告/营销，而不是可执行功能。
+
+    真实站点经常把“办理留抵退税2818亿元”“铁路畅行惠享出行”放在
+    可点击链接里。如果只依赖关键词，它们会因为“办理/出行”被误当成
+    核心入口。这里用长度、金额、日期、栏目词和宣传词做结构化拦截。
+    """
+    title = _normalise_title(text)
+    if not title:
+        return False
+
+    if any(word in title for word in LOW_CONTAINS):
+        return True
+
+    has_action = _has_action_verb(title)
+    has_domain = _has_domain_term(title)
+    # 短小的动宾结构优先；例如“开通电子医保凭证”是功能，
+    # 而“铁路畅行惠享出行”没有清楚动作，仍是营销文案。
+    action_entry = has_action and has_domain and len(title) <= 16
+    news_hits = tuple(word for word in NEWS_MARKERS if word in title)
+    marketing_hits = tuple(word for word in MARKETING_MARKERS if word in title)
+    if news_hits and not (
+            action_entry and all(word in NEWS_ACTION_OVERRIDES for word in news_hits)):
+        return True
+    if marketing_hits and not (
+            action_entry and all(word in MARKETING_ACTION_OVERRIDES for word in marketing_hits)):
+        return True
+
+    # “2818亿元”“5万人”这类数字通常是新闻正文，不是按钮。
+    if _AMOUNT_RE.search(title):
+        return True
+
+    # 日期本身不一定代表新闻；例如“2026年医保缴费”仍可能是入口。
+    # 只有它同时缺少明确动作、或标题偏长时才降级。
+    if _DATE_RE.search(title) and not (_has_action_verb(title) and len(title) <= 16):
+        return True
+    if _PERCENT_RE.search(title) and not _has_action_verb(title):
+        return True
+
+    # 常见新闻/宣传句式。
+    if any(marker in title for marker in ("以人民为中心", "你对", "让出行", "让生活", "为您")):
+        return True
+
+    # 长句通常来自标题或摘要；只有当它同时有明确动作和业务对象时才保留。
+    if len(title) >= 20 and not (_has_action_verb(title) and _has_domain_term(title)):
+        return True
+    if len(title) >= 16 and not _has_action_verb(title) and not _has_domain_term(title):
+        return True
+    return False
+
+
+def is_action_like_title(text: str) -> bool:
+    """判断文本是否像一个老人可以直接执行的功能入口。"""
+    title = _normalise_title(text)
+    if not title or looks_like_news_or_marketing(title):
+        return False
+    if title in TITLE_MAP:
+        return True
+    if _has_action_verb(title):
+        # 动作动词开头，或“动作 + 业务对象”，都算可执行入口。
+        if _has_domain_term(title):
+            return True
+        if any(title.startswith(verb) for verb in ACTION_VERBS if len(verb) >= 2):
+            return len(title) <= 14
+        return len(title) <= 12
+    # “就医指南/科室导航”这类短业务词没有动词，但仍值得作为兜底入口。
+    return _has_domain_term(title) and len(title) <= 16
+
+
 def judge_importance(text: str, el_type: str = "") -> str:
     """返回 high / mid / low。
 
@@ -192,11 +367,13 @@ def judge_importance(text: str, el_type: str = "") -> str:
     if not title:
         return "low"
 
-    if any(word in title for word in LOW_CONTAINS) and not any(
-            word in title for word in ("医保", "社保", "公积金", "挂号", "缴费")):
+    if looks_like_news_or_marketing(title):
         return "low"
-
+    if title in GENERIC_LOW_TEXTS:
+        return "low"
     if title.endswith(LOW_SUFFIX):
+        return "low"
+    if not is_action_like_title(title) and el_type not in ("heading", "text", "nav"):
         return "low"
 
     high_hits = _hits(title, HIGH_KEYWORDS)
@@ -209,6 +386,8 @@ def judge_importance(text: str, el_type: str = "") -> str:
 
     if mid_hits >= 1:
         return "mid"
+    if is_action_like_title(title):
+        return "mid"
     return "low"
 
 
@@ -216,6 +395,10 @@ def simplify_title(text: str) -> str:
     """把网页原文改写成老人一眼能懂的大字标题。"""
     raw = _normalise_title(text)
     if not raw:
+        return "查看页面"
+
+    # 新闻/广告不应当被截短后伪装成功能卡片。
+    if looks_like_news_or_marketing(raw):
         return "查看页面"
 
     if raw in TITLE_MAP:
@@ -250,6 +433,28 @@ def simplify_title(text: str) -> str:
     if len(title) > MAX_TITLE_LEN:
         title = title[:MAX_TITLE_LEN]
     return title or "查看页面"
+
+
+def build_summary(titles: Sequence[Any]) -> str:
+    """把卡片标题拼成自然、适合老年人阅读的一句话。"""
+    clean_titles: list[str] = []
+    for value in titles:
+        title = _clean_text(value).rstrip("。！？!?；;，,、")
+        for prefix in ("我要", "去", "请", "点此", "点击"):
+            if title.startswith(prefix) and len(title) > len(prefix):
+                title = title[len(prefix):]
+                break
+        if title:
+            clean_titles.append(title)
+
+    clean_titles = clean_titles[:4]
+    if not clean_titles:
+        return "这里可以帮助您查看页面上的常用功能"
+    if len(clean_titles) == 1:
+        return f"这里可以{clean_titles[0]}"
+    if len(clean_titles) == 2:
+        return f"这里可以{clean_titles[0]}和{clean_titles[1]}"
+    return "这里可以" + "、".join(clean_titles[:-1]) + "和" + clean_titles[-1]
 
 
 def categorize(text: str) -> str:
@@ -453,7 +658,9 @@ def build_card_for_element(element: Mapping[str, Any]) -> dict[str, Any] | None:
         return None
 
     title = simplify_title(raw_text)
-    # 纯英文和明显辅助项不进入老人主界面。
+    # 纯英文、单独一个“服务/首页”等无信息量标题不进入老人主界面。
+    if _normalise_title(title).lower() in GENERIC_LOW_TEXTS:
+        return None
     if title.lower() in {"english", "login", "register"}:
         return None
 
@@ -490,8 +697,10 @@ def _importance_score(card: Mapping[str, Any]) -> int:
         score -= 60
     if any(word in text for word in ("联系", "客服", "咨询", "电话")):
         score += 15
-    if any(word in text for word in ("指南", "介绍", "导航", "专家")):
+    if any(word in text for word in ("介绍", "导航", "专家")):
         score -= 5
+    if "指南" in text:
+        score += 15
     return score
 
 
@@ -520,13 +729,193 @@ def _dedupe_cards(cards: Sequence[dict[str, Any]]) -> list[dict[str, Any]]:
     return kept
 
 
+def _safe_order(value: Any) -> int:
+    try:
+        return int(value or 0)
+    except (TypeError, ValueError):
+        return 0
+
+
+def _form_card_is_visible(
+        group: Mapping[str, Any],
+        card: Mapping[str, Any],
+        elements_by_id: Mapping[str, Mapping[str, Any]],
+) -> bool:
+    root_id = str(card.get("action", {}).get("target_element_id") or "")
+    root = elements_by_id.get(root_id)
+    if root and bool(root.get("visible", True)):
+        return True
+    for element_id in group.get("element_ids") or []:
+        element = elements_by_id.get(str(element_id))
+        if element and bool(element.get("visible", True)):
+            return True
+    return False
+
+
+def _append_unique_cards(
+        base: Sequence[dict[str, Any]],
+        extras: Sequence[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    result: list[dict[str, Any]] = []
+    seen_ids: set[str] = set()
+    seen_titles: set[str] = set()
+    seen_targets: set[str] = set()
+    for card in [*base, *extras]:
+        card_id = str(card.get("id") or "")
+        title_key = _normalise_title(card.get("title"))
+        target_key = str(card.get("action", {}).get("target_element_id") or "")
+        if not card_id or card_id in seen_ids:
+            continue
+        if title_key in seen_titles:
+            continue
+        if target_key and target_key in seen_targets:
+            continue
+        result.append(card)
+        seen_ids.add(card_id)
+        seen_titles.add(title_key)
+        if target_key:
+            seen_targets.add(target_key)
+    return result
+
+
+def _sparse_scroll_title(text: str) -> str | None:
+    """把可见标题/区块名改写为保守的滚动入口；不确定时不生成卡片。"""
+    cleaned = _clean_text(text)
+    compact = _normalise_title(cleaned)
+    if not compact or looks_like_news_or_marketing(compact):
+        return None
+    if compact in TITLE_MAP:
+        return TITLE_MAP[compact]
+    for marker, title in SPARSE_TITLE_MAP:
+        if marker in compact:
+            return title
+    if is_action_like_title(compact):
+        title = simplify_title(compact)
+        if title and title != "查看页面" and len(title) <= MAX_TITLE_LEN:
+            return title
+    return None
+
+
+def _sparse_element_types(stats_by_type: Mapping[str, Any] | None) -> list[str]:
+    """按优先级返回确实存在的兜底来源类型；stats 缺失时保留全部候选。"""
+    preferred = ["heading", "text", "link", "button", "submit", "nav", "image", "other"]
+    if not isinstance(stats_by_type, Mapping) or not stats_by_type:
+        return preferred
+    available: list[str] = []
+    for element_type in preferred:
+        try:
+            count = int(stats_by_type.get(element_type, 0))
+        except (TypeError, ValueError):
+            count = 0
+        if count > 0:
+            available.append(element_type)
+    return available
+
+
+def _sparse_scroll_cards(
+        elements_data: Mapping[str, Any],
+        existing: Sequence[Mapping[str, Any]],
+        limit: int,
+        *,
+        stats_by_type: Mapping[str, Any] | None = None,
+) -> list[dict[str, Any]]:
+    """候选过少时，用可见标题/区块补足入口，而不是伪造新元素。"""
+    if limit <= 0:
+        return []
+    elements = elements_data.get("elements") or []
+    groups = elements_data.get("groups") or []
+    if not isinstance(elements, list) or not isinstance(groups, list):
+        return []
+
+    by_id = {
+        str(item.get("id")): item
+        for item in elements
+        if isinstance(item, Mapping) and item.get("id")
+    }
+    used_ids = {str(card.get("id") or "") for card in existing}
+    used_titles = {_normalise_title(card.get("title")) for card in existing}
+    used_targets = {
+        str(card.get("action", {}).get("target_element_id") or "")
+        for card in existing
+    }
+    result: list[dict[str, Any]] = []
+
+    def add(target_id: Any, raw_text: Any, order: Any = 0) -> None:
+        if len(result) >= limit:
+            return
+        element_id = str(target_id or "")
+        if not element_id or element_id in used_ids or element_id in used_targets:
+            return
+        element = by_id.get(element_id)
+        if not element or not bool(element.get("visible", True)):
+            return
+        title = _sparse_scroll_title(str(raw_text or ""))
+        if not title:
+            return
+        title_key = _normalise_title(title)
+        if not title_key or title_key in used_titles:
+            return
+        result.append({
+            "id": element_id,
+            "title": title,
+            "subtitle": _safe_subtitle(raw_text) if _normalise_title(raw_text) != title_key else None,
+            "icon": categorize(str(raw_text or title)),
+            "importance": "mid",
+            "order": _safe_order(order if order is not None else element.get("order")),
+            "action": {
+                "kind": "scroll",
+                "target_element_id": element_id,
+                "href": None,
+            },
+            "form": None,
+        })
+        used_ids.add(element_id)
+        used_titles.add(title_key)
+        used_targets.add(element_id)
+
+    # 先看 main/section/nav 等区块标签，再看标题、文本和交互元素。
+    for group in groups:
+        if not isinstance(group, Mapping) or group.get("type") in {"form", "header", "footer"}:
+            continue
+        label = _clean_text(group.get("label"))
+        if not label:
+            continue
+        member_ids = group.get("element_ids") or []
+        members = [by_id.get(str(eid)) for eid in member_ids if str(eid) in by_id]
+        visible_members = [item for item in members if bool(item.get("visible", True))]
+        if not visible_members:
+            continue
+        target = next(
+            (item for item in visible_members if item.get("type") in
+             ("heading", "text", "nav", "form", "image", "link", "button")),
+            visible_members[0],
+        )
+        add(target.get("id"), label, target.get("order"))
+
+    for element_type in _sparse_element_types(stats_by_type):
+        for element in elements:
+            if not isinstance(element, Mapping) or element.get("type") != element_type:
+                continue
+            if not bool(element.get("visible", True)):
+                continue
+            raw_text = (
+                _clean_text(element.get("text"))
+                or _clean_text(element.get("aria_label"))
+                or _clean_text(element.get("label"))
+                or _clean_text(element.get("title"))
+            )
+            add(element.get("id"), raw_text, element.get("order"))
+
+    return result
+
+
 def _fallback_card(elements_data: Mapping[str, Any]) -> dict[str, Any] | None:
     elements = elements_data.get("elements") or []
     if not isinstance(elements, list) or not elements:
         return None
     candidates = sorted(
         [e for e in elements if isinstance(e, Mapping) and e.get("id")],
-        key=lambda e: (not bool(e.get("visible", True)), int(e.get("order") or 0)),
+        key=lambda e: (not bool(e.get("visible", True)), _safe_order(e.get("order"))),
     )
     element = candidates[0]
     return {
@@ -535,7 +924,7 @@ def _fallback_card(elements_data: Mapping[str, Any]) -> dict[str, Any] | None:
         "subtitle": "页面上暂时没有识别到常用按钮",
         "icon": "info",
         "importance": "low",
-        "order": int(element.get("order") or 0),
+        "order": _safe_order(element.get("order")),
         "action": {
             "kind": "scroll",
             "target_element_id": str(element["id"]),
@@ -545,6 +934,34 @@ def _fallback_card(elements_data: Mapping[str, Any]) -> dict[str, Any] | None:
     }
 
 
+def _stats_snapshot(elements_data: Mapping[str, Any], element_count: int) -> dict[str, Any]:
+    """保留输入统计，并在 total 大于实际数组时保守地视为截断。"""
+    raw = elements_data.get("stats")
+    if not isinstance(raw, Mapping):
+        return {}
+
+    result: dict[str, Any] = {}
+    for key in ("total", "visible"):
+        value = raw.get(key)
+        if isinstance(value, int) and not isinstance(value, bool) and value >= 0:
+            result[key] = value
+
+    by_type = raw.get("by_type")
+    if isinstance(by_type, Mapping):
+        cleaned_by_type: dict[str, int] = {}
+        for key, value in by_type.items():
+            if isinstance(value, int) and not isinstance(value, bool) and value >= 0:
+                cleaned_by_type[str(key)] = value
+        result["by_type"] = cleaned_by_type
+
+    truncated = bool(raw.get("truncated", False))
+    total = result.get("total")
+    if isinstance(total, int) and total > element_count:
+        truncated = True
+    result["truncated"] = truncated
+    return result
+
+
 def build_cards(elements_data: Mapping[str, Any]) -> list[dict[str, Any]]:
     """构建、排序并截断卡片，确保 priority 从 1 连续递增。"""
     elements = elements_data.get("elements") or []
@@ -552,6 +969,8 @@ def build_cards(elements_data: Mapping[str, Any]) -> list[dict[str, Any]]:
     if not isinstance(elements, list) or not isinstance(groups, list):
         raise BuilderError("elements 和 groups 必须是数组")
 
+    stats = _stats_snapshot(elements_data, len(elements))
+    truncated = bool(stats.get("truncated", False))
     by_id = {
         str(e.get("id")): e
         for e in elements
@@ -564,6 +983,7 @@ def build_cards(elements_data: Mapping[str, Any]) -> list[dict[str, Any]]:
             continue
         card = build_card_for_form(group, by_id)
         if card:
+            card["_visible"] = _form_card_is_visible(group, card, by_id)
             candidates.append(card)
 
     for element in elements:
@@ -571,9 +991,26 @@ def build_cards(elements_data: Mapping[str, Any]) -> list[dict[str, Any]]:
             continue
         card = build_card_for_element(element)
         if card:
+            card["_visible"] = True
             candidates.append(card)
 
+    # 数据被截断时不假装看见了完整页面：主路径只接受可见候选。
+    # 如果页面只有隐藏表单（例如弹窗里的购票表单），才把它当最后兜底。
+    if truncated:
+        visible_candidates = [card for card in candidates if card.get("_visible", True)]
+        if visible_candidates:
+            candidates = visible_candidates
+
     selected = _dedupe_cards(candidates)[:MAX_CARDS]
+    if len(selected) < SPARSE_MIN_CARDS:
+        extras = _sparse_scroll_cards(
+            elements_data,
+            selected,
+            SPARSE_MIN_CARDS - len(selected),
+            stats_by_type=stats.get("by_type"),
+        )
+        selected = _append_unique_cards(selected, extras)[:MAX_CARDS]
+
     if not selected:
         fallback = _fallback_card(elements_data)
         if fallback:
@@ -602,11 +1039,7 @@ def _page_text(elements_data: Mapping[str, Any], cards: Sequence[Mapping[str, An
         greeting = "您好，欢迎使用"
 
     titles = [_clean_text(card.get("title")) for card in cards[:4]]
-    titles = [title for title in titles if title]
-    if titles:
-        summary = "这里可以" + "、".join(titles)
-    else:
-        summary = "这里可以帮助您查看页面上的常用功能"
+    summary = build_summary(titles)
     return {"greeting": greeting, "summary": summary}
 
 
@@ -631,7 +1064,7 @@ def build_ui_schema(
     if generated.tzinfo is None:
         generated = generated.replace(tzinfo=TZ_CST)
 
-    return {
+    result = {
         "schema_version": UI_SCHEMA_VERSION,
         "source_elements_schema_version": str(elements_data["schema_version"]),
         "page_url": str(elements_data["page_url"]),
@@ -641,3 +1074,8 @@ def build_ui_schema(
         "page": _page_text(elements_data, cards),
         "cards": cards,
     }
+
+    input_stats = _stats_snapshot(elements_data, len(elements_data.get("elements") or []))
+    if input_stats:
+        result["extensions"] = {"input_stats": input_stats}
+    return result

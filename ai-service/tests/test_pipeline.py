@@ -14,7 +14,13 @@ AI_DIR = Path(__file__).resolve().parents[1]
 REPO_DIR = AI_DIR.parent
 sys.path.insert(0, str(AI_DIR))
 
-from builder import BuilderError, build_ui_schema  # noqa: E402
+from builder import (  # noqa: E402
+    BuilderError,
+    build_summary,
+    build_ui_schema,
+    judge_importance,
+    looks_like_news_or_marketing,
+)
 from pipeline import analyze, apply_ai_hints, load_elements_file  # noqa: E402
 
 FIXED_TIME = datetime.fromisoformat("2026-10-02T10:00:00+08:00")
@@ -42,6 +48,20 @@ class FakeClient:
 class BrokenClient:
     def analyze(self, elements_data, ui_schema):
         raise TimeoutError("simulated timeout")
+
+
+class MarketingTitleClient:
+    def analyze(self, elements_data, ui_schema):
+        first = ui_schema["cards"][0]
+        return {
+            "cards": [
+                {
+                    "id": first["id"],
+                    "title": "铁路畅行惠享出行尊享体验",
+                    "priority": 1,
+                }
+            ]
+        }
 
 
 class BuilderTests(unittest.TestCase):
@@ -97,6 +117,144 @@ class BuilderTests(unittest.TestCase):
                         self.assertIn(card["form"]["submit_element_id"], known_elements)
                         for field in card["form"]["fields"]:
                             self.assertIn(field["element_id"], known_elements)
+
+    def test_real_site_news_and_marketing_titles_are_filtered(self):
+        bad_titles = (
+            "办理留抵退税2818亿元",
+            "以人民为中心你对养老、托育、教育",
+            "计次订票开售直刷乘车、出行乐无忧",
+            "铁路畅行惠享出行尊享体验",
+        )
+        for title in bad_titles:
+            with self.subTest(title=title):
+                self.assertEqual(judge_importance(title), "low")
+                self.assertTrue(looks_like_news_or_marketing(title))
+
+        texts = [*bad_titles, "预约挂号", "查看报告", "缴费"]
+        data = {
+            "schema_version": "1.0.0",
+            "page_url": "https://example.test/",
+            "page_title": "真实站点",
+            "source": "live",
+            "stats": {"total": len(texts), "visible": len(texts), "by_type": {}, "truncated": False},
+            "elements": [
+                {
+                    "id": f"el_{index:08x}",
+                    "type": "link",
+                    "text": text,
+                    "visible": True,
+                    "order": index,
+                }
+                for index, text in enumerate(texts)
+            ],
+            "groups": [],
+        }
+        result = build_ui_schema(data, generated_at=FIXED_TIME)
+        titles = [card["title"] for card in result["cards"]]
+        for title in bad_titles:
+            self.assertNotIn(title, titles)
+        self.assertEqual(titles, ["我要挂号", "查看报告", "缴费"])
+
+    def test_business_entries_are_not_mistaken_for_news(self):
+        for title in ("开通电子医保凭证", "查惠民补贴", "预约挂号"):
+            with self.subTest(title=title):
+                self.assertFalse(looks_like_news_or_marketing(title))
+                self.assertNotEqual(judge_importance(title), "low")
+
+    def test_summary_is_natural_chinese(self):
+        result = build_ui_schema(self.fixture("hospital"), generated_at=FIXED_TIME)
+        self.assertEqual(result["page"]["summary"], "这里可以挂号、查看报告、缴费和医保查询")
+        self.assertEqual(build_summary(["我要挂号"]), "这里可以挂号")
+
+    def test_truncated_input_prefers_visible_candidates(self):
+        data = {
+            "schema_version": "1.0.0",
+            "page_url": "https://example.test/",
+            "page_title": "截断页面",
+            "source": "live",
+            "stats": {
+                "total": 4,
+                "visible": 1,
+                "by_type": {"form": 1, "input": 1, "submit": 1, "link": 1},
+                "truncated": True,
+            },
+            "elements": [
+                {
+                    "id": "el_aaaaaaaa",
+                    "type": "form",
+                    "text": "预约挂号",
+                    "visible": False,
+                    "order": 0,
+                    "form_id": "form_cccccccc",
+                },
+                {
+                    "id": "el_bbbbbbbb",
+                    "type": "input",
+                    "text": "",
+                    "label": "姓名",
+                    "visible": False,
+                    "order": 1,
+                    "form_id": "form_cccccccc",
+                },
+                {
+                    "id": "el_dddddddd",
+                    "type": "submit",
+                    "text": "提交",
+                    "visible": False,
+                    "order": 2,
+                    "form_id": "form_cccccccc",
+                },
+                {
+                    "id": "el_eeeeeeee",
+                    "type": "link",
+                    "text": "查看报告",
+                    "visible": True,
+                    "order": 3,
+                },
+            ],
+            "groups": [
+                {
+                    "id": "form_cccccccc",
+                    "type": "form",
+                    "label": "预约挂号",
+                    "element_ids": ["el_aaaaaaaa", "el_bbbbbbbb", "el_dddddddd"],
+                }
+            ],
+        }
+        result = build_ui_schema(data, generated_at=FIXED_TIME)
+        self.assertEqual([card["title"] for card in result["cards"]], ["查看报告"])
+        input_stats = result["extensions"]["input_stats"]
+        self.assertTrue(input_stats["truncated"])
+        self.assertEqual(input_stats["by_type"]["link"], 1)
+
+    def test_sparse_page_adds_visible_scroll_fallbacks(self):
+        data = {
+            "schema_version": "1.0.0",
+            "page_url": "https://example.test/",
+            "page_title": "稀疏医院首页",
+            "source": "live",
+            "stats": {"total": 4, "visible": 4, "by_type": {}, "truncated": False},
+            "elements": [
+                {"id": "el_00000001", "type": "link", "text": "预约挂号", "visible": True, "order": 0},
+                {"id": "el_00000002", "type": "heading", "text": "科室导航", "visible": True, "order": 1},
+                {"id": "el_00000003", "type": "heading", "text": "专家团队", "visible": True, "order": 2},
+                {"id": "el_00000004", "type": "heading", "text": "就医指南", "visible": True, "order": 3},
+            ],
+            "groups": [],
+        }
+        result = build_ui_schema(data, generated_at=FIXED_TIME)
+        known_ids = {element["id"] for element in data["elements"]}
+        self.assertGreaterEqual(len(result["cards"]), 4)
+        self.assertEqual(result["cards"][0]["title"], "我要挂号")
+        self.assertTrue(any(card["action"]["kind"] == "scroll" for card in result["cards"]))
+        for card in result["cards"]:
+            self.assertIn(card["action"]["target_element_id"], known_ids)
+
+    def test_ai_cannot_reintroduce_marketing_title(self):
+        data = self.fixture("hospital")
+        base = build_ui_schema(data, generated_at=FIXED_TIME)
+        updated = apply_ai_hints(base, MarketingTitleClient().analyze(data, base))
+        self.assertEqual(updated["cards"][0]["title"], "我要挂号")
 
     def test_empty_elements_raises_clean_error(self):
         data = self.fixture("hospital")
