@@ -242,7 +242,15 @@ def _resolve_action(element: Mapping[str, Any], level: str,
         href_text = _clean(href)
         url_origin = _origin(href_text)
         if url_origin is None:
-            return None
+            # href 是 javascript:; 之类，不能导航。但元素确实在页面上，
+            # 而且它很可能就是老人要点的那个入口。
+            #
+            # 中文网站（尤其政务、交通、银行）大量用 javascript:; 代替真链接：
+            # 实测 12306 首页 210 个链接里有 167 个是 javascript:;。
+            # 早先这里直接返回 None，导致整张卡被丢弃 —— 12306 因此一张卡都出不来。
+            #
+            # 降级成"滚动定位 + 聚焦"，由用户自己点，既不越界也不丢信息。
+            return {**base, "kind": "scroll", "href": None, "confirmation": None}, "scroll"
         if url_origin[0] == "tel":
             return {**base, "kind": "external", "href": href_text, "confirmation": None}, "external"
         if page_origin is not None and url_origin == page_origin:

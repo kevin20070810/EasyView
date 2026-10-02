@@ -783,7 +783,20 @@
       var href = element.href;
       var hrefText = clean(href);
       var urlOrigin = origin(hrefText);
-      if (urlOrigin === null) return null;
+      if (urlOrigin === null) {
+          // href 是 javascript:; 之类，不能导航。但元素确实在页面上，
+          // 而且它很可能就是老人要点的那个入口。
+          //
+          // 中文网站（尤其政务、交通、银行）大量用 javascript:; 代替真链接：
+          // 实测 12306 首页 210 个链接里有 167 个是 javascript:;。
+          // 早先这里直接 return null，导致整张卡被丢弃 —— 12306 因此一张卡都出不来。
+          //
+          // 降级成"滚动定位 + 聚焦"，由用户自己点，既不越界也不丢信息。
+          return [{ target_element_id: base.target_element_id,
+                    target_selector: base.target_selector,
+                    target_xpath: base.target_xpath,
+                    kind: "scroll", href: null, confirmation: null }, "scroll"];
+        }
       if (urlOrigin[0] === "tel") {
         return [{ target_element_id: base.target_element_id, target_selector: base.target_selector,
                   target_xpath: base.target_xpath, kind: "external", href: hrefText,

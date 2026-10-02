@@ -43,7 +43,11 @@ class LlmConfig:
     base_url: str = "https://api.deepseek.com/v1"
     model: str = "deepseek-flash"
     timeout: float = 60.0
-    reasoning: str = "low"
+    # 默认关推理。实测（四个真实网站，同一份输入）：
+    #   off : 模型 2.2~2.4 秒，5 次输出完全一致（Jaccard 1.00）
+    #   low : 模型 8~17 秒，5 次 Jaccard 0.93
+    # 老人盯着加载面板等 17 秒会直接关掉，而 off 的卡片质量不差、稳定性更好。
+    reasoning: str = "off"
     temperature: float = 0.0
     json_mode: bool = False
 
