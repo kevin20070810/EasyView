@@ -1,0 +1,219 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://easyview.local/schemas/elements.schema.json",
+  "title": "EasyView elements.json",
+  "description": "C 模块（后端网页解析）的输出协议 / B 模块（AI 理解）的输入协议。只描述网页的客观结构，绝不包含功能重要性判断或 UI 设计决策——那是 B 的职责。",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "page_url",
+    "final_url",
+    "page_title",
+    "source",
+    "extracted_at",
+    "stats",
+    "elements",
+    "groups"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "1.0.0",
+      "description": "协议版本。修改本文件必须三人确认（规范 §7）。"
+    },
+    "page_url": {
+      "type": "string",
+      "description": "调用方请求的原始 URL。"
+    },
+    "final_url": {
+      "type": "string",
+      "description": "浏览器实际落地的 URL（可能因重定向/跳转与 page_url 不同）。"
+    },
+    "page_title": {
+      "type": "string",
+      "description": "网页标题，取自 document.title，取不到时回落为 h1 文本。"
+    },
+    "lang": {
+      "type": ["string", "null"],
+      "description": "页面声明的语言，取自 <html lang>。"
+    },
+    "source": {
+      "enum": ["live", "fallback"],
+      "description": "live = 真实抓取成功；fallback = 走了规范 §9 降级链路（本地快照或 Demo 数据）。B/A 必须据此决定是否提示用户。"
+    },
+    "fallback_reason": {
+      "type": ["string", "null"],
+      "description": "source=fallback 时必填，说明降级原因：timeout / nav_error / blocked / empty / unsupported。"
+    },
+    "extracted_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "解析完成的 ISO-8601 时间戳（含时区）。"
+    },
+    "stats": {
+      "type": "object",
+      "description": "元素计数统计，供 B 快速判断页面复杂度、供 A 做兜底展示。",
+      "required": ["total", "visible", "by_type"],
+      "additionalProperties": false,
+      "properties": {
+        "total": { "type": "integer", "minimum": 0 },
+        "visible": { "type": "integer", "minimum": 0 },
+        "by_type": {
+          "type": "object",
+          "description": "各 type 的元素数量。键为 element.type 的取值。",
+          "additionalProperties": { "type": "integer", "minimum": 0 }
+        },
+        "truncated": {
+          "type": "boolean",
+          "description": "元素数超过上限被截断时为 true。截断策略为「可见优先保留」：可见交互元素 > 可见文本 > 隐藏交互元素 > 隐藏文本。隐藏元素不会被丢弃而是排在最后，因为弹窗、折叠面板里的表单往往是核心功能（例如 12306 的购票表单就位于 display:none 的容器中），且元素带 visible 标记，B 可自行过滤。"
+        }
+      }
+    },
+    "elements": {
+      "type": "array",
+      "description": "扁平元素列表，按 DOM 文档序（order 升序）排列。",
+      "items": { "$ref": "#/$defs/element" }
+    },
+    "groups": {
+      "type": "array",
+      "description": "元素归属分组。这是 B 做功能聚类（如「挂号 / 缴费 / 查报告」）的关键依据——扁平列表无法表达哪些元素同属一个表单或一块导航。",
+      "items": { "$ref": "#/$defs/group" }
+    },
+    "extensions": {
+      "type": "object",
+      "description": "协议逃生舱：未冻结的实验字段放这里，B/A 可安全忽略。禁止把稳定字段塞进此处。"
+    }
+  },
+  "$defs": {
+    "element": {
+      "type": "object",
+      "required": ["id", "type", "text", "xpath", "selector", "visible", "order"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^el_[0-9a-f]{8}$",
+          "description": "稳定 ID = 'el_' + sha1(selector) 前 8 位。同一页面重复解析结果一致，B 输出的 ui_schema 可安全引用它。注意：ID 仅在本份文档内唯一——两个结构相似的不同页面可能产生相同 ID，ui_schema 必须与其对应的 elements.json 成对使用。"
+        },
+        "type": {
+          "enum": [
+            "button",
+            "link",
+            "input",
+            "textarea",
+            "select",
+            "checkbox",
+            "radio",
+            "submit",
+            "form",
+            "heading",
+            "text",
+            "image",
+            "nav",
+            "table",
+            "iframe",
+            "other"
+          ],
+          "description": "元素的客观结构类型，由 DOM 标签与 role 决定，不含语义重要性判断。"
+        },
+        "text": {
+          "type": "string",
+          "description": "元素的可读文本。取值优先级：aria-label > innerText（压缩空白） > placeholder > value > alt > title。纯图标按钮可能为空串。type=form 时取 legend/aria-label 作为表单名称，不拼接内部文本。"
+        },
+        "label": {
+          "type": ["string", "null"],
+          "description": "表单控件的关联标签文本，按 label[for] > 包裹式 label > aria-label > aria-labelledby > 紧邻 label 的顺序客观查询得到。非表单控件为 null。B 据此得知输入框的中文名，无需猜测。"
+        },
+        "aria_label": { "type": ["string", "null"] },
+        "placeholder": { "type": ["string", "null"] },
+        "name": {
+          "type": ["string", "null"],
+          "description": "表单控件的 name 属性，B 用它理解输入项含义。"
+        },
+        "value": {
+          "type": ["string", "null"],
+          "description": "表单控件的当前值（已截断，不含用户隐私输入）。"
+        },
+        "href": {
+          "type": ["string", "null"],
+          "description": "链接目标（已解析为绝对 URL）。非链接元素为 null。"
+        },
+        "selector": {
+          "type": "string",
+          "description": "CSS 选择器，A 可用于在原页面上高亮该元素。"
+        },
+        "xpath": {
+          "type": "string",
+          "description": "绝对 XPath（任务书 §6 要求字段），作为 selector 失效时的兜底定位方式。"
+        },
+        "visible": {
+          "type": "boolean",
+          "description": "解析时刻是否可见（非 display:none / visibility:hidden / 零尺寸）。"
+        },
+        "bbox": {
+          "type": ["object", "null"],
+          "description": "视口坐标下的包围盒，供 A 做「原网页对照高亮」。不可见元素为 null。",
+          "required": ["x", "y", "width", "height"],
+          "additionalProperties": false,
+          "properties": {
+            "x": { "type": "number" },
+            "y": { "type": "number" },
+            "width": { "type": "number" },
+            "height": { "type": "number" }
+          }
+        },
+        "group_id": {
+          "type": ["string", "null"],
+          "description": "所属分组 ID，对应 groups[].id；无所属分组时为 null。"
+        },
+        "in_form": {
+          "type": "boolean",
+          "description": "是否位于某个 <form> 内。"
+        },
+        "form_id": {
+          "type": ["string", "null"],
+          "description": "所属表单的分组 ID，用于把输入框和它的提交按钮关联起来。"
+        },
+        "required": {
+          "type": ["boolean", "null"],
+          "description": "表单控件是否必填。非表单控件为 null。"
+        },
+        "disabled": { "type": "boolean" },
+        "level": {
+          "type": ["integer", "null"],
+          "description": "标题层级（h1=1 ... h6=6）。仅 type=heading 时有值，否则为 null。"
+        },
+        "order": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "DOM 文档序索引，从 0 开始。B 排序、A 渲染都以此为准。"
+        }
+      }
+    },
+    "group": {
+      "type": "object",
+      "required": ["id", "type", "label", "element_ids"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^(grp|form)_[0-9a-f]{8}$",
+          "description": "分组稳定 ID。表单分组固定用 form_ 前缀。"
+        },
+        "type": {
+          "enum": ["form", "nav", "header", "footer", "aside", "main", "section", "list", "table"],
+          "description": "分组的结构类型，由 DOM 语义标签决定，不含重要性判断。"
+        },
+        "label": {
+          "type": "string",
+          "description": "分组的人类可读标签：表单取 legend/aria-label/最近的标题，导航取 nav 的 aria-label，取不到为空串。"
+        },
+        "element_ids": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "属于该分组的元素 ID 列表，按 DOM 文档序。"
+        }
+      }
+    }
+  }
+}

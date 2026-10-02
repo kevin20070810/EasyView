@@ -1,0 +1,27 @@
+# 统一换行符，避免跨成员的操作系统差异产生无意义的整文件 diff。
+# 三名成员可能用不同系统，这一条能省掉大量噪音提交。
+* text=auto
+
+*.py   text eol=lf
+*.js   text eol=lf
+*.json text eol=lf
+*.md   text eol=lf
+*.html text eol=lf
+*.css  text eol=lf
+*.txt  text eol=lf
+
+# Windows 脚本保持 CRLF
+*.ps1  text eol=crlf
+*.bat  text eol=crlf
+*.cmd  text eol=crlf
+
+# 二进制文件不做换行转换
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
+*.woff binary
+*.woff2 binary
+*.zip  binary
+*.docx binary
