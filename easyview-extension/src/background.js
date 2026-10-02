@@ -4,6 +4,20 @@ const DEFAULT_TITLE = "为当前网页生成敬老版";
 const DEFAULT_ENDPOINT = "http://127.0.0.1:8787";
 const ANALYZE_TIMEOUT_MS = 120000;
 
+/* 注入顺序即依赖顺序：
+ *   privacy → digest / binder / extract → ai-content
+ * 后三者挂接口，ai-content 最后跑并开始编排。
+ * 定义成常量并挂到 globalThis，是为了让端到端测试能读同一份 ——
+ * 测试里再硬编码一份，加了文件忘了改测试，就会静默失效。 */
+const CONTENT_FILES = [
+  "src/privacy.js",
+  "src/digest.js",
+  "src/binder.js",
+  "src/extract.js",
+  "src/ai-content.js"
+];
+globalThis.__easyviewContentFiles = CONTENT_FILES;
+
 /* ---------- 专用站点 ---------- */
 
 function dedicatedRootFor(url) {
@@ -76,16 +90,21 @@ async function aiEndpoint() {
 
 async function analyzeViaService(bodyText, kind, useAi) {
   const endpoint = await aiEndpoint();
-  // elements 直接交给 /analyze；digest 走 /draft（服务器只做"文字进、JSON 出"）
-  const route = kind === "digest" ? "draft" : "analyze";
-  const url = `${endpoint}/${route}?debug=1${useAi ? "&ai=1" : ""}`;
+  const isDraft = kind === "digest";
+  // digest 走 /draft：服务器只做「文字进、模型出、JSON 回」，
+  // 定位字段和风险策略都在扩展里，服务器看不到。
+  // elements 是旧路径（服务端绑定），保留给离线评测用。
+  const route = isDraft ? "draft" : "analyze";
+  const url = `${endpoint}/${route}?debug=1${!isDraft && useAi ? "&ai=1" : ""}`;
+  const requestBody = isDraft ? JSON.stringify({ digest: bodyText }) : bodyText;
+
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), ANALYZE_TIMEOUT_MS);
   try {
     const response = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: bodyText,
+      body: requestBody,
       signal: controller.signal
     });
     const text = await response.text();
@@ -96,8 +115,17 @@ async function analyzeViaService(bodyText, kind, useAi) {
       return { ok: false, error: `分析服务返回的不是 JSON（HTTP ${response.status}）` };
     }
     if (!response.ok || payload.ok === false) {
-      const detail = payload?.error?.message || `HTTP ${response.status}`;
-      return { ok: false, error: detail };
+      const detail = (payload && payload.error && payload.error.message) || `HTTP ${response.status}`;
+      return { ok: false, error: detail, endpoint };
+    }
+    if (isDraft) {
+      return {
+        ok: true,
+        draft: payload.draft,
+        promptVersion: payload.prompt_version || null,
+        meta: payload.meta || null,
+        endpoint
+      };
     }
     return { ok: true, data: payload.data, meta: payload.meta || null, endpoint };
   } catch (error) {
@@ -130,6 +158,22 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   if (message.type === "easyview:endpoint") {
     aiEndpoint().then((endpoint) => sendResponse({ ok: true, endpoint }));
+    return true;
+  }
+
+  // content script 在普通 HTTP 页面上没有 crypto.subtle（非安全上下文），
+  // 由扩展的 service worker 代算。这是扩展内部通信，不出浏览器。
+  if (message.type === "easyview:sha256") {
+    (async () => {
+      try {
+        const bytes = new TextEncoder().encode(String(message.text || ""));
+        const hash = await crypto.subtle.digest("SHA-256", bytes);
+        const hex = [...new Uint8Array(hash)].map((b) => b.toString(16).padStart(2, "0")).join("");
+        sendResponse({ ok: true, sha256: hex });
+      } catch (error) {
+        sendResponse({ ok: false, error: String(error) });
+      }
+    })();
     return true;
   }
 
@@ -183,11 +227,11 @@ chrome.action.onClicked.addListener(async (tab) => {
       return;
     }
 
-    // 通用网页：纯本地提取 -> 本地脱敏 -> 用户同意 -> 分析服务理解 -> 渲染
-    // 顺序重要：privacy 必须比 ai-content 先挂上，extract 同理
+    // 通用网页：本地提取 → 本地生成说明书并脱敏 → 用户同意
+    //          → 分析服务只回任务草稿 → 本地绑定 → 渲染
     await chrome.scripting.executeScript({
       target: { tabId },
-      files: ["src/privacy.js", "src/extract.js", "src/ai-content.js"]
+      files: CONTENT_FILES
     });
   } catch (error) {
     console.warn("[EasyView] Could not open the current page:", error);

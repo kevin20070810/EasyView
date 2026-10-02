@@ -36,6 +36,8 @@ except ImportError:  # 允许从仓库根目录以包方式导入
 
 
 MAX_BODY_BYTES = 8 * 1024 * 1024
+# 说明书是压缩过的精选文字，正常几 KB；给足余量但别让人拿它当文件上传通道
+MAX_DIGEST_CHARS = 200_000
 
 
 def _ai_client() -> OpenAICompatibleClient:
@@ -110,7 +112,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self) -> None:  # noqa: N802
         parsed = urlparse(self.path)
-        if parsed.path != "/analyze":
+        if parsed.path not in ("/analyze", "/draft"):
             self._error(404, "接口不存在", "not_found")
             return
         try:
@@ -136,6 +138,11 @@ class Handler(BaseHTTPRequestHandler):
 
         query = parse_qs(parsed.query)
         debug = query.get("debug", ["0"])[0] == "1"
+
+        if parsed.path == "/draft":
+            self._handle_draft(body, debug)
+            return
+
         try:
             elements_data, body_ai = _extract_elements(body)
             use_ai = body_ai or query.get("ai", ["0"])[0] == "1"
@@ -156,6 +163,53 @@ class Handler(BaseHTTPRequestHandler):
         payload: dict[str, Any] = {"ok": True, "data": result.ui_schema}
         if debug:
             payload["meta"] = result.summary()
+        self._json(200, payload)
+
+    def _handle_draft(self, body: Mapping[str, Any], debug: bool) -> None:
+        """只收「页面说明书」，只回「任务草稿」。
+
+        扩展里已经有 digest.js 和 binder.js，所以：
+          - 定位字段（selector / xpath / href）**根本不需要发过来**
+          - 绑定和风险策略在扩展本地跑
+          - 这个端点只做一件事：文字进，模型出，JSON 回
+
+        因此服务器永远看不到 DOM 选择器、完整链接，也看不到用户填过的内容。
+        """
+        digest = body.get("digest")
+        if not isinstance(digest, str) or not digest.strip():
+            self._error(400, "缺少 digest 字段（页面说明书文本）")
+            return
+        if len(digest) > MAX_DIGEST_CHARS:
+            self._error(413, f"说明书过长（上限 {MAX_DIGEST_CHARS} 字符）")
+            return
+
+        try:
+            client = _ai_client()
+        except AIError as exc:
+            self._error(503, str(exc), "ai_unavailable")
+            return
+
+        try:
+            reply = client.analyze_draft(digest)
+        except AIError as exc:
+            self._error(503, str(exc), "ai_unavailable")
+            return
+        except Exception as exc:  # noqa: BLE001
+            self.log_error("draft internal error: %s", type(exc).__name__)
+            self._error(500, "服务内部错误", "internal_error")
+            return
+
+        payload: dict[str, Any] = {
+            "ok": True,
+            "draft": reply.draft,
+            "prompt_version": client.prompt_version,
+        }
+        if debug:
+            payload["meta"] = {
+                "latency_ms": reply.latency_ms,
+                "usage": reply.usage,
+                "digest_chars": len(digest),
+            }
         self._json(200, payload)
 
     def log_message(self, fmt: str, *args: Any) -> None:

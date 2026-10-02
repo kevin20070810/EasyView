@@ -40,7 +40,8 @@
   };
 
   // 会被脱敏的文本字段（结构字段如 selector/href 不动，否则绑定会坏）
-  const TEXT_FIELDS = ["text", "label", "aria_label", "placeholder"];
+  // 注意：这些字段只在 buildPayload 的兜底分支里用到；
+  // digest.js 就位后发送的是说明书文本，脱敏由 privacy.redactText 统一处理。
 
   let host = null;
   let shadow = null;
@@ -50,6 +51,8 @@
   let currentUi = null;
   let pendingElements = null;
   let lastPayload = null;
+  let lastDropped = [];
+  let lastElementsJson = null;
   let busy = false;
 
   /* ---------- 小工具 ---------- */
@@ -101,45 +104,56 @@
   /**
    * 构造要发送的内容，并在本地做完脱敏。
    *
-   * 说明书在本地能生成时（digest.js 到位）走第一条：只发精选文字，
-   * 选择器、坐标、完整链接一律留在浏览器里。
-   * 否则退回第二条：发结构数据，但文本字段和链接仍然脱敏。
+   * 说明书在扩展里生成，所以发出去的只有**精选过的文字**：
+   * 没有 DOM 选择器、没有坐标、没有完整链接（查询串常带会话令牌），
+   * 也没有用户填过的内容。定位和风险策略都在本地跑（binder.js）。
    */
   function buildPayload(elements) {
     const priv = privacy();
     const digest = globalThis.EasyViewDigest;
 
-    if (digest && typeof digest.build === "function") {
-      if (priv) priv.begin();
-      const text = priv ? priv.redactText(digest.build(elements)) : digest.build(elements);
+    if (!digest || typeof digest.build !== "function") {
+      // 说明书模块没起来就不发任何东西 —— 宁可不能用，也不退回发送整页结构
       return {
-        kind: "页面说明书",
-        text,
-        chars: text.length,
-        redactions: priv ? priv.describe() : null,
-        full: false,
-        note: "只包含页面的文字说明，不含选择器、坐标或完整链接。"
+        kind: null,
+        text: "",
+        chars: 0,
+        redactions: null,
+        unusable: true,
+        note: "页面说明书模块没有加载成功，为避免泄露页面内容，本次不发送任何数据。"
       };
     }
 
     if (priv) priv.begin();
-    const clone = JSON.parse(JSON.stringify(elements));
-    for (const item of clone.elements || []) {
-      for (const field of TEXT_FIELDS) {
-        if (typeof item[field] === "string" && item[field]) {
-          item[field] = priv ? priv.redactText(item[field]) : item[field];
-        }
-      }
-    }
-    const text = JSON.stringify(clone, null, 2);
+    const raw = digest.build(elements);
+    const text = priv ? priv.redactText(raw) : raw;
     return {
-      kind: "页面结构数据",
+      kind: "页面说明书",
       text,
       chars: text.length,
       redactions: priv ? priv.describe() : null,
-      full: true,
-      note: "包含页面结构。文本已脱敏；链接地址仍会发送，用于把您带到对应页面。"
+      full: false,
+      note: "只包含这台页面的文字说明。不含选择器、坐标、完整链接，也不含您填过的内容。"
     };
+  }
+
+  /** elements.json 的 SHA-256，写进 ui_schema 的 input_snapshot。
+   *  crypto.subtle 只在安全上下文可用（HTTPS / localhost），
+   *  普通 HTTP 页面上要请 background 代算 —— 那是扩展内部通信，不出浏览器。 */
+  async function sha256Of(text) {
+    const subtle = globalThis.crypto && globalThis.crypto.subtle;
+    if (subtle) {
+      try {
+        const hash = await subtle.digest("SHA-256", new TextEncoder().encode(text));
+        return [...new Uint8Array(hash)].map((b) => b.toString(16).padStart(2, "0")).join("");
+      } catch (_) { /* 落到下面的回退 */ }
+    }
+    try {
+      const reply = await chrome.runtime.sendMessage({ type: "easyview:sha256", text });
+      if (reply && reply.ok) return reply.sha256;
+    } catch (_) { /* 继续落到占位值 */ }
+    // 拿不到就如实填 64 个 0，不编造一个看起来像哈希的东西
+    return "0".repeat(64);
   }
 
   function payloadSummary(payload) {
@@ -480,6 +494,10 @@
 
   async function requestAnalysis() {
     if (busy || !lastPayload) return;
+    if (lastPayload.unusable) {
+      showError(lastPayload.note, null);
+      return;
+    }
     busy = true;
     showLoading(`读到了 ${pendingElements.stats ? pendingElements.stats.total : "?"} 个页面元素，正在判断哪些对您最有用…`);
 
@@ -489,7 +507,7 @@
       reply = await chrome.runtime.sendMessage({
         type: "easyview:analyze",
         body: lastPayload.text,
-        kind: lastPayload.full ? "elements" : "digest"
+        kind: "digest"
       });
     } catch (error) {
       busy = false;
@@ -497,14 +515,51 @@
       return;
     }
 
-    busy = false;
     if (!reply || !reply.ok) {
+      busy = false;
       showError((reply && reply.error) || "分析服务没有返回结果。", reply && reply.endpoint);
       return;
     }
 
-    currentUi = reply.data;
-    renderResult(currentUi);
+    // 绑定在本地做：定位字段从 elements 里逐字抄，风险策略在 binder 里判定。
+    // 服务器只回了「任务 + 元素 ID + 文案」，它没有、也不需要定位信息。
+    let ui;
+    try {
+      const binder = globalThis.EasyViewBinder;
+      if (!binder || typeof binder.bind !== "function") {
+        throw new Error("绑定模块没有加载成功");
+      }
+      const dropped = [];
+      // input_snapshot.sha256 锚定在这一个序列化上：JSON.stringify(elements)。
+      // 换一种序列化（Python 的 json.dumps、加缩进、改键序）算出来就不是同一个值，
+      // 所以这一行和下面的 sha256Of 必须用同一个字符串。
+      const elementsJson = JSON.stringify(pendingElements);
+      ui = binder.bind(reply.draft, pendingElements, {
+        generatedAt: new Date().toISOString(),
+        sha256: await sha256Of(elementsJson),
+        generator: { mode: "model", prompt_version: reply.promptVersion || null, fallback_reason: null },
+        droppedReport: dropped
+      });
+      lastDropped = dropped;
+      lastElementsJson = elementsJson;
+    } catch (error) {
+      busy = false;
+      showError(`整理结果时出错：${error && error.message ? error.message : error}`, null);
+      return;
+    }
+
+    busy = false;
+    currentUi = ui;
+    // 供端到端测试与排查读取。这是页面内的全局变量，不出浏览器。
+    globalThis.__easyviewLastRun = {
+      ui,
+      elements: pendingElements,
+      elementsJson: lastElementsJson,
+      payload: lastPayload.text,
+      dropped: lastDropped,
+      meta: reply.meta || null
+    };
+    renderResult(ui);
   }
 
   async function open() {

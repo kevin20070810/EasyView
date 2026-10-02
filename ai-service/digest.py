@@ -160,6 +160,19 @@ def _y_top(element: Mapping[str, Any]) -> float:
     return _bbox(element)[0]
 
 
+def _order_of(element: Mapping[str, Any]) -> int:
+    """把 order 安全地取成整数。
+
+    正常输入里 order 是提取器给的连续整数，但畸形数据不该让整个请求 500 ——
+    模糊测试喂一个 order:"x" 就会在排序里炸掉。
+    """
+    value = element.get("order")
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return 0
+
+
 def _y_bottom(element: Mapping[str, Any]) -> float:
     return _bbox(element)[1]
 
@@ -353,7 +366,7 @@ def _merge_sections(sections: list[dict[str, Any]]) -> list[dict[str, Any]]:
     result: list[dict[str, Any]] = []
     for key in order:
         section = merged[key]
-        section["elements"].sort(key=lambda e: (_y_top(e), int(e.get("order") or 0)))
+        section["elements"].sort(key=lambda e: (_y_top(e), _order_of(e)))
         result.append(section)
     return result
 
@@ -392,7 +405,7 @@ def _build_sections(data: Mapping[str, Any]) -> list[dict[str, Any]]:
         if not members:
             continue
         members = _dedupe_section(members)
-        members.sort(key=lambda e: (_y_top(e), int(e.get("order") or 0)))
+        members.sort(key=lambda e: (_y_top(e), _order_of(e)))
         for element in members:
             consumed.add(_clean(element.get("id")))
         # 容器元素（表单/导航本身）与它的分组是同一件事：既用它取名，也不重复显示
@@ -438,7 +451,7 @@ def _build_sections(data: Mapping[str, Any]) -> list[dict[str, Any]]:
         members = _dedupe_section(members)
         if not members:
             continue
-        members.sort(key=lambda e: (_y_top(e), int(e.get("order") or 0)))
+        members.sort(key=lambda e: (_y_top(e), _order_of(e)))
         sections.append({
             "title": band_titles[band],
             "kind": f"band_{band}",

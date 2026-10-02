@@ -811,6 +811,20 @@ def rows_multiset_equal(a, b):
     return Counter(a.split("\n")) == Counter(b.split("\n"))
 
 
+def rows_only(a, b):
+    """两份说明书渲染出的"元素行"（以 [ 开头的行）完全一样。
+
+    NaN 只影响排序，所以行内容不该变；分区标题可能因排序不同而变
+    （标题是从第一个成员推出来的），所以这里只比元素行。
+    """
+    from collections import Counter
+
+    def rows(text):
+        return Counter(line for line in text.split("\n") if line.startswith("["))
+
+    return rows(a) == rows(b)
+
+
 def sanitize_nan(data):
     """把会解析成 NaN 的 bbox 分量换成 0.0，作为对照输入。"""
     out = json.loads(json.dumps(data, ensure_ascii=False))
@@ -831,9 +845,48 @@ def sanitize_nan(data):
     return out
 
 
-def run_nan_control(report, payloads, py_results):
-    """NaN 用例的对照：把 NaN 换成 0.0，两边必须逐字节一致。"""
+def nan_control(payloads):
+    """NaN 用例的对照：把 NaN 换成 0.0，看两边是否逐字节一致。
+
+    返回 (names, results, bad)；results[name] = True 表示对照通过。
+    这个结果同时用作 NaN 差异的分类依据：只有对照通过的用例才允许
+    出现"仅顺序/取舍不同"的差异。
+    """
     nan_names = [n for n, p in payloads.items() if doc_has_nan(p["doc"])]
+    if not nan_names:
+        return [], {}, 0
+    results = {}
+    bad = 0
+    js_payloads = {}
+    py_control = {}
+    for name in nan_names:
+        san = sanitize_nan(payloads[name]["doc"])
+        try:
+            py_control[name] = ("ok", digest.build_digest(san))
+        except Exception as exc:  # noqa: BLE001
+            py_control[name] = ("err", type(exc).__name__)
+        js_payloads[name] = {"doc": san, "sha256": hashlib.sha256(b"").hexdigest(),
+                             "generator": GENERATOR}
+    js_control = run_js(js_payloads)
+    for name in nan_names:
+        kind, value = py_control[name]
+        js_res = js_control[name]
+        if kind == "ok":
+            ok = value is not None and value == js_res["digest"]
+            detail = "OK 逐字节一致" if ok else "MISMATCH"
+        else:
+            got = err_kind(js_res["digest_error"])
+            ok = got == value
+            detail = ("OK 两边同样报错(%s)" % value if ok
+                      else "MISMATCH py=%s js=%s" % (value, got))
+        results[name] = ok
+        if not ok:
+            bad += 1
+        results[name + "\0detail"] = detail
+    return nan_names, results, bad
+
+
+def run_nan_control(report, nan_names, results, bad):
     report.add("")
     report.add("=" * 78)
     report.add("NaN 用例的对照验证（把这些 bbox 的 NaN 换成 0.0，两边必须逐字节一致）")
@@ -841,22 +894,8 @@ def run_nan_control(report, payloads, py_results):
     if not nan_names:
         report.add("  （本次没有含 NaN 的输入）")
         return 0
-    bad = 0
-    js_payloads = {}
-    py_control = {}
     for name in nan_names:
-        san = sanitize_nan(payloads[name]["doc"])
-        py_control[name] = digest.build_digest(san)
-        js_payloads[name] = {"doc": san, "sha256": hashlib.sha256(b"").hexdigest(),
-                             "generator": GENERATOR}
-    js_control = run_js(js_payloads)
-    for name in nan_names:
-        a = py_control[name]
-        b = js_control[name]["digest"]
-        ok = a is not None and a == b
-        if not ok:
-            bad += 1
-        report.add("  %-12s %s" % (name, "OK 逐字节一致" if ok else "MISMATCH"))
+        report.add("  %-12s %s" % (name, results[name + "\0detail"]))
     report.add("  合计 %d 个 NaN 用例，对照不一致 %d 个" % (len(nan_names), bad))
     return bad
 
@@ -874,6 +913,7 @@ class Report:
         self.bind_ok = 0
         self.bind_err = 0
         self.nan_order = 0
+        self.nan_control_ok = {}
 
     def add(self, line=""):
         self.lines.append(line)
@@ -905,13 +945,16 @@ class Report:
                 if verbose:
                     self.add("  digest : OK  逐字节一致（%d 字节）"
                              % len(py_text.encode("utf-8")))
-            elif doc is not None and doc_has_nan(doc):
+            elif (doc is not None and doc_has_nan(doc)
+                  and self.nan_control_ok.get(name, False)):
                 # bbox 解析出 NaN：CPython 的落点由 timsort 细节 + 浮点对象身份
                 # 决定（未定义行为），JS 侧固定用确定性稳定排序。
-                # 对照验证见 run_nan_control()：把 NaN 换成 0.0 后两边必须逐字节一致。
+                # 判定依据是 run_nan_control：把 NaN 换成 0.0 后两边逐字节一致，
+                # 说明这份输入的所有差异都只来自 NaN 参与排序。
                 self.nan_order += 1
                 if verbose:
-                    self.add("  digest : NaN 顺序差异（已知；对照见"NaN 排序"一节）")
+                    self.add("  digest : NaN 顺序差异（已知；NaN 换成 0.0 后逐字节一致）" +
+                             ("，行集合也一致" if rows_only(py_text, js_text) else ""))
             else:
                 self.failures += 1
                 if verbose:
@@ -1068,6 +1111,16 @@ def run_nan_order_note(report):
 # 主流程
 # --------------------------------------------------------------------------
 
+def sha256_of(path):
+    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+
+def file_fingerprints():
+    files = [AI_DIR / "digest.py", AI_DIR / "binder.py",
+             EXT_SRC / "digest.js", EXT_SRC / "binder.js"]
+    return {p.name: sha256_of(p) for p in files}
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser()
     parser.add_argument("--fuzz", type=int, default=150, help="随机输入组数")
@@ -1076,6 +1129,7 @@ def main(argv=None):
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     report = Report()
+    fp_before = file_fingerprints()
 
     payloads = {}
     py_results = {}
@@ -1118,6 +1172,10 @@ def main(argv=None):
 
     js_results = run_js(js_payloads)
 
+    # 先把 NaN 对照跑掉：它的结果决定 NaN 差异的分类口径
+    nan_names, nan_results, nan_bad = nan_control(payloads)
+    report.nan_control_ok = nan_results
+
     report.add("=" * 78)
     report.add("digest.js / binder.js 与 Python 基准的差分结果")
     report.add("=" * 78)
@@ -1149,7 +1207,7 @@ def main(argv=None):
                 del report.lines[before_lines:]
 
     run_known_divergences(report)
-    report.failures += run_nan_control(report, payloads, py_results)
+    report.failures += run_nan_control(report, nan_names, nan_results, nan_bad)
     run_nan_order_note(report)
 
     report.add("")
@@ -1160,6 +1218,18 @@ def main(argv=None):
     report.add("  binder 序列化一致 / 两边同样报错 : %d / %d" % (report.bind_ok, report.bind_err))
     report.add("  不一致项 : %d" % report.failures)
     report.add("=" * 78)
+    report.add("")
+    report.add("基准版本（本次运行开始时）：")
+    for name, digest_hex in fp_before.items():
+        report.add("  %-12s %s" % (name, digest_hex))
+    fp_after = file_fingerprints()
+    if fp_after != fp_before:
+        report.add("  !! 基准/产物文件在本次运行期间被改动过，本次结果不可靠，请重跑：")
+        for name in fp_before:
+            if fp_before[name] != fp_after[name]:
+                report.add("     %s: %s -> %s" % (name, fp_before[name][:16], fp_after[name][:16]))
+    else:
+        report.add("  （运行期间四个文件都没有变化）")
 
     text = "\n".join(report.lines)
     (OUT_DIR / "report.txt").write_text(text, encoding="utf-8")

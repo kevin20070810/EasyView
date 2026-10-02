@@ -1,4 +1,4 @@
-/* EasyView · 协议绑定器（浏览器端）
+﻿/* EasyView · 协议绑定器（浏览器端）
  *
  * 本文件是 ai-service/binder.py 的逐字移植：同样的草稿 + 同样的 elements.json
  * 必须产出完全相同的 ui_schema 0.3 对象（逐字段、逐键序）。
@@ -26,7 +26,6 @@
     "\\t\\n\\x0b\\f\\r\\x1c-\\x1f \\x85\\xa0\\u1680" +
     "\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000";
   var PY_WS_RUN = new RegExp("[" + PY_WS_CLASS + "]+", "gu");
-  var PY_WS_ONE = new RegExp("[" + PY_WS_CLASS + "]", "u");
   var PY_NON_WS_CLASS = "[^" + PY_WS_CLASS + "]";
   var PY_WS_TEXT =
     "\t\n\u000b\f\r\u001c\u001d\u001e\u001f \u0085\u00a0\u1680" +

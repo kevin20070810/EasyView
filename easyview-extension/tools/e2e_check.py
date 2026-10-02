@@ -143,7 +143,16 @@ async def run(fixture: str, use_ai: bool) -> int:
             await page.goto(f"http://127.0.0.1:{FIXTURE_PORT}/{fixture}.html", wait_until="load")
             print(f"  [PASS] 已打开 fixture: {fixture}.html")
 
-            # 从 service worker 里注入内容脚本 —— 等价于用户点扩展图标
+            # 从 service worker 里注入内容脚本 —— 等价于用户点扩展图标。
+            # 文件列表从扩展里读，不在这里另存一份，否则加了文件忘了改测试会静默失效。
+            files = await worker.evaluate("() => globalThis.__easyviewContentFiles")
+            if not files:
+                failures.append("扩展没有暴露内容脚本列表")
+                print("  [FAIL] 读不到扩展的内容脚本列表")
+                files = ["src/privacy.js", "src/digest.js", "src/binder.js",
+                         "src/extract.js", "src/ai-content.js"]
+            print(f"  注入 {len(files)} 个脚本: {', '.join(f.split('/')[-1] for f in files)}")
+
             result = await worker.evaluate(
                 """async (files) => {
                     const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -151,7 +160,7 @@ async def run(fixture: str, use_ai: bool) -> int:
                     await chrome.scripting.executeScript({ target: { tabId: tabs[0].id }, files });
                     return null;
                 }""",
-                ["src/extract.js", "src/ai-content.js"],
+                files,
             )
             if result:
                 failures.append(f"注入失败: {result}")

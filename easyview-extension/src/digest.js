@@ -1,4 +1,4 @@
-﻿/* EasyView · 页面说明书生成（浏览器端）
+/* EasyView · 页面说明书生成（浏览器端）
  *
  * 本文件是 ai-service/digest.py 的逐字移植：同样的输入必须产出逐字节相同的
  * 文本。所有"看起来多余"的写法都是为了对齐 Python 的语义，不要随手简化。
@@ -33,7 +33,6 @@
     "\\t\\n\\x0b\\f\\r\\x1c-\\x1f \\x85\\xa0\\u1680" +
     "\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000";
   var PY_WS_RUN = new RegExp("[" + PY_WS_CLASS + "]+", "gu");
-  var PY_WS_ONE = new RegExp("[" + PY_WS_CLASS + "]", "u");
   // 用于把 Python 正则里的 \S 翻译成 JS 字符类
   var PY_NON_WS_CLASS = "[^" + PY_WS_CLASS + "]";
   var PY_WS_TEXT =
@@ -535,17 +534,6 @@
     return pyLower(hostname);
   }
 
-  function urlPort(result) {
-    var port = urlHostinfo(result.netloc === null ? "" : result.netloc)[1];
-    if (port === null) return null;
-    if (!/^[0-9]+$/.test(port)) {
-      throw PyValueError("Port could not be cast to integer value as " + pyStrRepr(port));
-    }
-    var value = parseInt(port, 10);
-    if (!(value >= 0 && value <= 65535)) throw PyValueError("Port out of range 0-65535");
-    return value;
-  }
-
   // ================= Python 的排序语义（元组比较 + 稳定性） ==============
 
   function pyCodePointLess(a, b) {
@@ -784,8 +772,13 @@
   }
 
   function orderOf(element) {
-    // int(e.get("order") or 0)
-    return pyInt(pyTruthy(element.order) ? element.order : 0);
+    // 对齐 digest.py 的 _order_of()：畸形 order 不该让整页炸掉，解析失败按 0
+    try {
+      return pyInt(element.order === undefined ? null : element.order);
+    } catch (e) {
+      if (isPyError(e)) return 0;
+      throw e;
+    }
   }
 
   function row(element) {
