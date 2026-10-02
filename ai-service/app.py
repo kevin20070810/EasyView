@@ -75,6 +75,9 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Headers", "Content-Type")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        # 页面内容既不落盘也不该被任何中间层缓存
+        self.send_header("Cache-Control", "no-store")
+        self.send_header("X-EasyView-Retention", "none")
 
     def _json(self, status: int, payload: Mapping[str, Any]) -> None:
         data = json.dumps(payload, ensure_ascii=False, indent=2).encode("utf-8")
@@ -122,8 +125,10 @@ class Handler(BaseHTTPRequestHandler):
         raw = self.rfile.read(length)
         try:
             body = json.loads(raw.decode("utf-8-sig"))
-        except (UnicodeDecodeError, json.JSONDecodeError) as exc:
-            self._error(400, f"请求体不是合法 UTF-8 JSON: {exc}")
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            # 不回显异常内容：JSONDecodeError 的消息里会带出错的原文片段，
+            # 那可能就是页面上的文字。
+            self._error(400, "请求体不是合法 UTF-8 JSON", "bad_json")
             return
         if not isinstance(body, Mapping):
             self._error(400, "请求体顶层必须是对象")
@@ -143,7 +148,9 @@ class Handler(BaseHTTPRequestHandler):
             self._error(422, str(exc), "invalid_elements")
             return
         except Exception as exc:  # noqa: BLE001 - HTTP 边界必须返回稳定结构
-            self._error(500, f"内部错误: {type(exc).__name__}: {exc}", "internal_error")
+            # 只记异常类型。异常消息有时会带上请求体片段，写进日志等于把页面内容留了下来。
+            self.log_error("internal error: %s", type(exc).__name__)
+            self._error(500, "服务内部错误", "internal_error")
             return
 
         payload: dict[str, Any] = {"ok": True, "data": result.ui_schema}
@@ -152,12 +159,18 @@ class Handler(BaseHTTPRequestHandler):
         self._json(200, payload)
 
     def log_message(self, fmt: str, *args: Any) -> None:
+        """只记请求行（方法、路径、状态码、字节数）。
+
+        基类默认就是记这个，这里显式写出来是为了固定住：
+        **请求体、页面文字、元素内容一律不进日志。**
+        """
         sys.stderr.write("[easyview-ai] " + fmt % args + "\n")
 
 
 def run_server(host: str, port: int) -> None:
     server = ThreadingHTTPServer((host, port), Handler)
     print(f"EasyView AI service listening on http://{host}:{port}", flush=True)
+    print("  留存策略：不记录请求体、不落盘、不回显输入、响应标记 no-store", flush=True)
     try:
         server.serve_forever()
     except KeyboardInterrupt:
