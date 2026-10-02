@@ -731,7 +731,7 @@ JS_BIND = """
 """
 
 
-def run_js(js_payloads):
+def run_js(js_payloads, expression=None):
     from playwright.sync_api import sync_playwright
 
     out = {}
@@ -845,12 +845,24 @@ def sanitize_nan(data):
     return out
 
 
-def nan_control(payloads):
-    """NaN 用例的对照：把 NaN 换成 0.0，看两边是否逐字节一致。
+JS_DIGEST_NOLIMIT = """
+(payload) => {
+  try {
+    return { ok: true, value: globalThis.EasyViewDigest.build(payload.doc, { maxRows: 1000000000 }) };
+  } catch (e) {
+    return { ok: false, error: (e && e.name ? e.name : "Error") + ": " + (e && e.message) };
+  }
+}
+"""
 
-    返回 (names, results, bad)；results[name] = True 表示对照通过。
-    这个结果同时用作 NaN 差异的分类依据：只有对照通过的用例才允许
-    出现"仅顺序/取舍不同"的差异。
+
+def nan_control(payloads):
+    """NaN 用例的两个对照，返回 (names, results, bad)。
+
+    对照 1（分类依据）：把 NaN 换成 0.0，两边必须逐字节一致。
+    对照 2（不变式）：不设行数上限时，两边渲染出的元素行必须完全相同
+                    （NaN 只影响排序，不该影响"有哪些行"）。
+    results[name] = True 仅当两个对照都通过。
     """
     nan_names = [n for n, p in payloads.items() if doc_has_nan(p["doc"])]
     if not nan_names:
@@ -865,24 +877,46 @@ def nan_control(payloads):
             py_control[name] = ("ok", digest.build_digest(san))
         except Exception as exc:  # noqa: BLE001
             py_control[name] = ("err", type(exc).__name__)
-        js_payloads[name] = {"doc": san, "sha256": hashlib.sha256(b"").hexdigest(),
-                             "generator": GENERATOR}
-    js_control = run_js(js_payloads)
+        js_payloads[name] = {"doc": san}
+    js_control = run_js(js_payloads, expression=JS_DIGEST_NOLIMIT)
+
+    # 对照 2：不设上限，行集合必须一致（Python 侧可能会抛错，那就只比错误类型）
+    js_rows = run_js({n: {"doc": payloads[n]["doc"]} for n in nan_names},
+                     expression=JS_DIGEST_NOLIMIT)
+    py_rows = {}
+    for name in nan_names:
+        try:
+            py_rows[name] = ("ok", digest.build_digest(payloads[name]["doc"], max_rows=10 ** 9))
+        except Exception as exc:  # noqa: BLE001
+            py_rows[name] = ("err", type(exc).__name__)
+
     for name in nan_names:
         kind, value = py_control[name]
         js_res = js_control[name]
         if kind == "ok":
-            ok = value is not None and value == js_res["digest"]
-            detail = "OK 逐字节一致" if ok else "MISMATCH"
+            ok1 = value is not None and value == js_res["digest"]
+            detail1 = "NaN→0.0 逐字节一致" if ok1 else "NaN→0.0 MISMATCH"
         else:
             got = err_kind(js_res["digest_error"])
-            ok = got == value
-            detail = ("OK 两边同样报错(%s)" % value if ok
-                      else "MISMATCH py=%s js=%s" % (value, got))
-        results[name] = ok
-        if not ok:
+            ok1 = got == value
+            detail1 = ("NaN→0.0 同样报错(%s)" % value if ok1
+                       else "NaN→0.0 MISMATCH py=%s js=%s" % (value, got))
+
+        kind2, value2 = py_rows[name]
+        js_row_res = js_rows[name]
+        if kind2 == "ok":
+            js_text = js_row_res["digest"]
+            ok2 = js_text is not None and rows_only(value2, js_text)
+            detail2 = "元素行集合一致" if ok2 else "元素行集合不一致"
+        else:
+            got2 = err_kind(js_row_res["digest_error"])
+            ok2 = got2 == value2
+            detail2 = "同样报错(%s)" % value2 if ok2 else "报错不一致 py=%s js=%s" % (value2, got2)
+
+        results[name] = ok1 and ok2
+        if not results[name]:
             bad += 1
-        results[name + "\0detail"] = detail
+        results[name + "\0detail"] = "%s；%s" % (detail1, detail2)
     return nan_names, results, bad
 
 
