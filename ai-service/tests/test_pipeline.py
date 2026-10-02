@@ -250,6 +250,114 @@ class BuilderTests(unittest.TestCase):
         for card in result["cards"]:
             self.assertIn(card["action"]["target_element_id"], known_ids)
 
+    def test_external_actions_only_for_safe_external_targets(self):
+        data = {
+            "schema_version": "1.0.0",
+            "page_url": "https://example.test/start",
+            "page_title": "外链测试",
+            "source": "live",
+            "stats": {"total": 4, "visible": 4, "by_type": {"link": 4}, "truncated": False},
+            "elements": [
+                {
+                    "id": "el_00000101", "type": "link", "text": "查办事指南",
+                    "href": "https://example.test/guide", "visible": True, "order": 0,
+                },
+                {
+                    "id": "el_00000102", "type": "link", "text": "拨打客服",
+                    "href": "tel:12345", "visible": True, "order": 1,
+                },
+                {
+                    "id": "el_00000103", "type": "link", "text": "查政策",
+                    "href": "https://other.test/policy", "visible": True, "order": 2,
+                },
+                {
+                    "id": "el_00000104", "type": "link", "text": "查询进度",
+                    "href": "javascript:alert(1)", "visible": True, "order": 3,
+                },
+            ],
+            "groups": [],
+        }
+        result = build_ui_schema(data, generated_at=FIXED_TIME)
+        by_title = {card["title"]: card for card in result["cards"]}
+
+        same_site = by_title["查办事指南"]["action"]
+        self.assertEqual(same_site["kind"], "navigate")
+        self.assertIsNone(same_site["href"])
+        self.assertEqual(same_site["target_element_id"], "el_00000101")
+
+        phone = by_title["拨打客服"]["action"]
+        self.assertEqual(phone["kind"], "external")
+        self.assertEqual(phone["href"], "tel:12345")
+        self.assertEqual(phone["target_element_id"], "el_00000102")
+
+        other_site = by_title["查政策"]["action"]
+        self.assertEqual(other_site["kind"], "external")
+        self.assertEqual(other_site["href"], "https://other.test/policy")
+
+        unsafe = by_title["查进度"]["action"]
+        self.assertEqual(unsafe["kind"], "navigate")
+        self.assertIsNone(unsafe["href"])
+
+        derived = result["extensions"]["input_stats"]
+        self.assertEqual(derived["card_count"], 4)
+        self.assertEqual(derived["external_count"], 2)
+        self.assertEqual(derived["visible_ratio"], 1.0)
+        self.assertFalse(derived["sparse_fallback_used"])
+
+    def test_image_only_sparse_page_uses_scroll_not_fake_navigation(self):
+        image_ids = [f"el_0000020{index}" for index in range(1, 6)]
+        data = {
+            "schema_version": "1.0.0",
+            "page_url": "https://hospital.test/",
+            "page_title": "图片导航医院首页",
+            "source": "live",
+            "stats": {"total": 5, "visible": 5, "by_type": {"image": 5}, "truncated": False},
+            "elements": [
+                {"id": image_ids[0], "type": "image", "text": "预约挂号", "visible": True, "order": 0},
+                {"id": image_ids[1], "type": "image", "text": "医保查询", "visible": True, "order": 1},
+                {"id": image_ids[2], "type": "image", "text": "科室导航", "visible": True, "order": 2},
+                {"id": image_ids[3], "type": "image", "text": "查看报告", "visible": True, "order": 3},
+                {"id": image_ids[4], "type": "image", "text": "专家团队", "visible": True, "order": 4},
+            ],
+            "groups": [
+                {
+                    "id": "grp_00000201", "type": "nav", "label": "就医指南",
+                    "element_ids": image_ids,
+                }
+            ],
+        }
+        result = build_ui_schema(data, generated_at=FIXED_TIME)
+        self.assertGreaterEqual(len(result["cards"]), 4)
+        self.assertTrue(any(card["title"] == "查看就医指南" for card in result["cards"]))
+        for card in result["cards"]:
+            self.assertEqual(card["action"]["kind"], "scroll")
+            self.assertIn(card["action"]["target_element_id"], image_ids)
+        derived = result["extensions"]["input_stats"]
+        self.assertGreaterEqual(derived["scroll_count"], 4)
+        self.assertTrue(derived["sparse_fallback_used"])
+        self.assertEqual(derived["external_count"], 0)
+
+    def test_core_services_rank_before_contact_and_guides(self):
+        data = {
+            "schema_version": "1.0.0",
+            "page_url": "https://service.test/",
+            "page_title": "排序测试",
+            "source": "live",
+            "stats": {"total": 5, "visible": 5, "by_type": {"link": 5}, "truncated": False},
+            "elements": [
+                {"id": "el_00000301", "type": "link", "text": "联系客服", "href": "https://service.test/contact", "visible": True, "order": 0},
+                {"id": "el_00000302", "type": "link", "text": "就医指南", "href": "https://service.test/guide", "visible": True, "order": 1},
+                {"id": "el_00000303", "type": "link", "text": "办证件", "href": "https://service.test/id", "visible": True, "order": 2},
+                {"id": "el_00000304", "type": "link", "text": "医保查询", "href": "https://service.test/insurance", "visible": True, "order": 3},
+                {"id": "el_00000305", "type": "link", "text": "查违章", "href": "https://service.test/violation", "visible": True, "order": 4},
+            ],
+            "groups": [],
+        }
+        titles = [card["title"] for card in build_ui_schema(data, generated_at=FIXED_TIME)["cards"]]
+        self.assertLess(titles.index("查违章"), titles.index("办证件"))
+        self.assertLess(titles.index("办证件"), titles.index("联系客服"))
+        self.assertLess(titles.index("医保查询"), titles.index("就医指南"))
+
     def test_ai_cannot_reintroduce_marketing_title(self):
         data = self.fixture("hospital")
         base = build_ui_schema(data, generated_at=FIXED_TIME)

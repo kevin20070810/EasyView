@@ -4,10 +4,10 @@
   "page_url": "https://demo.easyview.local/traffic/",
   "page_title": "市交通运输局 · 出行服务（本地快照）",
   "source": "fallback",
-  "generated_at": "2026-10-02T11:21:47+08:00",
+  "generated_at": "2026-10-02T11:35:13+08:00",
   "page": {
     "greeting": "您好，这里是市交通运输局 出行服务（本地快照）",
-    "summary": "这里可以查违章、办证件、联系客服和查公交"
+    "summary": "这里可以查违章、办证件、查公交和坐地铁"
   },
   "cards": [
     {
@@ -62,24 +62,11 @@
       "form": null
     },
     {
-      "id": "el_177a57da",
-      "title": "联系客服",
-      "subtitle": "联系在线客服",
-      "icon": "phone",
-      "priority": 3,
-      "action": {
-        "kind": "navigate",
-        "target_element_id": "el_177a57da",
-        "href": null
-      },
-      "form": null
-    },
-    {
       "id": "el_1c7ec156",
       "title": "查公交",
       "subtitle": "公交查询",
       "icon": "bus",
-      "priority": 4,
+      "priority": 3,
       "action": {
         "kind": "navigate",
         "target_element_id": "el_1c7ec156",
@@ -92,7 +79,7 @@
       "title": "坐地铁",
       "subtitle": "地铁出行",
       "icon": "info",
-      "priority": 5,
+      "priority": 4,
       "action": {
         "kind": "navigate",
         "target_element_id": "el_e64c55d5",
@@ -105,10 +92,23 @@
       "title": "打车",
       "subtitle": "出租网约",
       "icon": "info",
-      "priority": 6,
+      "priority": 5,
       "action": {
         "kind": "navigate",
         "target_element_id": "el_f31a6d95",
+        "href": null
+      },
+      "form": null
+    },
+    {
+      "id": "el_02acb258",
+      "title": "ETC服务",
+      "subtitle": null,
+      "icon": "info",
+      "priority": 6,
+      "action": {
+        "kind": "navigate",
+        "target_element_id": "el_02acb258",
         "href": null
       },
       "form": null
@@ -130,7 +130,12 @@
         "button": 3,
         "table": 1
       },
-      "truncated": false
+      "truncated": false,
+      "visible_ratio": 1.0,
+      "card_count": 6,
+      "external_count": 0,
+      "scroll_count": 0,
+      "sparse_fallback_used": false
     }
   }
 }

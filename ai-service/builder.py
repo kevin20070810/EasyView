@@ -18,6 +18,7 @@ from __future__ import annotations
 import re
 from datetime import datetime, timedelta, timezone
 from typing import Any, Iterable, Mapping, Sequence
+from urllib.parse import urlsplit
 
 UI_SCHEMA_VERSION = "0.1.0-draft"
 TZ_CST = timezone(timedelta(hours=8))
@@ -243,6 +244,18 @@ TITLE_MAP = {
     "登 录": "登录账号",
 }
 
+# 高频刚性需求：医疗、政务、交通中老人最常办理的事项。
+# 这些词只用于同类高价值入口之间的排序，不会把新闻/广告拉回卡片。
+CORE_CARD_TERMS = (
+    "挂号", "报告", "缴费", "交费", "医保", "社保", "公积金", "违章",
+    "办事指南", "户籍", "证件", "证明", "补贴", "养老金", "退休", "报销",
+    "购票", "车票", "退票", "改签",
+)
+SECONDARY_CARD_TERMS = (
+    "公交", "地铁", "打车", "出租", "网约", "ETC", "路况", "停车场",
+    "住院", "门诊", "体检", "药房",
+)
+
 # 组合关键词：命中越多，越应当排到前面
 _STRONG_COMBOS = (
     ("预约", "挂号"), ("门诊", "预约"), ("查询", "违章"), ("查询", "报告"),
@@ -268,6 +281,41 @@ def _clean_text(value: Any) -> str:
     text = _MULTI_PUNCT_RE.sub(" ", str(value))
     text = _SPACE_RE.sub(" ", text).strip()
     return text
+
+
+def _safe_external_href(href: Any, page_url: Any = "") -> str | None:
+    """返回可安全交给 A 打开的外部地址。
+
+    同源 http(s) 链接继续走 ``navigate``，由 A 点击原网页元素，避免绕过站点
+    自身的脚本和登录态。只有跨源链接以及 tel/mailto/sms/geo 这类明确协议才
+    使用 ``external``；javascript/data 等伪协议一律拒绝。
+    """
+    raw = str(href or "").strip()
+    if not raw or len(raw) > 2048:
+        return None
+    if any(ord(char) < 32 for char in raw):
+        return None
+
+    parsed = urlsplit(raw)
+    scheme = parsed.scheme.lower()
+    if scheme not in {"http", "https", "tel", "mailto", "sms", "geo"}:
+        return None
+
+    if scheme in {"http", "https"}:
+        if not parsed.netloc:
+            return None
+        base = urlsplit(str(page_url or "").strip())
+        if (
+            base.scheme.lower() == scheme
+            and base.netloc.lower() == parsed.netloc.lower()
+        ):
+            return None
+        return raw
+
+    # 非网页协议也必须有实际目标，不能是裸露的 ``tel:``。
+    if len(raw) <= len(scheme) + 1:
+        return None
+    return raw
 
 
 def _hits(text: str, words: Iterable[str]) -> int:
@@ -635,8 +683,15 @@ def build_card_for_form(
     }
 
 
-def build_card_for_element(element: Mapping[str, Any]) -> dict[str, Any] | None:
-    """把单个可点击元素转成导航卡片。"""
+def build_card_for_element(
+        element: Mapping[str, Any],
+        page_url: Any = "",
+) -> dict[str, Any] | None:
+    """把单个可点击元素转成导航卡片。
+
+    同源链接保留 ``navigate``，让 A 在原页面触发真实元素；跨源网页、电话、
+    邮件等明确目标则输出 ``external``，同时保留元素 ID 便于追溯。
+    """
     if element.get("type") not in INTERACTIVE_TYPES:
         return None
     if element.get("type") in {"submit", "button"} and element.get("form_id"):
@@ -668,6 +723,13 @@ def build_card_for_element(element: Mapping[str, Any]) -> dict[str, Any] | None:
     if _normalise_title(title) != _normalise_title(raw_text):
         subtitle = raw_text[:30]
 
+    external_href = _safe_external_href(element.get("href"), page_url)
+    action = {
+        "kind": "external" if external_href else "navigate",
+        "target_element_id": str(element["id"]),
+        "href": external_href,
+    }
+
     return {
         "id": str(element["id"]),
         "title": title,
@@ -675,11 +737,7 @@ def build_card_for_element(element: Mapping[str, Any]) -> dict[str, Any] | None:
         "icon": categorize(raw_text),
         "importance": importance,
         "order": int(element.get("order") or 0),
-        "action": {
-            "kind": "navigate",
-            "target_element_id": str(element["id"]),
-            "href": None,
-        },
+        "action": action,
         "form": None,
     }
 
@@ -690,15 +748,20 @@ def _importance_score(card: Mapping[str, Any]) -> int:
     score = {"high": 100, "mid": 50, "low": 10}.get(str(importance), 10)
     if kind == "form":
         score += 40
+
     text = _normalise_title(card.get("title"))
-    if any(word in text for word in ("挂号", "缴费", "报告", "查违章", "查办事", "医保", "社保", "公积金")):
-        score += 30
+    if any(word in text for word in CORE_CARD_TERMS):
+        score += 35
+    elif any(word in text for word in SECONDARY_CARD_TERMS):
+        score += 15
+
     if any(word in text for word in ("登录", "账号")):
         score -= 60
+    # 联系方式是补充入口，不应压过挂号、报告、医保、违章等主流程。
     if any(word in text for word in ("联系", "客服", "咨询", "电话")):
-        score += 15
+        score += 5
     if any(word in text for word in ("介绍", "导航", "专家")):
-        score -= 5
+        score -= 10
     if "指南" in text:
         score += 15
     return score
@@ -962,6 +1025,41 @@ def _stats_snapshot(elements_data: Mapping[str, Any], element_count: int) -> dic
     return result
 
 
+def _extend_input_stats(
+        stats: Mapping[str, Any],
+        elements_data: Mapping[str, Any],
+        cards: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    """补充只读诊断信息；A 可以忽略，B 用它定位真实站点退化。"""
+    result = dict(stats)
+    elements = elements_data.get("elements")
+    actual_elements = elements if isinstance(elements, list) else []
+    actual_visible = sum(
+        1 for element in actual_elements
+        if isinstance(element, Mapping) and bool(element.get("visible", True))
+    )
+
+    total = result.get("total")
+    if not isinstance(total, int) or isinstance(total, bool) or total < 0:
+        total = len(actual_elements)
+    visible = result.get("visible")
+    if not isinstance(visible, int) or isinstance(visible, bool) or visible < 0:
+        visible = actual_visible
+
+    result["visible_ratio"] = round(min(visible / total, 1.0), 3) if total else 0.0
+    result["card_count"] = len(cards)
+    result["external_count"] = sum(
+        1 for card in cards
+        if card.get("action", {}).get("kind") == "external"
+    )
+    result["scroll_count"] = sum(
+        1 for card in cards
+        if card.get("action", {}).get("kind") == "scroll"
+    )
+    result["sparse_fallback_used"] = bool(result["scroll_count"])
+    return result
+
+
 def build_cards(elements_data: Mapping[str, Any]) -> list[dict[str, Any]]:
     """构建、排序并截断卡片，确保 priority 从 1 连续递增。"""
     elements = elements_data.get("elements") or []
@@ -989,7 +1087,7 @@ def build_cards(elements_data: Mapping[str, Any]) -> list[dict[str, Any]]:
     for element in elements:
         if not isinstance(element, Mapping):
             continue
-        card = build_card_for_element(element)
+        card = build_card_for_element(element, elements_data.get("page_url"))
         if card:
             card["_visible"] = True
             candidates.append(card)
@@ -1077,5 +1175,7 @@ def build_ui_schema(
 
     input_stats = _stats_snapshot(elements_data, len(elements_data.get("elements") or []))
     if input_stats:
-        result["extensions"] = {"input_stats": input_stats}
+        result["extensions"] = {
+            "input_stats": _extend_input_stats(input_stats, elements_data, cards)
+        }
     return result

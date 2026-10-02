@@ -4,7 +4,7 @@
   "page_url": "https://demo.easyview.local/gov/",
   "page_title": "市政务服务中心 · 办事大厅（本地快照）",
   "source": "fallback",
-  "generated_at": "2026-10-02T11:21:47+08:00",
+  "generated_at": "2026-10-02T11:35:13+08:00",
   "page": {
     "greeting": "您好，这里是市政务服务中心 办事大厅（本地快照）",
     "summary": "这里可以查办事指南、社保医保、办医保和查公积金"
@@ -88,27 +88,27 @@
       "form": null
     },
     {
-      "id": "el_5973edb5",
-      "title": "查社保缴费",
-      "subtitle": "社保缴费记录",
-      "icon": "payment",
+      "id": "el_dee69604",
+      "title": "开户籍证明",
+      "subtitle": "户籍证明开具",
+      "icon": "government",
       "priority": 5,
       "action": {
         "kind": "navigate",
-        "target_element_id": "el_5973edb5",
+        "target_element_id": "el_dee69604",
         "href": null
       },
       "form": null
     },
     {
-      "id": "el_c8dc41cb",
-      "title": "养老助残",
-      "subtitle": null,
-      "icon": "info",
+      "id": "el_5973edb5",
+      "title": "查社保缴费",
+      "subtitle": "社保缴费记录",
+      "icon": "payment",
       "priority": 6,
       "action": {
         "kind": "navigate",
-        "target_element_id": "el_c8dc41cb",
+        "target_element_id": "el_5973edb5",
         "href": null
       },
       "form": null
@@ -129,7 +129,12 @@
         "button": 2,
         "table": 1
       },
-      "truncated": false
+      "truncated": false,
+      "visible_ratio": 1.0,
+      "card_count": 6,
+      "external_count": 0,
+      "scroll_count": 0,
+      "sparse_fallback_used": false
     }
   }
 }

@@ -4,7 +4,7 @@
   "page_url": "https://demo.easyview.local/hospital/",
   "page_title": "市第一人民医院 · 网上服务（本地快照）",
   "source": "fallback",
-  "generated_at": "2026-10-02T11:21:47+08:00",
+  "generated_at": "2026-10-02T11:35:13+08:00",
   "page": {
     "greeting": "您好，这里是市第一人民医院 网上服务（本地快照）",
     "summary": "这里可以挂号、查看报告、缴费和医保查询"
@@ -122,14 +122,14 @@
       "form": null
     },
     {
-      "id": "el_c8dc41cb",
-      "title": "联系客服",
-      "subtitle": "联系我们",
-      "icon": "phone",
+      "id": "el_6a435f92",
+      "title": "住院服务",
+      "subtitle": null,
+      "icon": "hospital",
       "priority": 6,
       "action": {
         "kind": "navigate",
-        "target_element_id": "el_c8dc41cb",
+        "target_element_id": "el_6a435f92",
         "href": null
       },
       "form": null
@@ -151,7 +151,12 @@
         "button": 4,
         "table": 1
       },
-      "truncated": false
+      "truncated": false,
+      "visible_ratio": 1.0,
+      "card_count": 6,
+      "external_count": 0,
+      "scroll_count": 0,
+      "sparse_fallback_used": false
     }
   }
 }

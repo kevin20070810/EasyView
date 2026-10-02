@@ -44,9 +44,19 @@ Invoke-RestMethod -Method Post -Uri http://127.0.0.1:8787/analyze -ContentType a
     "generated_at": "2026-10-02T10:35:00+08:00",
     "page": {
       "greeting": "您好，这里是页面标题",
-      "summary": "这里可以我要挂号、查看报告、缴费"
+      "summary": "这里可以挂号、查看报告、缴费和医保查询"
     },
-    "cards": []
+    "cards": [],
+    "extensions": {
+      "input_stats": {
+        "total": 93,
+        "visible": 93,
+        "truncated": false,
+        "visible_ratio": 1.0,
+        "card_count": 6,
+        "external_count": 0
+      }
+    }
   }
 }
 ```
