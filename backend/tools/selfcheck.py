@@ -1,15 +1,19 @@
-"""协议自检：验证 C 组输出严格符合 docs/elements.schema.json。
+"""协议自检：验证 elements.json 严格符合 docs/elements.schema.json。
 
 这是本项目最重要的一道防线 —— 协议对不上，B/A 全部返工。
+
+校验对象是 docs/examples/ 下已提交的真实产出。这里原先还会用 Playwright
+现场抓取真实站点，但服务端抓取已经退役：产品改为浏览器扩展在页面内提取，
+不再由服务端访问网页。因此本工具只做「已固化产出」的协议校验。
+
 用法：
-    python -m tools.selfcheck                 # 跑全部本地快照
-    python -m tools.selfcheck --url https://... # 跑真实站点
+    python -m tools.selfcheck
+    python -m tools.selfcheck --file path/to/elements.json
 """
 
 from __future__ import annotations
 
 import argparse
-import asyncio
 import json
 import re
 import sys
@@ -20,9 +24,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import jsonschema  # noqa: E402
 
-from app import fallback as fb  # noqa: E402
 from app.config import DOCS_DIR, MAX_ELEMENTS  # noqa: E402
-from app.extractor import extract, pool  # noqa: E402
 
 ID_RE = re.compile(r"^el_[0-9a-f]{8}$")
 GROUP_RE = re.compile(r"^(grp|form)_[0-9a-f]{8}$")
@@ -116,15 +118,8 @@ def validate_invariants(doc: dict) -> None:
     check("未越界输出 UI/重要性字段", not leaked, f"越界字段: {leaked}")
 
 
-async def run_case(label: str, title: str, coro) -> dict | None:
+def run_case(label: str, payload: dict) -> dict | None:
     print(f"\n=== {label} ===")
-    try:
-        doc = await coro
-    except Exception as exc:  # noqa: BLE001
-        check(f"{label} 解析成功", False, f"异常: {exc!r}")
-        return None
-
-    payload = json.loads(doc.model_dump_json())
     print(f"  标题: {payload['page_title']}")
     print(f"  来源: {payload['source']}  reason={payload['fallback_reason']}")
     print(f"  元素: {payload['stats']['total']} 个（可见 {payload['stats']['visible']}）"
@@ -150,11 +145,10 @@ async def run_case(label: str, title: str, coro) -> dict | None:
 SCHEMA = json.loads((DOCS_DIR / "elements.schema.json").read_text(encoding="utf-8-sig"))
 
 
-async def main() -> int:
-    parser = argparse.ArgumentParser(description="EasyView C 组协议自检")
-    parser.add_argument("--url", action="append", default=[],
-                        help="额外测试的真实 URL，可重复指定")
-    parser.add_argument("--live-only", action="store_true", help="只测真实 URL，跳过本地快照")
+def main() -> int:
+    parser = argparse.ArgumentParser(description="EasyView 协议自检")
+    parser.add_argument("--file", action="append", default=[],
+                        help="额外校验的 elements.json，可重复指定")
     args = parser.parse_args()
 
     # 先校验 schema 文件本身是合法 JSON Schema
@@ -165,20 +159,22 @@ async def main() -> int:
     except jsonschema.SchemaError as exc:
         check("docs/elements.schema.json 是合法的 JSON Schema", False, str(exc.message))
 
-    samples = [] if args.live_only else fb.available_snapshots()
-    print(f"\n可用本地快照: {samples}")
+    examples_dir = DOCS_DIR / "examples"
+    targets = sorted(examples_dir.glob("elements.*.json"))
+    targets += [Path(p) for p in args.file]
+    print(f"\n待校验的产出: {[p.name for p in targets]}")
 
-    try:
-        for name in samples:
-            await run_case(
-                f"快照 {name}",
-                name,
-                extract("https://demo.easyview.local/example", demo=name),
-            )
-        for url in args.url:
-            await run_case(f"真实站点 {url}", url, extract(url))
-    finally:
-        await pool.close()
+    if not targets:
+        check("找到待校验的 elements.json", False, f"{examples_dir} 下没有 elements.*.json")
+
+    for path in targets:
+        label = path.stem
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8-sig"))
+        except Exception as exc:  # noqa: BLE001
+            check(f"{label} 可读取", False, f"异常: {exc!r}")
+            continue
+        run_case(label, payload)
 
     print(f"\n{'=' * 46}")
     print(f"自检结果: {_ok} 通过 / {_fail} 失败")
@@ -187,4 +183,4 @@ async def main() -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(asyncio.run(main()))
+    raise SystemExit(main())

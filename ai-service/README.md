@@ -1,0 +1,73 @@
+# EasyView B 组 · AI 理解模块
+
+把 C 组输出的 `elements.json` 转为 A 组可直接渲染的 `ui_schema.json`。
+
+## 设计原则
+
+- **规则引擎保底**：不联网、没有 API Key 也能生成合规结果。
+- **AI 只做语义增强**：模型只能修改已有卡片的标题、副标题和顺序，不能改 ID、动作和表单结构。
+- **失败即降级**：模型超时、返回脏 JSON 时自动回到规则结果。
+- **适老化优先**：挂号、报告、缴费、医保、办事、公交等常用功能优先；新闻、公告、介绍和推广降级或过滤。
+- **真实站点防退化**：标题必须是老人能直接理解的动宾短语；金额、日期、政策会议词、知识攻略和营销口吻会被结构化识别，不会因“办理、预约、养老”等词直接漏成卡片。
+- **动作标题兜底**：原始入口即使是“社保医保”“住院服务”“ETC服务”这类名词，也会改写成“查社保医保”“查看住院服务”“查ETC服务”。
+- **AI 回写双重校验**：模型只能用明确动作短语覆盖规则标题；新闻、营销文案、纯业务名词和泛化标题都会被拒绝。
+- **点击目标不猜测**：同源链接继续触发原网页元素；跨源网页以及 `tel:`、`mailto:`、`sms:`、`geo:` 明确目标使用 `external` 并给出绝对地址，`javascript:`/`data:` 等伪协议不会被当成外链。
+- **尊重数据完整性**：读取 `stats.truncated`；截断时优先只使用可见候选，避免把不完整页面误认为完整页面。
+- **主流程排序**：挂号、报告、缴费、医保、公积金、户籍、违章等刚性需求稳定优先，联系方式和介绍页只作补充。
+- **稀疏页兜底**：可用入口少于 4 张时，会从真实存在的可见标题、区块和交互元素补充 `scroll` 卡片；`stats.by_type` 用于限定兜底来源，不会伪造元素 ID。
+- **一屏最多 6 张卡片**：`priority` 从 1 连续编号，A 无需重新判断。
+- **摘要自然可读**：单张卡为“这里可以挂号”，多张卡自动使用中文并列句式，不再机械拼接。
+
+## 快速开始
+
+```powershell
+# 无模型，纯规则运行
+python .\ai-service\app.py --file .\docs\examples\elements.hospital.json --output .\out.json
+
+# 启动 HTTP 服务
+python .\ai-service\app.py --host 127.0.0.1 --port 8787
+
+# 可选：启用模型增强
+$env:EASYVIEW_API_KEY = "你的密钥"
+$env:EASYVIEW_BASE_URL = "https://api.openai.com/v1"
+$env:EASYVIEW_MODEL = "gpt-4.1-mini"
+python .\ai-service\app.py --file .\docs\examples\elements.hospital.json --ai
+```
+
+接口与字段说明见 [docs/api.md](docs/api.md)。
+
+生成结果会在 `extensions.input_stats` 中保留输入的 `total`、`visible`、`by_type`、`truncated`，并补充只读诊断字段 `visible_ratio`、`card_count`、`external_count`、`scroll_count`、`sparse_fallback_used`。A 组可以忽略这些字段。
+
+## 验证
+
+```powershell
+python -m unittest discover -s .\ai-service\tests -v
+python .\ai-service\tools\generate_examples.py
+
+cd backend
+python -m tools.check_ui --elements ..\docs\examples\elements.hospital.json --ui ..\ai-service\examples\ui_schema.hospital.json
+python -m tools.check_ui --elements ..\docs\examples\elements.gov.json --ui ..\ai-service\examples\ui_schema.gov.json
+python -m tools.check_ui --elements ..\docs\examples\elements.traffic.json --ui ..\ai-service\examples\ui_schema.traffic.json
+```
+
+当前结果：
+
+| 样例 | 卡片顺序 | 官方校验 |
+|---|---|---|
+| 医院 | 我要挂号 → 查看报告 → 缴费 → 查医保 → 查看就医指南 → 查看住院服务 | 14/14 |
+| 政务 | 查办事指南 → 查社保医保 → 办医保 → 查公积金 → 开户籍证明 → 查社保缴费 | 14/14 |
+| 交通 | 查违章 → 办证件 → 查公交 → 坐地铁 → 打车 → 查ETC服务 | 14/14 |
+
+## 目录
+
+```text
+ai-service/
+├── app.py                       # HTTP 服务 + CLI
+├── builder.py                   # 确定性卡片规则引擎
+├── pipeline.py                  # AI 增强 + 失败降级
+├── llm_client.py                # OpenAI 兼容接口客户端
+├── prompts/analyze.prompt.md    # 模型提示词
+├── examples/                    # 三组 ui_schema 联调结果
+├── tests/test_pipeline.py       # 自动化测试
+└── docs/api.md                  # HTTP / CLI 接口说明
+```
