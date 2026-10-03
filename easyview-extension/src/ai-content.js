@@ -614,6 +614,8 @@
       stepHighlighted.style.outline = "";
       stepHighlighted.style.outlineOffset = "";
       stepHighlighted.style.backgroundColor = "";
+      stepHighlighted.style.scrollMarginTop = "";
+      stepHighlighted.style.scrollMarginBottom = "";
     }
     stepHighlighted = null;
     if (stepHost) stepHost.remove();
@@ -626,7 +628,12 @@
       stepHighlighted.style.outline = "";
       stepHighlighted.style.outlineOffset = "";
       stepHighlighted.style.backgroundColor = "";
+      stepHighlighted.style.scrollMarginTop = "";
+      stepHighlighted.style.scrollMarginBottom = "";
     }
+    // 底部有步骤条，滚动时给下面留出空间，别让目标被压住
+    element.style.scrollMarginTop = "24px";
+    element.style.scrollMarginBottom = "120px";
     element.scrollIntoView({ behavior: "smooth", block: "center" });
     element.style.outline = "4px solid #0b5cad";
     element.style.outlineOffset = "3px";
@@ -646,15 +653,27 @@
       shadow.appendChild(link);
       const extra = document.createElement("style");
       extra.textContent = `
-        .ev-stepbar { position: fixed; top: 0; left: 0; right: 0; z-index: 2147483600;
-          background: #0b5cad; color: #fff; padding: 14px 20px;
-          display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
-          font: 20px/1.5 "Microsoft YaHei", system-ui, sans-serif;
-          box-shadow: 0 3px 14px rgba(0,0,0,.25); }
-        .ev-stepbar .ev-step-count { font-size: 24px; font-weight: 700; white-space: nowrap; }
-        .ev-stepbar .ev-step-text { flex: 1 1 300px; }
-        .ev-stepbar button { font: 20px/1 "Microsoft YaHei", system-ui, sans-serif;
-          padding: 12px 22px; border: 0; border-radius: 8px; cursor: pointer;
+        /* 底部、单行、收窄、圆角。
+           两版教训：顶部通栏会盖住页面顶部；即使移到底部，
+           一旦换行堆成三四行（实测高 273px）照样挡掉三成屏幕。
+           所以这里禁止换行，文字超长省略，整体压到一行 ~60px。 */
+        .ev-stepbar { position: fixed; left: 50%; bottom: 20px;
+          transform: translateX(-50%);
+          z-index: 2147483600;
+          max-width: min(920px, calc(100vw - 32px));
+          box-sizing: border-box;
+          background: #0b5cad; color: #fff; padding: 10px 14px;
+          border-radius: 12px;
+          display: flex; align-items: center; gap: 12px;
+          flex-wrap: nowrap;
+          font: 17px/1.4 "Microsoft YaHei", system-ui, sans-serif;
+          box-shadow: 0 6px 26px rgba(0,0,0,.32); }
+        .ev-stepbar .ev-step-count { font-size: 18px; font-weight: 700; white-space: nowrap; }
+        .ev-stepbar .ev-step-text { flex: 1 1 auto; min-width: 0;
+          overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .ev-stepbar button { flex: 0 0 auto;
+          font: 17px/1 "Microsoft YaHei", system-ui, sans-serif;
+          padding: 9px 14px; border: 0; border-radius: 8px; cursor: pointer;
           background: rgba(255,255,255,.18); color: #fff; }
         .ev-stepbar button:hover { background: rgba(255,255,255,.32); }
         .ev-stepbar button:disabled { opacity: .4; cursor: default; }
@@ -682,12 +701,12 @@
     });
     prev.disabled = index === 0;
 
-    const next = button(index === steps.length - 1 ? "完成，收起提示" : "下一步", () => {
+    const next = button(index === steps.length - 1 ? "完成" : "下一步", () => {
       if (index === steps.length - 1) { clearStepBar(); return; }
       showStepBar(steps, index + 1);
     });
 
-    const exit = button("退出引导", () => clearStepBar());
+    const exit = button("退出", () => clearStepBar());
     exit.className = "ev-step-exit";
 
     bar.append(prev, next, exit);
