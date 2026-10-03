@@ -804,7 +804,7 @@
     }, 120);
   }
 
-  function showGroupGuide(elements) {
+  function showGroupGuide(elements, index) {
     if (!stepHost) {
       stepHost = document.createElement("div");
       stepHost.id = "easyview-step-host";
@@ -867,34 +867,44 @@
         { childList: true, subtree: true });
     }
 
-    // 一次把整组框起来，不再一格一格来。
-    // 早先是"第 1 步 / 共 3 步"逐个高亮，三个问题：
-    //   1. 老人得在气泡按钮和页面之间来回看
-    //   2. 输入地点弹出的候选框会盖住下一个格子，逐步模式对此无解
-    //   3. "第 N 步 / 共 M 步"本身是机器说法
-    // 合成一个框之后整块一起亮，候选框天然落在框里，文案也回到人话。
-    const nodes = elements
-      .map((e) => (resolveElement ? resolveElement(e.id) : null))
-      .filter((n) => n && n.isConnected);
+    // 一步步来：一次只亮一格。
+    //
+    // v0.13.0 曾经把整组框成一个大框（"就在这个框里填写"），理由是逐步引导
+    // 有三个毛病。但其中两个已经另行修好了：
+    //   - 候选框盖住下一格 → 挡板不再拦点击，且候选框会被吸进洞口
+    //   - 老人要在按钮和页面间来回看 → 这是逐步模式的本性，接受
+    // 合成大框的代价是"没有先后感"：字段多的时候老人不知道从哪开始。
+    // 所以回到分步，但保留 v0.13.0 的排版重构（旋转到当前这一步的元素）。
+    const total = elements.length;
+    const current = elements[Math.min(index, total - 1)] || elements[0];
+    const nodes = [resolveElement ? resolveElement(current.id) : null].filter((n) => n && n.isConnected);
     if (!nodes.length) { clearStepBar(); return; }
 
-    const names = elements
-      .map((e) => (e.label || e.text || e.placeholder || "").trim())
-      .filter(Boolean);
+    const label = (current.label || current.text || current.placeholder || "").trim();
+    const verb = current.type === "button" ? "点一下" : "填写";
+
     const bubble = stepHost.__bubble;
     bubble.replaceChildren();
-    bubble.appendChild(el("div", "ev-step-count", "就在这个框里填写"));
-    bubble.appendChild(el("div", "ev-step-text", names.join(" → ")));
+    bubble.appendChild(el("div", "ev-step-count", `第 ${index + 1} 步 / 共 ${total} 步`));
+    bubble.appendChild(el("div", "ev-step-text", `请在「${label}」里${verb}`));
+
     const actions = el("div", "ev-step-actions");
-    const exit = button("知道了", () => clearStepBar());
+    const prev = button("上一步", () => {
+      if (index > 0) showGroupGuide(elements, index - 1);
+    });
+    prev.disabled = index === 0;
+    const next = button(index === total - 1 ? "完成" : "下一步", () => {
+      if (index === total - 1) { clearStepBar(); return; }
+      showGroupGuide(elements, index + 1);
+    });
+    const exit = button("退出", () => clearStepBar());
     exit.className = "ev-step-exit";
-    actions.append(exit);
+    actions.append(prev, next, exit);
     bubble.appendChild(actions);
 
     stepHost.__nodes = nodes;
     stepHost.__current = nodes[0];
 
-    // 整组滚进视野。整组比屏幕还高时改成顶部对齐，否则居中会切掉一头。
     window.requestAnimationFrame(() => {
       const rect = groupRect();
       if (!rect) return;
@@ -953,7 +963,7 @@
     if (steps.length < 2) return false;
 
     close();
-    showGroupGuide(steps);
+    showGroupGuide(steps, 0);
     return true;
   }
 
