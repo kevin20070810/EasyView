@@ -84,12 +84,13 @@ async function openDedicatedOverlay(rootId) {
     });
   }
   const shadow = root?.shadowRoot;
-  if (!shadow) return false;
-  if (shadow.querySelector(".ev-overlay")) return true;
+  if (!shadow) return "missing";
+  // 「已经开着」和「这次刚打开」要能分开 —— 调用方据此决定再点一次要不要切到 AI 版
+  if (shadow.querySelector(".ev-overlay")) return "already";
   const launcher = shadow.querySelector(".ev-launcher");
-  if (!launcher || launcher.hidden) return false;
+  if (!launcher || launcher.hidden) return "missing";
   launcher.click();
-  return Boolean(shadow.querySelector(".ev-overlay"));
+  return shadow.querySelector(".ev-overlay") ? "opened" : "missing";
 }
 
 /* ---------- 分析服务 ---------- */
@@ -224,7 +225,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 /* ---------- 点击图标 ---------- */
 
-chrome.action.onClicked.addListener(async (tab) => {
+/* 抽成具名函数并挂到 globalThis，是为了让端到端测试能调【和用户点图标完全同一条】
+ * 代码路径。之前测试直接调 chrome.scripting.executeScript 注入，绕过了
+ * 这里的专用站点分支，于是"测试全过、用户看不到"—— 这个坑踩过一次了。 */
+async function handleActionClick(tab) {
   if (typeof tab.id !== "number") return;
   const tabId = tab.id;
   await clearStatus(tabId);
@@ -250,9 +254,15 @@ chrome.action.onClicked.addListener(async (tab) => {
         func: openDedicatedOverlay,
         args: [rootId]
       });
-      if (results.some(({ result }) => result === true)) return;
-      await showFailure(tabId, "专用敬老版尚未加载，请等网页加载完成后重试");
-      return;
+      const state = results.find(({ result }) => typeof result === "string")?.result;
+      // 第一次点：开专用敬老版 —— 它对这几个站点做得更深，能真正替你操作原页面。
+      // 再点一次：切到 AI 通用版。不加这一条，AI 路径在这几个站点上永远看不到 ——
+      // 之前就卡在这里：代码没问题、测试也过，但用户点图标走的一直是专用分支。
+      // 专用版没起来时（state === "missing"）也落到 AI，而不是只弹个错误提示。
+      if (state === "opened") return;
+      if (state === "missing") {
+        console.warn("[EasyView] 专用敬老版不可用，改用 AI 通用版");
+      }
     }
 
     // 通用网页：本地提取 → 本地生成说明书并脱敏 → 用户同意
@@ -265,7 +275,10 @@ chrome.action.onClicked.addListener(async (tab) => {
     console.warn("[EasyView] Could not open the current page:", error);
     await showFailure(tabId, "无法打开此页面的敬老版，请刷新网页后重试");
   }
-});
+}
+
+chrome.action.onClicked.addListener(handleActionClick);
+globalThis.__easyviewHandleClick = handleActionClick;
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
   if (changeInfo.status === "loading") clearStatus(tabId).catch(() => {});

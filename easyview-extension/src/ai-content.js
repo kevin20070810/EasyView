@@ -695,14 +695,46 @@
     highlightStep(resolveElement ? resolveElement(current.id) : null);
   }
 
-  /** 进入步骤引导。来源元素里凑不出两个表单控件就返回 false，交回单次定位。 */
+  /** 目标元素视觉邻域里的可见表单控件 —— 来源里凑不出步骤时的兜底。 */
+  function stepsNearTarget(targetId, doc, windowPx) {
+    const elements = doc.elements || [];
+    const target = elements.find((e) => e.id === targetId);
+    if (!target || !target.bbox) return [];
+    const center = target.bbox.y + (target.bbox.height || 0) / 2;
+    const group = elements.filter((e) => {
+      if (!wanted_ok(e) || !e.visible || !e.bbox) return false;
+      const y = e.bbox.y + (e.bbox.height || 0) / 2;
+      return Math.abs(y - center) <= windowPx;
+    });
+    group.sort((a, b) => (a.bbox.y - b.bbox.y) || (a.bbox.x - b.bbox.x));
+    return group;
+    function wanted_ok(e) {
+      if (!STEP_TYPES.has(e.type)) return false;
+      return Boolean((e.label || e.text || e.placeholder || "").trim());
+    }
+  }
+
+  /** 进入步骤引导。凑不出两个表单控件就返回 false，交回单次定位。
+   *
+   * 两级策略：
+   *   1. 先用卡片自己的 provenance.source_element_ids —— 精确。
+   *      12306 的「我要买火车票」就是这么找到出发地/到达地/出发日期的。
+   *   2. 来源里凑不出两步时，退一步看目标元素附近有没有表单控件。
+   *      没有这一层，这个功能就只在查票/办事这类页面上出现，
+   *      别的网站点了卡片什么都不发生，看起来像坏了。
+   */
   function startSteps(card) {
     if (!pendingElements) return false;
     const action = card.action || {};
     const provenance = card.provenance || {};
     const ids = [action.target_element_id, ...(provenance.source_element_ids || [])];
-    const steps = stepsFromIds(ids, pendingElements);
+
+    let steps = stepsFromIds(ids, pendingElements);
+    if (steps.length < 2) {
+      steps = stepsNearTarget(action.target_element_id, pendingElements, 140);
+    }
     if (steps.length < 2) return false;
+
     close();
     showStepBar(steps, 0);
     return true;
