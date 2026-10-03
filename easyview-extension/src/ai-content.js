@@ -739,17 +739,34 @@
     return best;
   }
 
-  function layoutSpotlight(element) {
-    if (!stepHost || !element || !element.isConnected) return;
-    const rect = element.getBoundingClientRect();
-    const pad = 6;
+  /** 这一组控件合起来的外接矩形。整个框就是"该填的地方"。 */
+  function groupRect() {
+    const nodes = (stepHost && stepHost.__nodes) || [];
+    let left = Infinity, top = Infinity, right = -Infinity, bottom = -Infinity;
+    for (const node of nodes) {
+      if (!node || !node.isConnected) continue;
+      const r = node.getBoundingClientRect();
+      if (r.width < 1 || r.height < 1) continue;
+      left = Math.min(left, r.left); top = Math.min(top, r.top);
+      right = Math.max(right, r.right); bottom = Math.max(bottom, r.bottom);
+    }
+    if (left === Infinity) return null;
+    return { left, top, right, bottom, width: right - left, height: bottom - top };
+  }
+
+  function layoutSpotlight() {
+    if (!stepHost) return;
+    const rect = groupRect();
+    if (!rect) return;
+    const pad = 8;
     const top = Math.max(0, rect.top - pad);
     const left = Math.max(0, rect.left - pad);
     let bottom = Math.min(window.innerHeight, rect.bottom + pad);
     let right = Math.min(window.innerWidth, rect.right + pad);
 
-    // 把弹出来的候选框一起照亮 —— 否则它是暗的，看着像禁用了
-    const popup = popupRectNear(element, rect);
+    // 候选框/日期选择器一起照亮 —— 否则它是暗的，看着像禁用了
+    const anchor = stepHost.__nodes && stepHost.__nodes[0];
+    const popup = anchor ? popupRectNear(anchor, rect) : null;
     if (popup) {
       bottom = Math.min(window.innerHeight, Math.max(bottom, popup.bottom + pad));
       right = Math.min(window.innerWidth, Math.max(right, popup.right + pad));
@@ -768,11 +785,10 @@
     const bubble = stepHost.__bubble;
     const bw = bubble.offsetWidth || 340;
     const bh = bubble.offsetHeight || 130;
-    // 避让范围把候选框也算进去，否则气泡会压在候选列表上
-    const avoidRect = popup
-      ? { top, left, right, bottom, width: right - left, height: bandH }
+    const avoid = popup
+      ? { left, top, right, bottom, width: right - left, height: bandH }
       : rect;
-    const spot = pickBubbleSpot(avoidRect, bw, bh);
+    const spot = pickBubbleSpot(avoid, bw, bh);
     bubble.style.top = `${spot.top}px`;
     bubble.style.left = `${spot.left}px`;
   }
@@ -784,12 +800,11 @@
     if (stepLayoutTimer) return;
     stepLayoutTimer = setTimeout(() => {
       stepLayoutTimer = null;
-      const current = stepHost && stepHost.__current;
-      if (current) layoutSpotlight(current);
+      layoutSpotlight();
     }, 120);
   }
 
-  function showStepBar(steps, index) {
+  function showGroupGuide(elements) {
     if (!stepHost) {
       stepHost = document.createElement("div");
       stepHost.id = "easyview-step-host";
@@ -852,38 +867,49 @@
         { childList: true, subtree: true });
     }
 
-    const current = steps[index];
-    const label = (current.label || current.text || current.placeholder || "").trim();
-    const verb = current.type === "button" ? "点一下" : "填写";
+    // 一次把整组框起来，不再一格一格来。
+    // 早先是"第 1 步 / 共 3 步"逐个高亮，三个问题：
+    //   1. 老人得在气泡按钮和页面之间来回看
+    //   2. 输入地点弹出的候选框会盖住下一个格子，逐步模式对此无解
+    //   3. "第 N 步 / 共 M 步"本身是机器说法
+    // 合成一个框之后整块一起亮，候选框天然落在框里，文案也回到人话。
+    const nodes = elements
+      .map((e) => (resolveElement ? resolveElement(e.id) : null))
+      .filter((n) => n && n.isConnected);
+    if (!nodes.length) { clearStepBar(); return; }
 
+    const names = elements
+      .map((e) => (e.label || e.text || e.placeholder || "").trim())
+      .filter(Boolean);
     const bubble = stepHost.__bubble;
     bubble.replaceChildren();
-    bubble.appendChild(el("div", "ev-step-count", `第 ${index + 1} 步 / 共 ${steps.length} 步`));
-    bubble.appendChild(el("div", "ev-step-text", `请在「${label}」里${verb}`));
-
+    bubble.appendChild(el("div", "ev-step-count", "就在这个框里填写"));
+    bubble.appendChild(el("div", "ev-step-text", names.join(" → ")));
     const actions = el("div", "ev-step-actions");
-    const prev = button("上一步", () => {
-      if (index > 0) showStepBar(steps, index - 1);
-    });
-    prev.disabled = index === 0;
-    const next = button(index === steps.length - 1 ? "完成" : "下一步", () => {
-      if (index === steps.length - 1) { clearStepBar(); return; }
-      showStepBar(steps, index + 1);
-    });
-    const exit = button("退出", () => clearStepBar());
+    const exit = button("知道了", () => clearStepBar());
     exit.className = "ev-step-exit";
-    actions.append(prev, next, exit);
+    actions.append(exit);
     bubble.appendChild(actions);
 
-    const element = resolveElement ? resolveElement(current.id) : null;
-    stepHost.__current = element;
-    if (element) {
-      highlightStep(element);
-      // 等一帧再量位置：scrollIntoView 是平滑滚动，立刻量会拿到旧坐标
-      layoutSpotlight(element);
-      requestAnimationFrame(() => layoutSpotlight(element));
-      setTimeout(() => layoutSpotlight(element), 350);
-    }
+    stepHost.__nodes = nodes;
+    stepHost.__current = nodes[0];
+
+    // 整组滚进视野。整组比屏幕还高时改成顶部对齐，否则居中会切掉一头。
+    window.requestAnimationFrame(() => {
+      const rect = groupRect();
+      if (!rect) return;
+      if (rect.height > window.innerHeight * 0.8) {
+        nodes[0].scrollIntoView({ behavior: "smooth", block: "start" });
+      } else {
+        window.scrollBy({
+          top: (rect.top + rect.bottom) / 2 - window.innerHeight / 2,
+          behavior: "smooth"
+        });
+      }
+      layoutSpotlight();
+      requestAnimationFrame(layoutSpotlight);
+      setTimeout(layoutSpotlight, 350);
+    });
   }
 
   /** 目标元素视觉邻域里的可见表单控件 —— 来源里凑不出步骤时的兜底。 */
@@ -927,7 +953,7 @@
     if (steps.length < 2) return false;
 
     close();
-    showStepBar(steps, 0);
+    showGroupGuide(steps);
     return true;
   }
 
