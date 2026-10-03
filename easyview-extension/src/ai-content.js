@@ -1708,8 +1708,35 @@
     body.appendChild(foot);
 
     go.addEventListener("click", async () => {
-      const target = train.bookButton;
-      if (!target || !target.isConnected) {
+      // 【点击时重新找】这一趟的「预订」按钮，不用渲染列表时抓下的那个引用。
+      //
+      // 用户报的现象：第一次点没反应，第二次才弹登录框。
+      // 原因是 12306 的「预订」长这样：
+      //   <a href="javascript:" onclick="checkG1234('T4Zj9OCe...', '06:08', ...)" class="btn72">
+      // 第一个参数是跟当次搜索会话绑定的加密令牌。结果页会定时刷新车次表，
+      // 刷新后旧引用指向的行已被替换，带着【过期令牌】—— checkG1234 静默失败，
+      // 表现就是"点了没反应"；等页面再刷一次，第二次点用的令牌是新的，就弹框了。
+      //
+      // 所以每一趟都按车次号回页面里重新定位。
+      function findBookLink() {
+        if (train.code) {
+          const rows = [...document.querySelectorAll('tr[id^="ticket_"]')];
+          const row = rows.find((r) => {
+            const n = r.querySelector(".number");
+            return n && n.innerText.trim() === train.code;
+          });
+          if (row) {
+            const link = [...row.querySelectorAll("a")]
+              .find((a) => /预订/.test((a.innerText || "").trim()));
+            if (link) return link;
+          }
+        }
+        // 回不到就退回渲染时的引用，至少不比原来差
+        return train.bookButton && train.bookButton.isConnected ? train.bookButton : null;
+      }
+
+      const target = findBookLink();
+      if (!target) {
         msg.textContent = "这一趟的「预订」按钮找不到了，请返回重新选一趟。";
         return;
       }
