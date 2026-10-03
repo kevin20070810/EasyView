@@ -541,14 +541,21 @@
     const id = action.target_element_id;
     const element = id && resolveElement ? resolveElement(id) : null;
 
-    // 先看要不要分步引导：如果这张卡的来源元素里有本页的表单控件
-    // （12306 的「我要买火车票」就带着出发地/到达地/出发日期），
-    // 就在当前页面一步步带他填，比直接跳走有用得多。
+    // 先看是不是"一组要填的字段"（12306 的「我要买火车票」带着
+    // 出发地/到达地/出发日期）→ 把购票流程铺成卡片，点哪步指哪格。
     //
-    // 这一步必须在 navigate/external 之前 —— 否则卡片一导航就走了，
-    // 步骤引导永远轮不到。来源里凑不出两个表单控件时会返回 false，
-    // 正常走下面的导航逻辑。
-    if (startSteps(card)) return;
+    // 必须在 navigate/external 之前：否则卡片一导航就走了，永远轮不到。
+    // 来源里凑不出两个表单字段时返回 false，正常走下面的导航逻辑。
+    if (hasFormGroup(card)) {
+      const act = card.action || {};
+      const prov = card.provenance || {};
+      const ids = [act.target_element_id, ...(prov.source_element_ids || [])];
+      const group = stepsFromIds(ids, pendingElements);
+      if (group.length >= 2) {
+        renderBookingSteps(group);
+        return;
+      }
+    }
 
     if (action.kind === "external" || action.kind === "navigate") {
       const href = action.href;
@@ -572,13 +579,8 @@
       showError("页面上找不到这个位置了，页面可能刚刚变过。请退出后重试。", null);
       return;
     }
+    // 情况一已经在 activate 开头处理过了（要在导航分支之前），这里只剩两种。
     const risk = (card && card.risk && card.risk.level) || "normal";
-
-    // 情况一：这张卡的来源里有一组表单字段（12306 的出发地/到达地/日期）
-    // → 在当前页面一步步带他填，比跳走有用。
-    if (hasFormGroup(card)) {
-      if (startSteps(card)) return;
-    }
 
     // 情况二：这是"带我去某个入口"的卡，目标是个链接/按钮。
     //
@@ -972,7 +974,10 @@
     // 页面 JS 会替换/重建这些节点，映射就失效了。失效时 showGroupGuide 会走到
     // clearStepBar()，表现是"面板关了、什么提示都没有" —— 正是用户报的
     // "其他功能点了没反应"。选择器是提取那一刻记下来的，能兜住这种情况。
-    const nodes = elements
+    // 只框【当前这一步】那一格。
+    // 早先这里 map 的是整组 elements，结果三步每次框出来的都是同一个大框
+    // （覆盖三个输入格），"一步步来"就没有意义了。
+    const nodes = [current]
       .map((e) => {
         let node = resolveElement ? resolveElement(e.id) : null;
         if ((!node || !node.isConnected) && e.selector) {
@@ -1302,6 +1307,92 @@
     foot.appendChild(el("div", "", "看好了就点那一趟，我们会带您到原网页的「预订」。"));
     foot.appendChild(el("div", "ev-ai-foot-meta",
       `车次来自当前网页，没有发给任何服务器。EasyView v${chrome.runtime.getManifest().version}`));
+    body.appendChild(foot);
+  }
+
+  /* ---------- 购票流程卡片化 ----------
+   *
+   * 点「我要买火车票」不再直接钻进聚光灯，而是先把流程铺成一张张
+   * "下一步该做什么"的卡片，用老人问得出口的话：
+   *
+   *     第 1 步  您要从哪里出发？
+   *     第 2 步  您要去哪里？
+   *     第 3 步  哪天走？
+   *     最后     填好了，点这里查车次
+   *
+   * 点其中一张 → 收起面板、聚光灯框出对应输入框。
+   * 这样老人随时能看到"一共几步、我走到哪了"，而不是被丢进一个只有
+   * "第 1 步 / 共 3 步"的聚光灯里、看不到全貌。
+   */
+  const BOOKSTEP_CSS = `
+    .ev-booksteps { display: grid; gap: 14px; }
+    .ev-bookstep {
+      display: grid; grid-template-columns: 92px 1fr auto; align-items: center;
+      gap: 16px; width: 100%; text-align: left; box-sizing: border-box;
+      padding: 22px 24px; border: 0; border-radius: 20px; cursor: pointer;
+      background: linear-gradient(160deg, #f2f9ff 0%, #ffffff 100%);
+      box-shadow: 0 8px 22px rgba(23,72,124,.12), inset 0 1px 0 rgba(255,255,255,.9);
+      color: #10314f;
+      font: 20px/1.45 "Microsoft YaHei", "PingFang SC", system-ui, sans-serif;
+      transition: transform .12s ease, box-shadow .12s ease;
+    }
+    .ev-bookstep:hover { transform: translateY(-2px);
+      box-shadow: 0 14px 30px rgba(23,72,124,.18), inset 0 1px 0 rgba(255,255,255,.95); }
+    .ev-bookstep-no { font-size: 19px; font-weight: 800; color: #0b5cad;
+      background: #e3f0fb; border-radius: 999px; padding: 8px 0; text-align: center; }
+    .ev-bookstep-q { font-size: 30px; font-weight: 800; line-height: 1.25; }
+    .ev-bookstep-hint { grid-column: 2; font-size: 18px; color: #5b7f9e; margin-top: 2px; }
+    .ev-bookstep-arrow { grid-row: 1 / span 2; font-size: 30px; color: #6fa8d6; }
+  `;
+
+  /** 把字段翻成老人问得出口的话。 */
+  function questionFor(element) {
+    const label = (element.label || element.text || element.placeholder || "").trim();
+    // 日期要排在「出发」前面判断：否则「出发日期」会被 /出发/ 先截走，
+    // 第 3 步会写成"您要从哪里出发？"（踩过一次）。
+    if (/日期|出发日|乘车日|哪天/.test(label)) return "哪天走？";
+    if (/出发地|出发站|出发/.test(label)) return "您要从哪里出发？";
+    if (/到达地|到达站|目的地|到达/.test(label)) return "您要去哪里？";
+    if (/查询|搜索|查找/.test(label)) return "填好了，点这里查车次";
+    return label ? `填一下「${label}」` : "在这里填一下";
+  }
+
+  function renderBookingSteps(elements) {
+    const body = header("买火车票，就三步", "点哪一步，我就指给您看在哪填。");
+    const style = document.createElement("style");
+    style.textContent = BOOKSTEP_CSS;
+    body.appendChild(style);
+
+    const list = el("div", "ev-booksteps");
+    elements.forEach((element, index) => {
+      const node = el("button", "ev-bookstep");
+      node.type = "button";
+
+      const isLast = index === elements.length - 1;
+      node.appendChild(el("span", "ev-bookstep-no", isLast ? "最后" : `第 ${index + 1} 步`));
+      node.appendChild(el("span", "ev-bookstep-q", questionFor(element)));
+      node.appendChild(el("span", "ev-bookstep-arrow", "→"));
+
+      const hint = el("span", "ev-bookstep-hint");
+      const name = (element.label || element.text || element.placeholder || "").trim();
+      hint.textContent = name ? `点这里，我指给您看「${name}」` : "点这里，我指给您看";
+      node.appendChild(hint);
+
+      node.addEventListener("click", () => {
+        close();
+        showGroupGuide(elements, index);
+      });
+      list.appendChild(node);
+    });
+
+    const box = el("div", "ev-ai-bookbox");
+    box.appendChild(list);
+    body.appendChild(box);
+
+    const foot = el("div", "ev-ai-foot");
+    foot.appendChild(el("div", "", "填好之后，原网页上的「查询」按钮就是最后一步。"));
+    foot.appendChild(el("div", "ev-ai-foot-meta",
+      `这一步全在本机完成，没有把网页内容发出去。EasyView v${chrome.runtime.getManifest().version}`));
     body.appendChild(foot);
   }
 
