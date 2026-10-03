@@ -967,6 +967,138 @@
     return true;
   }
 
+  /* ---------- 车次卡片（12306 查票结果页）----------
+   *
+   * 为什么不走模型：车次列表是结构化数据，直接读比让模型猜准得多。
+   * 实测通用路径在结果页上给的是「我要退票 / 我要改签 / 查正晚点」——
+   * 首页级别的任务，对着一屏 110 趟车毫无用处。
+   *
+   * 视觉：冰蓝→白渐变、毛玻璃、大圆角悬浮、大字号。
+   * 设计稿里还有「座位 12车05A / 检票口 6A / 站台 3」—— 这三项在查票页面
+   * 上还不存在（要下单后才有），所以没有硬塞，留到乘车人那一步再上。
+   */
+  const TRAIN_CSS = `
+    .ev-trains { display: grid; gap: 14px; }
+    .ev-train {
+      position: relative; overflow: hidden; box-sizing: border-box;
+      display: grid; gap: 10px; width: 100%; text-align: left;
+      padding: 18px 20px 16px; border: 0; cursor: pointer;
+      border-radius: 22px;
+      background:
+        radial-gradient(120% 90% at 8% 0%, #ffffff 0%, rgba(255,255,255,0) 58%),
+        linear-gradient(160deg, #e8f4ff 0%, #f7fbff 46%, #ffffff 100%);
+      box-shadow: 0 10px 28px rgba(23,72,124,.16), 0 2px 6px rgba(23,72,124,.08),
+                  inset 0 1px 0 rgba(255,255,255,.9);
+      backdrop-filter: blur(14px) saturate(140%);
+      -webkit-backdrop-filter: blur(14px) saturate(140%);
+      color: #10314f;
+      font: 17px/1.45 "Microsoft YaHei", "PingFang SC", system-ui, sans-serif;
+      transition: transform .12s ease, box-shadow .12s ease;
+    }
+    .ev-train:hover { transform: translateY(-2px);
+      box-shadow: 0 16px 34px rgba(23,72,124,.22), 0 3px 8px rgba(23,72,124,.1),
+                  inset 0 1px 0 rgba(255,255,255,.95); }
+    .ev-train-head { display: flex; align-items: center; gap: 9px;
+      color: #4a7ba6; font-size: 15px; font-weight: 600; letter-spacing: .04em; }
+    .ev-train-head svg { width: 19px; height: 19px; }
+    .ev-train-code { font-size: 40px; font-weight: 800; line-height: 1.05;
+      letter-spacing: .01em; color: #0b4f86; }
+    .ev-train-route { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+      font-size: 24px; font-weight: 700; }
+    .ev-train-route .ev-arrow { color: #6fa8d6; font-weight: 500; }
+    .ev-train-times { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
+      font-size: 27px; font-weight: 800; color: #0b4f86; font-variant-numeric: tabular-nums; }
+    .ev-train-times small { font-size: 16px; font-weight: 600; color: #5b7f9e; }
+    .ev-train-meta { display: flex; gap: 8px 14px; flex-wrap: wrap; align-items: center;
+      font-size: 17px; color: #43617c; }
+    .ev-train-price { font-size: 25px; font-weight: 800; color: #b3521a; }
+    .ev-train-left { padding: 3px 10px; border-radius: 999px; font-size: 15px; font-weight: 700;
+      background: #e2f3e6; color: #1c6b39; }
+    .ev-train-left.ev-tight { background: #fdecd8; color: #8a4a12; }
+    .ev-train-rule { height: 1px; margin: 2px 0 0;
+      background: linear-gradient(90deg, rgba(23,72,124,.16), rgba(23,72,124,0)); }
+    .ev-train-cta { display: flex; justify-content: space-between; align-items: center;
+      font-size: 18px; font-weight: 700; color: #0b5cad; }
+  `;
+
+  function trainIcon() {
+    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"'
+      + ' stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+      + '<rect x="5" y="2" width="14" height="17" rx="3"/>'
+      + '<path d="M5 11h14M8 6h8M8 19l-2 3m10-3 2 3M8 15h.01M16 15h.01"/></svg>';
+  }
+
+  function renderTrainCards(trains) {
+    ensureMount();
+    const body = header("选一趟车", `这趟车有 ${trains.length} 个车次，点一下就是它。`);
+
+    const wrap = el("div", "ev-trains");
+    for (const t of trains) {
+      const card = el("button", "ev-train");
+      card.type = "button";
+
+      const head = el("div", "ev-train-head");
+      head.innerHTML = trainIcon();
+      head.appendChild(el("span", "", "车次信息"));
+      card.appendChild(head);
+
+      card.appendChild(el("div", "ev-train-code", t.code));
+
+      const route = el("div", "ev-train-route");
+      route.append(t.from, el("span", "ev-arrow", "→"), t.to);
+      card.appendChild(route);
+
+      const times = el("div", "ev-train-times");
+      times.append(t.depart, el("small", "", "发车"), el("span", "ev-arrow", "→"),
+                   t.arrive, el("small", "", "到达"));
+      if (t.duration) times.appendChild(el("small", "", `历时 ${t.duration}`));
+      card.appendChild(times);
+
+      card.appendChild(el("div", "ev-train-rule"));
+
+      const meta = el("div", "ev-train-meta");
+      if (t.price) {
+        meta.append(el("span", "ev-train-price", `${t.priceClass || "二等座"} ${t.price} 元`));
+      }
+      if (t.left) {
+        const tight = /无|候补/.test(t.left);
+        meta.appendChild(el("span", `ev-train-left${tight ? " ev-tight" : ""}`,
+          tight ? `余票 ${t.left}` : `余票 ${t.left}`));
+      }
+      card.appendChild(meta);
+
+      const cta = el("div", "ev-train-cta");
+      cta.append(el("span", "", "选这一趟"), el("span", "", "→"));
+      card.appendChild(cta);
+
+      card.addEventListener("click", () => {
+        const target = t.bookButton;
+        if (target && target.isConnected) {
+          close();
+          target.scrollIntoView({ behavior: "smooth", block: "center" });
+          target.style.outline = "4px solid #ffb020";
+          target.style.outlineOffset = "3px";
+          target.focus({ preventScroll: true });
+        } else {
+          showError("这一趟的「预订」按钮找不到了，页面可能刚刷新过。", null);
+        }
+      });
+      wrap.appendChild(card);
+    }
+
+    // 注意别用 .ev-ai-consent 当容器 —— 那是同意页的类名，
+    // 复用它会让"有没有弹同意页"的检测误报（踩过一次）。
+    const box = el("div", "ev-ai-trainbox");
+    box.appendChild(wrap);
+    body.appendChild(box);
+
+    const foot = el("div", "ev-ai-foot");
+    foot.appendChild(el("div", "", "看好了就点那一趟，我们会带您到原网页的「预订」。"));
+    foot.appendChild(el("div", "ev-ai-foot-meta",
+      `车次来自当前网页，没有发给任何服务器。EasyView v${chrome.runtime.getManifest().version}`));
+    body.appendChild(foot);
+  }
+
   /* ---------- 本地规则兜底 ---------- */
 
   async function useLocalRules() {
@@ -1078,6 +1210,25 @@
       resolveElement = extracted.resolve;
       // 去掉同名的隐藏副本：模型可能挑中隐藏那份，"滚动+高亮"就白做了
       pendingElements = stripHiddenDuplicates(extracted.elements);
+
+      // 12306 查票结果页：车次列表是结构化数据，直接读，不调模型也不用同意。
+      // 实测通用路径在这一页上给的是「我要退票 / 我要改签」这类首页任务，
+      // 对着一屏 55~110 趟车毫无用处。这不算绕过隐私检查 ——
+      // 车次信息本来就在当前页面上，本地解析不发送任何东西。
+      if (globalThis.EasyViewTrainList) {
+        let trains = [];
+        try {
+          trains = globalThis.EasyViewTrainList.read();
+        } catch (_) {
+          trains = [];
+        }
+        if (trains.length >= 3) {
+          lastPayload = null;
+          busy = false;
+          renderTrainCards(trains);
+          return;
+        }
+      }
     } catch (error) {
       busy = false;
       showError(`读取页面失败：${error && error.message ? error.message : error}`, null);
