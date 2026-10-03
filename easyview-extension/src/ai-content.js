@@ -1553,6 +1553,48 @@
       font-weight: 800; box-shadow: 0 12px 28px rgba(11,92,173,.3); }
     .ev-confirm-go:hover { background: #0a4e93; }
     .ev-confirm-msg { font-size: 20px; font-weight: 700; color: #8a4a12; min-height: 24px; }
+    /* 核对屏：和车次卡片同一套设计语言 */
+    .ev-order { display: grid; gap: 0; padding: 0; overflow: hidden;
+      border-radius: 26px;
+      background:
+        radial-gradient(120% 90% at 8% 0%, #ffffff 0%, rgba(255,255,255,0) 60%),
+        linear-gradient(160deg, #eaf5ff 0%, #f8fcff 48%, #ffffff 100%);
+      box-shadow: 0 14px 34px rgba(23,72,124,.16), 0 2px 6px rgba(23,72,124,.07),
+                  inset 0 1px 0 rgba(255,255,255,.92);
+      backdrop-filter: blur(14px) saturate(140%);
+      -webkit-backdrop-filter: blur(14px) saturate(140%);
+      color: #10314f;
+      font: 20px/1.45 "Microsoft YaHei", "PingFang SC", system-ui, sans-serif; }
+    .ev-order-sec { display: grid; gap: 8px; padding: 22px 28px;
+      border-bottom: 1px solid rgba(23,72,124,.1); }
+    .ev-order-sec.ev-order-inline { grid-template-columns: 1fr auto; align-items: end; }
+    .ev-order-label { font-size: 17px; font-weight: 700; letter-spacing: .08em; color: #6b93b5; }
+    .ev-order-code { font-size: 60px; font-weight: 800; line-height: 1; color: #0b4f86; }
+    .ev-order-route { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap;
+      font-size: 32px; font-weight: 700; }
+    .ev-order-times { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+      font-size: 34px; font-weight: 800; color: #0b4f86; font-variant-numeric: tabular-nums; }
+    .ev-order-times small { font-size: 19px; font-weight: 600; color: #5b7f9e; }
+    .ev-order-times .ev-order-dur { margin-left: 6px; }
+    .ev-order-arrow { color: #6fa8d6; font-weight: 500; }
+    .ev-order-seat { font-size: 32px; font-weight: 800; color: #10314f; }
+    .ev-order-right { text-align: right; }
+    .ev-order-price { font-size: 32px; font-weight: 800; color: #b3521a;
+      font-variant-numeric: tabular-nums; }
+    .ev-order-people { display: flex; gap: 12px; flex-wrap: wrap; }
+    .ev-order-person { display: inline-flex; align-items: center; gap: 10px;
+      padding: 8px 18px 8px 8px; border-radius: 999px;
+      background: #e3f0fb; color: #0b4f86;
+      font-size: 26px; font-weight: 800; }
+    .ev-order-face { width: 44px; height: 44px; border-radius: 50%;
+      display: grid; place-items: center; background: #0b5cad; color: #fff;
+      font-size: 22px; font-weight: 800; }
+    .ev-order-warn { font-size: 22px; font-weight: 700; color: #8a4a12; }
+    .ev-order-total { display: flex; align-items: baseline; justify-content: space-between;
+      gap: 16px; padding: 22px 28px; background: rgba(11,92,173,.07); }
+    .ev-order-total-label { font-size: 24px; font-weight: 700; color: #14507f; }
+    .ev-order-total-price { font-size: 44px; font-weight: 800; color: #b3521a;
+      font-variant-numeric: tabular-nums; }
   `;
 
   function renderTrainConfirm(train) {
@@ -1663,40 +1705,61 @@
   function renderOrderConfirm(train, passengers) {
     const body = backBar(header("请核对一下", "这是您要买的车票，看清楚了再提交。"));
 
-    const card = el("div", "ev-confirm-card");
-    card.appendChild(el("div", "ev-confirm-code", train.code));
+    // 分区块 + 标签 + 形状，和车次卡片同一套设计语言。
+    // 之前是一堆白底文字堆在一起，用户反馈"只是白纸黑字"。
+    const card = el("div", "ev-order");
 
-    const route = el("div", "ev-confirm-route");
-    route.append(train.from, el("span", "ev-arrow", "→"), train.to);
-    card.appendChild(route);
-
-    const times = el("div", "ev-confirm-times");
-    times.append(train.depart, el("small", "", "开"), el("span", "ev-arrow", "→"),
+    const sec1 = el("div", "ev-order-sec");
+    sec1.appendChild(el("div", "ev-order-label", "车次"));
+    sec1.appendChild(el("div", "ev-order-code", train.code));
+    const route = el("div", "ev-order-route");
+    route.append(train.from, el("span", "ev-order-arrow", "→"), train.to);
+    sec1.appendChild(route);
+    const times = el("div", "ev-order-times");
+    times.append(train.depart, el("small", "", "开"), el("span", "ev-order-arrow", "→"),
                  train.arrive, el("small", "", "到"));
-    if (train.duration) times.appendChild(el("small", "", `历时 ${train.duration}`));
-    card.appendChild(times);
+    if (train.duration) times.appendChild(el("small", "ev-order-dur", `历时 ${train.duration}`));
+    sec1.appendChild(times);
+    card.appendChild(sec1);
 
-    card.appendChild(el("div", "ev-confirm-rule"));
-
-    const who = (passengers || []).filter((p) => p.checked);
-    const meta = el("div", "ev-confirm-meta");
+    const sec2 = el("div", "ev-order-sec ev-order-inline");
+    const seatBox = el("div", "");
+    seatBox.appendChild(el("div", "ev-order-label", "座位"));
+    seatBox.appendChild(el("div", "ev-order-seat", train.priceClass || "二等座"));
+    sec2.appendChild(seatBox);
     if (train.price) {
-      meta.append(el("span", "ev-confirm-price", `${train.priceClass || "二等座"} ${train.price} 元`));
+      const priceBox = el("div", "ev-order-right");
+      priceBox.appendChild(el("div", "ev-order-label", "每张"));
+      priceBox.appendChild(el("div", "ev-order-price", `${train.price} 元`));
+      sec2.appendChild(priceBox);
     }
-    card.appendChild(meta);
+    card.appendChild(sec2);
 
-    const line = el("div", "ev-confirm-meta");
-    line.appendChild(el("span", "", who.length
-      ? `乘车人：${who.map((p) => p.name).join("、")}`
-      : "乘车人还没有选，请回原网页上勾一下"));
-    card.appendChild(line);
-
-    if (train.price && who.length) {
-      const total = el("div", "ev-confirm-meta");
-      total.appendChild(el("span", "ev-confirm-price",
-        `${who.length} 位，共 ${train.price * who.length} 元`));
-      card.appendChild(total);
+    // 乘车人做成头像胶囊 —— 和车次卡片一样有形状，不是一行文字
+    const who = (passengers || []).filter((p) => p.checked);
+    const sec3 = el("div", "ev-order-sec");
+    sec3.appendChild(el("div", "ev-order-label", "乘车人"));
+    const people = el("div", "ev-order-people");
+    if (who.length) {
+      for (const person of who) {
+        const chip = el("span", "ev-order-person");
+        chip.appendChild(el("span", "ev-order-face", person.name.slice(0, 1)));
+        chip.appendChild(el("span", "", person.name));
+        people.appendChild(chip);
+      }
+    } else {
+      people.appendChild(el("span", "ev-order-warn", "还没选乘车人，请回原网页上勾一下"));
     }
+    sec3.appendChild(people);
+    card.appendChild(sec3);
+
+    // 合计单独一块，最大最显眼
+    const total = el("div", "ev-order-total");
+    total.appendChild(el("span", "ev-order-total-label",
+      who.length ? `共 ${who.length} 位` : "合计"));
+    total.appendChild(el("span", "ev-order-total-price",
+      train.price && who.length ? `${train.price * who.length} 元` : "—"));
+    card.appendChild(total);
 
     const msg = el("div", "ev-confirm-msg", "");
     const go = el("button", "ev-confirm-go", "核对无误，去提交");
