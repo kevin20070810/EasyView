@@ -412,6 +412,12 @@
     const line = `本次发送：${lastPayload.kind}，约 ${kb(lastPayload.chars)}。`;
     foot.appendChild(el("div", "ev-ai-foot-meta", line + (lastPayload.redactions ? lastPayload.redactions.summary + "。" : "")));
     foot.appendChild(button("查看发送的内容", () => showPayloadReview()));
+    // 版本号写在界面上：改了代码有没有生效，一眼就能看出来，
+    // 不用去 chrome://extensions 对照加载的路径和版本。
+    try {
+      foot.appendChild(el("div", "ev-ai-foot-meta",
+        `EasyView v${chrome.runtime.getManifest().version}`));
+    } catch (_) { /* 拿不到就算了，不能因为一行版本号让整个结果渲染不出来 */ }
     body.appendChild(foot);
   }
 

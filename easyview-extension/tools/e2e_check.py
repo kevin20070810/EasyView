@@ -69,7 +69,13 @@ READ_OVERLAY = """
     cards: [...shadow.querySelectorAll('.ev-card')].map((card) => ({
       icon: card.dataset.icon || null,
       title: card.querySelector('strong') ? card.querySelector('strong').textContent.trim() : null,
-      detail: card.querySelector('.ev-card-copy > span') ? card.querySelector('.ev-card-copy > span').textContent.trim() : null,
+      // 排除 .ev-ai-card-heading 这一层：里面是「标题 + 风险徽章」。
+      // 早先直接取 .ev-card-copy > span，拿到的是那个包层，打印出来像
+      // "副标题重复了一遍标题"，其实选择器错了，卡片本身没问题。
+      detail: (() => {
+        const n = card.querySelector('.ev-card-copy > span:not(.ev-ai-card-heading)');
+        return n ? n.textContent.trim() : null;
+      })(),
       note: card.querySelector('.ev-ai-note') ? card.querySelector('.ev-ai-note').textContent.trim() : null,
       blocked: card.classList.contains('ev-ai-risk-blocked'),
     })),
