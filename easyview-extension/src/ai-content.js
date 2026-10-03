@@ -650,6 +650,69 @@
    * 洞里的元素**照常能点**（那是老人要操作的东西），
    * 洞外的点击被挡板接住，防止误点别处。
    */
+  /** 页面上其它"还要填的控件"当前的真实位置（视口坐标）。
+   *
+   * 用实时 DOM 量，不用 elements.json 里的 bbox —— 那是提取那一刻的坐标，
+   * 页面滚动过就对不上了。
+   */
+  function otherControlRects(excludeElement) {
+    const out = [];
+    if (!pendingElements || !resolveElement) return out;
+    const vh = window.innerHeight;
+    for (const item of pendingElements.elements || []) {
+      if (!item.visible) continue;
+      if (!STEP_TYPES.has(item.type) && item.type !== "link") continue;
+      const node = resolveElement(item.id);
+      if (!node || !node.isConnected || node === excludeElement) continue;
+      const r = node.getBoundingClientRect();
+      if (r.width < 4 || r.height < 4) continue;
+      if (r.bottom < 0 || r.top > vh) continue;      // 不在视口里就不用管
+      out.push({ left: r.left, top: r.top, right: r.right, bottom: r.bottom });
+    }
+    return out;
+  }
+
+  function overlapArea(box, rect) {
+    const w = Math.min(box.right, rect.right) - Math.max(box.left, rect.left);
+    const h = Math.min(box.bottom, rect.bottom) - Math.max(box.top, rect.top);
+    return w > 0 && h > 0 ? w * h : 0;
+  }
+
+  /** 给批注气泡挑一个"不挡还要填的东西"的落点。
+   *
+   * 之前固定贴在洞口下方 —— 在 12306 上正好盖住下面的「到达地」和「出发日期」，
+   * 老人看不见自己要填的下一格。这里改成：四个方位各试一遍，
+   * 算出各自和"其它控件"的重叠面积，取最小的那个。
+   */
+  function pickBubbleSpot(rect, bw, bh) {
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const gap = 12;
+    const others = otherControlRects(stepHost && stepHost.__current);
+    const clamp = (v, lo, hi) => Math.min(Math.max(lo, v), Math.max(lo, hi));
+
+    const raw = [
+      { name: "below", left: rect.left, top: rect.bottom + gap },
+      { name: "above", left: rect.left, top: rect.top - bh - gap },
+      { name: "right", left: rect.right + gap, top: rect.top },
+      { name: "left", left: rect.left - bw - gap, top: rect.top },
+    ];
+    // 轻微偏好阅读顺序：能放下面就放下面，其次上面，再次左右
+    const bias = { below: 0, above: 300, right: 700, left: 900 };
+
+    let best = null;
+    for (const c of raw) {
+      const left = clamp(c.left, 8, vw - bw - 8);
+      const top = clamp(c.top, 8, vh - bh - 8);
+      const box = { left, top, right: left + bw, bottom: top + bh };
+      let covered = 0;
+      for (const o of others) covered += overlapArea(box, o);
+      const score = covered + bias[c.name];
+      if (!best || score < best.score) best = { left, top, score, covered };
+    }
+    return best || { left: 8, top: 8 };
+  }
+
   function layoutSpotlight(element) {
     if (!stepHost || !element || !element.isConnected) return;
     const rect = element.getBoundingClientRect();
@@ -669,16 +732,12 @@
     ring.style.cssText =
       `top:${top}px;left:${left}px;width:${Math.max(0, right - left)}px;height:${bandH}px`;
 
-    // 批注气泡：优先贴在洞口下方；下方放不下就翻到上方，横向也不出屏
     const bubble = stepHost.__bubble;
-    const bw = bubble.offsetWidth || 380;
-    const bh = bubble.offsetHeight || 140;
-    let by = bottom + 14;
-    if (by + bh > window.innerHeight - 10) by = Math.max(10, top - bh - 14);
-    let bx = left;
-    if (bx + bw > window.innerWidth - 10) bx = Math.max(10, window.innerWidth - bw - 10);
-    bubble.style.top = `${by}px`;
-    bubble.style.left = `${bx}px`;
+    const bw = bubble.offsetWidth || 340;
+    const bh = bubble.offsetHeight || 130;
+    const spot = pickBubbleSpot(rect, bw, bh);
+    bubble.style.top = `${spot.top}px`;
+    bubble.style.left = `${spot.left}px`;
   }
 
   function onStepViewportChange() {
@@ -707,15 +766,15 @@
           border: 3px solid #ffb020; border-radius: 10px;
           box-shadow: 0 0 0 4px rgba(255,176,32,.28), 0 0 26px rgba(255,176,32,.6); }
         .ev-spot-bubble { position: fixed; z-index: 2147483602; pointer-events: auto;
-          max-width: min(420px, calc(100vw - 32px)); box-sizing: border-box;
-          background: #0b5cad; color: #fff; padding: 14px 16px;
+          max-width: min(340px, calc(100vw - 32px)); box-sizing: border-box;
+          background: #0b5cad; color: #fff; padding: 11px 13px;
           border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,.45);
-          font: 17px/1.5 "Microsoft YaHei", system-ui, sans-serif; }
-        .ev-spot-bubble .ev-step-count { font-size: 19px; font-weight: 700; margin-bottom: 4px; }
-        .ev-spot-bubble .ev-step-text { margin-bottom: 12px; }
-        .ev-spot-bubble .ev-step-actions { display: flex; gap: 10px; justify-content: flex-end; }
-        .ev-spot-bubble button { font: 17px/1 "Microsoft YaHei", system-ui, sans-serif;
-          padding: 10px 16px; border: 0; border-radius: 8px; cursor: pointer;
+          font: 16px/1.45 "Microsoft YaHei", system-ui, sans-serif; }
+        .ev-spot-bubble .ev-step-count { font-size: 17px; font-weight: 700; margin-bottom: 3px; }
+        .ev-spot-bubble .ev-step-text { margin-bottom: 9px; }
+        .ev-spot-bubble .ev-step-actions { display: flex; gap: 8px; justify-content: flex-end; }
+        .ev-spot-bubble button { font: 16px/1 "Microsoft YaHei", system-ui, sans-serif;
+          padding: 8px 13px; border: 0; border-radius: 8px; cursor: pointer;
           background: rgba(255,255,255,.2); color: #fff; }
         .ev-spot-bubble button:hover { background: rgba(255,255,255,.34); }
         .ev-spot-bubble button:disabled { opacity: .4; cursor: default; }
@@ -741,12 +800,12 @@
 
     const current = steps[index];
     const label = (current.label || current.text || current.placeholder || "").trim();
-    const kindName = current.type === "button" ? "按钮" : "输入框";
+    const verb = current.type === "button" ? "点一下" : "填写";
 
     const bubble = stepHost.__bubble;
     bubble.replaceChildren();
     bubble.appendChild(el("div", "ev-step-count", `第 ${index + 1} 步 / 共 ${steps.length} 步`));
-    bubble.appendChild(el("div", "ev-step-text", `请在「${label}」这个${kindName}里操作`));
+    bubble.appendChild(el("div", "ev-step-text", `请在「${label}」里${verb}`));
 
     const actions = el("div", "ev-step-actions");
     const prev = button("上一步", () => {
