@@ -1598,19 +1598,137 @@
       `EasyView v${chrome.runtime.getManifest().version}`));
     body.appendChild(foot);
 
-    go.addEventListener("click", () => {
+    go.addEventListener("click", async () => {
       const target = train.bookButton;
       if (!target || !target.isConnected) {
         msg.textContent = "这一趟的「预订」按钮找不到了，请返回重新选一趟。";
         return;
       }
       try {
+        // 【必须先 await 存好再点】。点「预订」会导航，内容脚本随即被销毁，
+        // 没写完的存储操作会一起丢掉（实测踩过）。
+        await savePendingTrain(train);
         // 12306 的「预订」是 javascript: 链接，点它就进下单流程
         target.click();
         close();
       } catch (_) {
         msg.textContent = "没能打开这一趟，请刷新网页后重试。";
       }
+    });
+  }
+
+  /* ---------- 提交订单前的大字核对 ----------
+   *
+   * 用户同意不做"支付页”，而是在【提交订单之前】给一屏大字核对 ——
+   * 车次、日期、席别、乘车人、金额，这是老人最容易搞错的一屏，
+   * 而它完全不碰支付。
+   *
+   * 关键决定：车次信息【不靠爬下单页】，而是用我们自己手上的数据。
+   * 用户选的那趟车是我们在结果页解析出来的，本来就是权威来源；
+   * 去猜一个没见过的下单页的 DOM 只会引入新的不确定性。
+   * 跨页面用 chrome.storage.session 带过去（点「预订」那一刻存）。
+   */
+  const PENDING_TRAIN_KEY = "easyview.pendingTrain";
+
+  // 用 storage.local，不用 storage.session。
+  // storage.session 默认 accessLevel 只给扩展页面和后台，【内容脚本读不到写不进】，
+  // 而且是静默失败 —— 实测点了「预订」之后 session 里什么都没有。
+  // 配合下面 30 分钟的过期判断，落在 local 里也不会长期残留。
+  async function savePendingTrain(train) {
+    try {
+      await chrome.storage.local.set({
+        [PENDING_TRAIN_KEY]: {
+          code: train.code, from: train.from, to: train.to,
+          depart: train.depart, arrive: train.arrive, duration: train.duration,
+          price: train.price, priceClass: train.priceClass, left: train.left,
+          savedAt: Date.now()
+        }
+      });
+    } catch (_) { /* 存不下就算了，核对页会退回普通卡片列表 */ }
+  }
+
+  async function loadPendingTrain() {
+    try {
+      const got = await chrome.storage.local.get(PENDING_TRAIN_KEY);
+      const t = got && got[PENDING_TRAIN_KEY];
+      if (!t) return null;
+      // 超过 30 分钟就不认了，免得下次打开还挂着上一次的车次
+      if (Date.now() - (t.savedAt || 0) > 30 * 60 * 1000) return null;
+      return t;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function renderOrderConfirm(train, passengers) {
+    const body = backBar(header("请核对一下", "这是您要买的车票，看清楚了再提交。"));
+
+    const card = el("div", "ev-confirm-card");
+    card.appendChild(el("div", "ev-confirm-code", train.code));
+
+    const route = el("div", "ev-confirm-route");
+    route.append(train.from, el("span", "ev-arrow", "→"), train.to);
+    card.appendChild(route);
+
+    const times = el("div", "ev-confirm-times");
+    times.append(train.depart, el("small", "", "开"), el("span", "ev-arrow", "→"),
+                 train.arrive, el("small", "", "到"));
+    if (train.duration) times.appendChild(el("small", "", `历时 ${train.duration}`));
+    card.appendChild(times);
+
+    card.appendChild(el("div", "ev-confirm-rule"));
+
+    const who = (passengers || []).filter((p) => p.checked);
+    const meta = el("div", "ev-confirm-meta");
+    if (train.price) {
+      meta.append(el("span", "ev-confirm-price", `${train.priceClass || "二等座"} ${train.price} 元`));
+    }
+    card.appendChild(meta);
+
+    const line = el("div", "ev-confirm-meta");
+    line.appendChild(el("span", "", who.length
+      ? `乘车人：${who.map((p) => p.name).join("、")}`
+      : "乘车人还没有选，请回原网页上勾一下"));
+    card.appendChild(line);
+
+    if (train.price && who.length) {
+      const total = el("div", "ev-confirm-meta");
+      total.appendChild(el("span", "ev-confirm-price",
+        `${who.length} 位，共 ${train.price * who.length} 元`));
+      card.appendChild(total);
+    }
+
+    const msg = el("div", "ev-confirm-msg", "");
+    const go = el("button", "ev-confirm-go", "核对无误，去提交");
+    go.type = "button";
+    card.append(msg, go);
+
+    const box = el("div", "ev-ai-orderbox");
+    box.appendChild(card);
+    body.appendChild(box);
+
+    const foot = el("div", "ev-ai-foot");
+    foot.appendChild(el("div", "", "点上面那个按钮只会带您到原网页的提交按钮，按不按由您决定。"));
+    foot.appendChild(el("div", "ev-ai-foot-meta",
+      `EasyView v${chrome.runtime.getManifest().version}`));
+    body.appendChild(foot);
+
+    go.addEventListener("click", () => {
+      // 找原网页上的提交按钮。找不到就如实说，不硬点别的东西。
+      const candidates = [...document.querySelectorAll("a, button, input[type='submit']")];
+      const submit = candidates.find((n) => {
+        const t = (n.innerText || n.value || "").replace(/\s+/g, "");
+        return /提交订单|确认订单|提交|下一步/.test(t) && elementIsVisible(n);
+      });
+      if (!submit) {
+        msg.textContent = "没找到原网页上的提交按钮，请自己找一下。";
+        return;
+      }
+      close();
+      submit.scrollIntoView({ behavior: "smooth", block: "center" });
+      submit.style.outline = "4px solid #ffb020";
+      submit.style.outlineOffset = "3px";
+      submit.focus({ preventScroll: true });
     });
   }
 
@@ -1992,10 +2110,15 @@
         if (people.length) {
           lastPayload = null;
           busy = false;
-          // 用 showView 压栈（先清空）—— 否则确认卡上的「返回上一步」不会出现，
-          // 因为栈里没有这个根视图，栈深永远是 1。
           viewStack.length = 0;
-          showView(renderPassengerCards, people);
+          // 有刚选好的车次 → 先给一屏大字核对（车次+乘车人+金额），
+          // 这是老人最容易搞错的一屏，而且完全不碰支付。
+          const pending = await loadPendingTrain();
+          if (pending && pending.code) {
+            showView(renderOrderConfirm, pending, people);
+          } else {
+            showView(renderPassengerCards, people);
+          }
           return;
         }
       }
