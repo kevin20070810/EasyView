@@ -554,7 +554,8 @@
       if (group.length >= 2) {
         // 用户要的是在卡片里直接填，不是聚光灯。所以这里走表单卡片，
         // 不再调用 renderBookingSteps（那套会收起面板去高亮页面）。
-        renderBookingForm();
+        // 用 showView 压栈，这样表单顶部会出现「← 返回上一步」回到卡片列表。
+        showView(renderBookingForm);
         return;
       }
     }
@@ -1170,7 +1171,7 @@
 
   function renderTrainCards(trains) {
     ensureMount();
-    const body = header("选一趟车", `这趟车有 ${trains.length} 个车次，点一下就是它。`);
+    const body = backBar(header("选一趟车", `这趟车有 ${trains.length} 个车次，点一下就是它。`));
 
     const style = document.createElement("style");
     style.textContent = TRAIN_CSS;
@@ -1398,6 +1399,46 @@
     body.appendChild(foot);
   }
 
+  /* ---------- 视图栈：每一步都能退回去 ----------
+   *
+   * 面板内的几个视图（卡片列表 → 购票表单）压成一个栈，
+   * 深度大于 1 时每个视图顶部出现「← 返回上一步」。
+   * 另外提供一个「返回上一个网页」，走浏览器历史。
+   *
+   * 这两件事必须分开：栈退的是"我在面板里走到哪了"，
+   * 历史退的是"我从哪个网页过来的"，混在一起会让人莫名跳走。
+   */
+  const viewStack = [];
+
+  function showView(render, ...args) {
+    viewStack.push({ render, args });
+    render(...args);
+  }
+
+  function goBackView() {
+    if (viewStack.length <= 1) return false;
+    viewStack.pop();
+    const top = viewStack[viewStack.length - 1];
+    top.render(...top.args);
+    return true;
+  }
+
+  /** 给一个视图装返回条。没有可退的就不显示，不留空条。 */
+  function backBar(body) {
+    const bar = el("div", "ev-backbar");
+    if (viewStack.length > 1) {
+      bar.appendChild(button("← 返回上一步", () => goBackView()));
+    }
+    if (window.history.length > 1) {
+      const back = button("← 返回上一个网页", () => {
+        try { window.history.back(); } catch (_) { /* 退不了就算了，不弹错 */ }
+      });
+      bar.appendChild(back);
+    }
+    if (bar.childElementCount) body.insertBefore(bar, body.firstChild);
+    return body;
+  }
+
   /* ---------- 购票表单卡片 ----------
    *
    * 用户要的是"在卡片里直接填"，不是聚光灯指来指去。所以这里不再高亮页面，
@@ -1431,6 +1472,11 @@
     .ev-bf-go:hover { background: #0a4e93; }
     .ev-bf-go:disabled { opacity: .55; cursor: default; box-shadow: none; }
     .ev-bf-msg { font-size: 20px; font-weight: 700; color: #8a4a12; min-height: 26px; }
+    .ev-backbar { display: flex; gap: 12px; flex-wrap: wrap; margin: 0 0 18px; }
+    .ev-backbar button { font: 20px/1 "Microsoft YaHei", system-ui, sans-serif;
+      padding: 14px 22px; border: 2px solid #bcd7ee; border-radius: 999px;
+      background: #fff; color: #14507f; cursor: pointer; font-weight: 700; }
+    .ev-backbar button:hover { background: #f2f9ff; border-color: #7fb2dd; }
   `;
 
   function dateValue(daysAhead) {
@@ -1442,7 +1488,7 @@
 
   function renderBookingForm() {
     const site = globalThis.EasyView12306;
-    const body = header("买火车票", "在这几格里填好，点下面的按钮就能查车次。");
+    const body = backBar(header("买火车票", "在这几格里填好，点下面的按钮就能查车次。"));
     const style = document.createElement("style");
     style.textContent = BOOKFORM_CSS;
     body.appendChild(style);
@@ -1612,7 +1658,10 @@
       dropped: lastDropped,
       meta: reply.meta || null
     };
-    renderResult(ui);
+    // 卡片列表是视图栈的栈底 —— 早先直接调 renderResult，栈里没有它，
+    // 于是购票表单里的「返回上一步」永远不出现（栈深只有 1）。
+    viewStack.length = 0;
+    showView(renderResult, ui);
   }
 
   async function open() {
