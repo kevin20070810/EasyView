@@ -612,6 +612,8 @@
   function clearStepBar() {
     window.removeEventListener("scroll", onStepViewportChange, true);
     window.removeEventListener("resize", onStepViewportChange);
+    if (stepLayoutTimer) { clearTimeout(stepLayoutTimer); stepLayoutTimer = null; }
+    if (stepHost && stepHost.__observer) stepHost.__observer.disconnect();
     if (stepHighlighted && stepHighlighted.isConnected) {
       stepHighlighted.style.outline = "";
       stepHighlighted.style.outlineOffset = "";
@@ -713,14 +715,45 @@
     return best || { left: 8, top: 8 };
   }
 
+  /** 找目标下方紧邻的浮层 —— 站点的自动补全候选、日期选择器之类。
+   *
+   * 只认"绝对/固定定位、出现在目标正下方、够大"的盒子，而且只扫一层，
+   * 不做递归。够用就行：漏判最多是候选框还被暗着（仍能点），
+   * 误判最多是洞开大一点，都不会让人填不了表。
+   */
+  function popupRectNear(element, baseRect) {
+    let best = null;
+    const nodes = document.querySelectorAll("ul, ol, div, section, table");
+    for (const node of nodes) {
+      if (stepHost && stepHost.contains(node)) continue;
+      const style = window.getComputedStyle(node);
+      if (style.position !== "absolute" && style.position !== "fixed") continue;
+      if (style.display === "none" || style.visibility === "hidden" || style.opacity === "0") continue;
+      const r = node.getBoundingClientRect();
+      if (r.width < 80 || r.height < 36) continue;
+      // 必须紧贴在目标下方，且横向有重叠
+      if (r.top < baseRect.bottom - 10 || r.top > baseRect.bottom + 80) continue;
+      if (r.right < baseRect.left - 60 || r.left > baseRect.right + 60) continue;
+      if (!best || r.height > best.height) best = r;
+    }
+    return best;
+  }
+
   function layoutSpotlight(element) {
     if (!stepHost || !element || !element.isConnected) return;
     const rect = element.getBoundingClientRect();
     const pad = 6;
     const top = Math.max(0, rect.top - pad);
     const left = Math.max(0, rect.left - pad);
-    const bottom = Math.min(window.innerHeight, rect.bottom + pad);
-    const right = Math.min(window.innerWidth, rect.right + pad);
+    let bottom = Math.min(window.innerHeight, rect.bottom + pad);
+    let right = Math.min(window.innerWidth, rect.right + pad);
+
+    // 把弹出来的候选框一起照亮 —— 否则它是暗的，看着像禁用了
+    const popup = popupRectNear(element, rect);
+    if (popup) {
+      bottom = Math.min(window.innerHeight, Math.max(bottom, popup.bottom + pad));
+      right = Math.min(window.innerWidth, Math.max(right, popup.right + pad));
+    }
     const bandH = Math.max(0, bottom - top);
 
     stepHost.__panelTop.style.cssText = `top:0;left:0;right:0;height:${top}px`;
@@ -735,14 +768,25 @@
     const bubble = stepHost.__bubble;
     const bw = bubble.offsetWidth || 340;
     const bh = bubble.offsetHeight || 130;
-    const spot = pickBubbleSpot(rect, bw, bh);
+    // 避让范围把候选框也算进去，否则气泡会压在候选列表上
+    const avoidRect = popup
+      ? { top, left, right, bottom, width: right - left, height: bandH }
+      : rect;
+    const spot = pickBubbleSpot(avoidRect, bw, bh);
     bubble.style.top = `${spot.top}px`;
     bubble.style.left = `${spot.left}px`;
   }
 
+  let stepLayoutTimer = null;
+
+  /** 重新摆位。节流到约 8fps —— DOM 变化监听会触发得非常频繁。 */
   function onStepViewportChange() {
-    const current = stepHost && stepHost.__current;
-    if (current) layoutSpotlight(current);
+    if (stepLayoutTimer) return;
+    stepLayoutTimer = setTimeout(() => {
+      stepLayoutTimer = null;
+      const current = stepHost && stepHost.__current;
+      if (current) layoutSpotlight(current);
+    }, 120);
   }
 
   function showStepBar(steps, index) {
@@ -760,8 +804,14 @@
            早先两版都是"一条横条"—— 顶部通栏挡住页面顶部，移到底部又因为
            换行堆到 273px。横条这个形态本身就和"指引"冲突：它总得占一块地方。
            改成挖洞之后，被指的元素自己就是最亮的地方，不需要额外占位。 */
+        /* 挡板只负责"暗"，不负责"挡"。
+           早先给挡板加了 pointer-events: auto 想防误点，结果把站点的自动补全
+           候选框也挡住了 —— 12306 输入地点会弹出站点候选，那东西在洞口外面，
+           点不到就等于填不了表。所以挡板一律 pointer-events: none，
+           页面上该点的东西永远点得到；引导靠"亮/暗"来表达，不靠拦截。
+           真正需要点击的只有批注气泡，它自己保留 auto。 */
         .ev-spot-panel { position: fixed; background: rgba(15,23,42,.68);
-          z-index: 2147483600; pointer-events: auto; }
+          z-index: 2147483600; pointer-events: none; }
         .ev-spot-ring { position: fixed; z-index: 2147483601; pointer-events: none;
           border: 3px solid #ffb020; border-radius: 10px;
           box-shadow: 0 0 0 4px rgba(255,176,32,.28), 0 0 26px rgba(255,176,32,.6); }
@@ -793,9 +843,13 @@
                     stepHost.__ring, stepHost.__bubble);
       (document.documentElement || document.body).appendChild(stepHost);
 
-      // 滚动或改窗口大小时洞要跟着走，否则一滚就指错地方
+      // 滚动、改窗口大小、以及"候选框弹出来"都要重新摆位。
+      // 候选框是用户一打字才出现的，光靠 scroll/resize 抓不到它。
       window.addEventListener("scroll", onStepViewportChange, true);
       window.addEventListener("resize", onStepViewportChange);
+      stepHost.__observer = new MutationObserver(onStepViewportChange);
+      stepHost.__observer.observe(document.body || document.documentElement,
+        { childList: true, subtree: true });
     }
 
     const current = steps[index];
