@@ -1464,6 +1464,75 @@
     return ui;
   }
 
+  /* ---------- 乘车人卡片（12306 乘车人页）----------
+   *
+   * 这一页要登录态，我的自动化浏览器进不去，所以没有实测数据 ——
+   * 解析器写成"读不到就返回空、上层如实说明"，不假装成功。
+   */
+  const PASSENGER_CSS = `
+    .ev-passengers { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 16px; }
+    @media (max-width: 900px) { .ev-passengers { grid-template-columns: 1fr; } }
+    .ev-passenger { display: flex; align-items: center; gap: 16px; width: 100%;
+      text-align: left; box-sizing: border-box; padding: 24px 26px; border: 3px solid transparent;
+      border-radius: 22px; cursor: pointer;
+      background: linear-gradient(160deg, #eef7ff 0%, #ffffff 100%);
+      box-shadow: 0 10px 26px rgba(23,72,124,.13), inset 0 1px 0 rgba(255,255,255,.9);
+      color: #10314f; font: 20px/1.4 "Microsoft YaHei", system-ui, sans-serif; }
+    .ev-passenger:hover { transform: translateY(-2px); }
+    .ev-passenger.ev-picked { border-color: #0b5cad; background: #dcecfb; }
+    .ev-passenger-face { flex: 0 0 auto; width: 62px; height: 62px; border-radius: 50%;
+      display: grid; place-items: center; background: #cfe4f7; color: #0b5cad;
+      font-size: 30px; font-weight: 800; }
+    .ev-passenger-name { font-size: 32px; font-weight: 800; }
+    .ev-passenger-tick { margin-left: auto; font-size: 30px; color: #0b5cad; font-weight: 800; }
+  `;
+
+  function renderPassengerCards(passengers) {
+    const body = backBar(header("这是给谁买票？", "点一下名字就是选他了，可以选多位。"));
+    const style = document.createElement("style");
+    style.textContent = PASSENGER_CSS;
+    body.appendChild(style);
+
+    const wrap = el("div", "ev-passengers");
+    const cards = new Map();
+
+    for (const p of passengers) {
+      const card = el("button", `ev-passenger${p.checked ? " ev-picked" : ""}`);
+      card.type = "button";
+      card.appendChild(el("span", "ev-passenger-face", p.name.slice(0, 1)));
+      card.appendChild(el("span", "ev-passenger-name", p.name));
+      const tick = el("span", "ev-passenger-tick", p.checked ? "✓" : "");
+      card.appendChild(tick);
+
+      card.addEventListener("click", () => {
+        const result = globalThis.EasyViewPassengers
+          ? globalThis.EasyViewPassengers.select(p)
+          : { ok: false };
+        if (!result.ok) {
+          showError("这一位没能选上，页面可能刚变过。请在原网页上自己勾一下。", null);
+          return;
+        }
+        const nowChecked = Boolean(p.node && p.node.checked);
+        p.checked = nowChecked;
+        card.classList.toggle("ev-picked", nowChecked);
+        tick.textContent = nowChecked ? "✓" : "";
+      });
+
+      wrap.appendChild(card);
+      cards.set(p.name, card);
+    }
+
+    const box = el("div", "ev-ai-passbox");
+    box.appendChild(wrap);
+    body.appendChild(box);
+
+    const foot = el("div", "ev-ai-foot");
+    foot.appendChild(el("div", "", "选好之后，后面的提交和付款仍然在原网页上由您自己确认。"));
+    foot.appendChild(el("div", "ev-ai-foot-meta",
+      `乘车人来自当前网页，没有发出去。EasyView v${chrome.runtime.getManifest().version}`));
+    body.appendChild(foot);
+  }
+
   /* ---------- 视图栈：每一步都能退回去 ----------
    *
    * 面板内的几个视图（卡片列表 → 购票表单）压成一个栈，
@@ -1750,6 +1819,24 @@
       resolveElement = extracted.resolve;
       // 去掉同名的隐藏副本：模型可能挑中隐藏那份，"滚动+高亮"就白做了
       pendingElements = stripHiddenDuplicates(extracted.elements);
+
+      // 12306 乘车人页：乘车人也是结构化数据，本地读，不调模型不用同意。
+      // 这一页要登录，自动化测试进不去，所以解析器允许读不到 ——
+      // 读不到就落到下面的通用路径，不硬撑。
+      if (globalThis.EasyViewPassengers) {
+        let people = [];
+        try {
+          people = globalThis.EasyViewPassengers.read();
+        } catch (_) {
+          people = [];
+        }
+        if (people.length) {
+          lastPayload = null;
+          busy = false;
+          renderPassengerCards(people);
+          return;
+        }
+      }
 
       // 12306 查票结果页：车次列表是结构化数据，直接读，不调模型也不用同意。
       // 实测通用路径在这一页上给的是「我要退票 / 我要改签」这类首页任务，
