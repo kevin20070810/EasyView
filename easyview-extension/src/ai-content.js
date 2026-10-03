@@ -62,6 +62,7 @@
   let host = null;
   let shadow = null;
   let panel = null;
+  let brandTheme = null;
   let previousFocus = null;
   let resolveElement = null;
   let currentUi = null;
@@ -235,6 +236,42 @@
     link.href = chrome.runtime.getURL("src/styles.css");
     shadow.appendChild(link);
 
+    const extra = document.createElement("style");
+    extra.textContent = `
+      .ev-ai-banner { margin: 0 0 12px; padding: 10px 14px; border-radius: 8px;
+        background: #fff6e5; color: #7a5200; font-size: 17px; line-height: 1.5; }
+      .ev-ai-note { display: block; margin-top: 4px; font-size: 15px; color: #8a6d3b; }
+      .ev-ai-risk-blocked .ev-card-copy > span { color: #8a6d3b; }
+      .ev-ai-confirm { margin-top: 14px; padding: 16px; border: 2px solid #0b5cad;
+        border-radius: 10px; background: #f2f7fd; }
+      .ev-ai-confirm p { margin: 0 0 14px; font-size: 20px; line-height: 1.6; }
+      .ev-ai-confirm .ev-actions { display: flex; gap: 12px; }
+      .ev-ai-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 16px; }
+      .ev-ai-stats { margin-top: 18px; font-size: 14px; color: #5c6b7a; line-height: 1.7; }
+      .ev-ai-consent { margin-top: 14px; padding: 14px 16px; border: 2px solid #0b5cad;
+        border-radius: 10px; background: #f2f7fd; }
+      .ev-ai-consent ul { margin: 8px 0 0; padding-left: 22px; font-size: 17px; line-height: 1.8; }
+      .ev-ai-preview { margin-top: 12px; max-height: 260px; overflow: auto; padding: 12px;
+        border: 1px solid #c3ccd6; border-radius: 8px; background: #fff;
+        font-family: Consolas, Menlo, monospace; font-size: 13px; line-height: 1.6;
+        white-space: pre-wrap; word-break: break-all; }
+      .ev-ai-foot { margin-top: 18px; padding-top: 12px; border-top: 1px solid #dde3ea;
+        font-size: 14px; color: #5c6b7a; line-height: 1.8; }
+      .ev-ai-foot button { margin-top: 8px; font-size: 14px; padding: 6px 12px; }
+    `;
+    shadow.appendChild(extra);
+
+    // 通用网页也复用同一套品牌提取：变量写在宿主元素上，继承进 Shadow DOM。
+    try {
+      if (window.EasyViewBrand) {
+        brandTheme = window.EasyViewBrand.extract();
+        window.EasyViewBrand.apply(brandTheme, host);
+      }
+    } catch (error) {
+      brandTheme = null;
+      console.warn("[EasyView] Brand tokens unavailable, using defaults.", error);
+    }
+
     const overlay = el("div", "ev-overlay ev-generic ev-ai");
     overlay.setAttribute("role", "dialog");
     overlay.setAttribute("aria-modal", "true");
@@ -278,28 +315,21 @@
   function header(title, summary) {
     panel.replaceChildren();
     const bar = el("header", "ev-header");
-    const top = el("div", "ev-ai-topline");
-    const brand = el("div", "ev-ai-brand");
-    brand.setAttribute("role", "img");
-    brand.setAttribute("aria-label", "EasyView 标志");
-    const logo = el("canvas", "ev-ai-brand-image");
-    logo.width = 256;
-    logo.height = 256;
-    logo.setAttribute("aria-hidden", "true");
-    const fallback = el("span", "ev-ai-brand-fallback", "EasyView");
-    fallback.setAttribute("aria-hidden", "true");
-    brand.append(logo, fallback);
-    paintBrandLogo(logo, fallback);
-    const exit = el("button", "ev-exit", "返回原网页");
-    exit.type = "button";
-    exit.addEventListener("click", close);
-    const copy = el("div", "ev-ai-heading");
-    const site = siteName();
-    if (site) copy.append(el("span", "ev-ai-site", `当前网页 · ${site}`));
+    const brand = el("div", "ev-brandline");
+    // 通用层的标题是问候语（不是站名），所以这里只加 Logo，不做标题隐藏。
+    if (brandTheme && brandTheme.logoUrl && window.EasyViewBrand) {
+      const slot = el("div", "ev-logoslot");
+      window.EasyViewBrand.mountLogo(slot, brandTheme, { textFallback: false });
+      if (slot.childNodes.length) brand.append(slot);
+    }
+    const copy = el("div", "ev-brandcopy");
     copy.append(el("h1", "", title));
     if (summary) copy.append(el("p", "", summary));
-    top.append(brand, copy, exit);
-    bar.appendChild(top);
+    brand.append(copy);
+    const exit = el("button", "ev-exit", "退出敬老版");
+    exit.type = "button";
+    exit.addEventListener("click", close);
+    bar.append(brand, exit);
     panel.appendChild(bar);
     const body = el("div", "ev-content");
     panel.appendChild(body);

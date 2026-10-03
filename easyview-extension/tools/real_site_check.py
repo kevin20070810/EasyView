@@ -30,8 +30,19 @@ import pathlib
 import shutil
 import sys
 import time
+from urllib.parse import urlparse
 
 from playwright.async_api import async_playwright
+
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+from _chrome_launcher import (  # noqa: E402
+    fix_console_encoding,
+    launch_chrome,
+    load_unpacked,
+    stop_chrome,
+    wait_for_cdp,
+    wait_for_worker,
+)
 
 HERE = pathlib.Path(__file__).resolve().parent
 EXTENSION_DIR = HERE.parent
@@ -39,6 +50,7 @@ REPO = EXTENSION_DIR.parent
 PROFILE_DIR = pathlib.Path.home() / "AppData" / "Local" / "Temp" / "easyview-real-profile"
 TEST_EXTENSION_DIR = pathlib.Path.home() / "AppData" / "Local" / "Temp" / "easyview-real-ext"
 VALIDATOR_PATH = REPO / "docs" / "drafts" / "ui-schema-0.3" / "validate.py"
+OUT_DIR = HERE / "shots"
 
 
 def build_test_extension() -> pathlib.Path:
@@ -93,6 +105,14 @@ OVERLAY_STATE = """() => {
   const text = (sel) => { const n = s.querySelector(sel); return n ? n.textContent.trim() : null; };
   return {
     present: true,
+    brand: (getComputedStyle(h).getPropertyValue('--ev-brand') || '').trim(),
+    logo: (() => { const n = s.querySelector('.ev-logo'); return n ? (n.getAttribute('src') || 'text') : null; })(),
+    logoLoaded: (() => {
+      const n = s.querySelector('.ev-logo');
+      if (!n) return false;
+      if (n.tagName !== 'IMG') return true;
+      return n.complete && n.naturalWidth > 0;
+    })(),
     error: text('.ev-error'),
     consent: !!s.querySelector('.ev-ai-consent'),
     cards: s.querySelectorAll('.ev-card').length,
@@ -114,14 +134,6 @@ def load_validator():
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
-
-
-async def wait_for_worker(context, timeout_s: float = 15.0):
-    for _ in range(int(timeout_s / 0.2)):
-        if context.service_workers:
-            return context.service_workers[0]
-        await asyncio.sleep(0.2)
-    return None
 
 
 async def check_site(page, worker, validator, label, url, timeout_s: float) -> dict:
@@ -167,6 +179,7 @@ async def check_site(page, worker, validator, label, url, timeout_s: float) -> d
 
     result["stage"] = "分析"
     deadline = started + timeout_s
+    state = {}
     while time.monotonic() < deadline:
         await asyncio.sleep(1.0)
         captured = await worker.evaluate(CAPTURE)
@@ -198,6 +211,9 @@ async def check_site(page, worker, validator, label, url, timeout_s: float) -> d
         dropped=len(captured.get("dropped") or []),
         meta=captured.get("meta") or {},
     )
+    result["brand"] = state.get("brand")
+    result["logo"] = state.get("logo")
+    result["logoLoaded"] = state.get("logoLoaded")
 
     # 用扩展自己哈希的那个序列化去校验，否则 sha256 对不上
     raw = (captured.get("elementsJson") or "").encode("utf-8")
@@ -213,6 +229,14 @@ async def check_site(page, worker, validator, label, url, timeout_s: float) -> d
         }
         for c in ui.get("cards") or []
     ]
+    try:
+        OUT_DIR.mkdir(exist_ok=True)
+        slug = (urlparse(url).hostname or "site").replace(".", "-")
+        shot = OUT_DIR / f"{slug}-generic.png"
+        await page.screenshot(path=str(shot))
+        result["shot"] = str(shot)
+    except Exception:  # noqa: BLE001
+        pass
     return result
 
 
@@ -237,6 +261,11 @@ def report(result: dict) -> None:
           f"输出 {usage.get('completion_tokens', '?')} token"
           f"（推理 {(usage.get('completion_tokens_details') or {}).get('reasoning_tokens', '?')}）")
     print(f"  耗时:  {result['elapsed']}s（含页面加载）")
+    print(f"  品牌:  --ev-brand {result.get('brand') or '(空)'}")
+    print(f"  Logo:  {result.get('logo') or '(无)'}"
+          f"{'  [已加载]' if result.get('logoLoaded') else ''}")
+    if result.get("shot"):
+        print(f"  截图:  {result['shot']}")
     print(f"  绑定:  丢弃 {result['dropped']} 张  "
           f"0.3 校验 {'通过' if not result['validation_errors'] else str(len(result['validation_errors'])) + ' 项错误'}")
     for err in result["validation_errors"][:4]:
@@ -252,6 +281,7 @@ def report(result: dict) -> None:
 
 
 async def main() -> int:
+    fix_console_encoding()
     parser = argparse.ArgumentParser(description="真实网站端到端检查")
     parser.add_argument("--url", action="append", default=[], help="直接指定网址，可重复")
     parser.add_argument("--sites", help="从默认列表里选，逗号分隔：" + ",".join(SITES))
@@ -279,18 +309,19 @@ async def main() -> int:
     print("  自动化无法伪造该授权，所以这里放宽权限，只验证处理链路本身。\n")
 
     results: list[dict] = []
-    async with async_playwright() as p:
-        context = await p.chromium.launch_persistent_context(
-            user_data_dir=str(PROFILE_DIR),
-            # 无头模式下 Chrome 不启动扩展的 service worker，必须开窗口
-            headless=False,
-            args=[
-                f"--disable-extensions-except={load_dir}",
-                f"--load-extension={load_dir}",
-            ],
-        )
-        try:
-            worker = await wait_for_worker(context)
+    chrome = launch_chrome(PROFILE_DIR)
+    if chrome is None:
+        print("找不到 Chrome，请改 _chrome_launcher.CHROME_CANDIDATES", file=sys.stderr)
+        return 2
+    proc, port = chrome
+    try:
+        await wait_for_cdp(port)
+        async with async_playwright() as p:
+            browser = await p.chromium.connect_over_cdp(f"http://127.0.0.1:{port}")
+            ext_id = await load_unpacked(browser, load_dir)
+            print(f"扩展已加载，id={ext_id}")
+            context = browser.contexts[0] if browser.contexts else await browser.new_context()
+            worker = await wait_for_worker(context, ext_id)
             if worker is None:
                 print("扩展没加载成功，拿不到 service worker")
                 return 1
@@ -314,8 +345,9 @@ async def main() -> int:
                     page = await context.new_page()
                 results.append(outcome)
                 report(outcome)
-        finally:
-            await context.close()
+            await browser.close()
+    finally:
+        stop_chrome(proc)
 
     ok = [r for r in results if r["ok"]]
     print("=" * 66)

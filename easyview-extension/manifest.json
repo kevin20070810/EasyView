@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "EasyView 简界 · 敬老版",
-  "version": "0.31.0",
+  "version": "0.32.0",
   "description": "为常用网站提供敬老版，并可在当前网页生成候选敬老版。",
   "permissions": ["activeTab", "scripting", "storage"],
   "host_permissions": [
@@ -24,6 +24,7 @@
         "https://kyfw.12306.cn/otn/confirmPassenger/*"
       ],
       "js": [
+        "src/brand.js",
         "src/site/train-list.js",
         "src/site/passenger-list.js",
         "src/privacy.js",
@@ -38,6 +39,7 @@
     {
       "matches": ["https://*.12306.cn/*"],
       "js": [
+        "src/brand.js",
         "src/site/12306.js",
         "src/ui/ticket-flow.js",
         "src/ui/overlay.js",
@@ -47,8 +49,9 @@
       "run_at": "document_idle"
     },
     {
-      "matches": ["https://www.10086.cn/*", "https://shop.10086.cn/*"],
+      "matches": ["https://10086.cn/*", "https://*.10086.cn/*"],
       "js": [
+        "src/brand.js",
         "src/site/10086.js",
         "src/ui/mobile-overlay.js",
         "src/mobile-content.js"
@@ -59,6 +62,7 @@
     {
       "matches": ["https://www.weather.com.cn/*"],
       "js": [
+        "src/brand.js",
         "src/site/weather.js",
         "src/ui/weather-overlay.js",
         "src/weather-content.js"
@@ -69,6 +73,7 @@
     {
       "matches": ["https://11185.cn/*", "https://www.11185.cn/*"],
       "js": [
+        "src/brand.js",
         "src/site/postal.js",
         "src/ui/postal-overlay.js",
         "src/postal-content.js"

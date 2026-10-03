@@ -5,11 +5,13 @@ const DEFAULT_ENDPOINT = "http://127.0.0.1:8787";
 const ANALYZE_TIMEOUT_MS = 120000;
 
 /* 注入顺序即依赖顺序：
- *   privacy → digest / binder / extract → ai-content
+ *   brand → privacy → digest / binder / extract → ai-content
+ * brand 只挂全局接口，谁先谁都行，但要在覆盖层渲染前就位。
  * 后三者挂接口，ai-content 最后跑并开始编排。
  * 定义成常量并挂到 globalThis，是为了让端到端测试能读同一份 ——
  * 测试里再硬编码一份，加了文件忘了改测试，就会静默失效。 */
 const CONTENT_FILES = [
+  "src/brand.js",
   "src/privacy.js",
   "src/digest.js",
   "src/binder.js",
@@ -44,8 +46,8 @@ function brandLogoBase64() {
 function dedicatedRootFor(url) {
   if (url.protocol !== "https:") return null;
   const host = url.hostname.toLowerCase();
-  if (host.endsWith(".12306.cn")) return "easyview-root";
-  if (host === "www.10086.cn" || host === "shop.10086.cn") return "easyview-mobile-root";
+  if (host === "12306.cn" || host.endsWith(".12306.cn")) return "easyview-root";
+  if (host === "10086.cn" || host.endsWith(".10086.cn")) return "easyview-mobile-root";
   if (host === "www.weather.com.cn") return "easyview-weather-root";
   if (host === "11185.cn" || host === "www.11185.cn") return "easyview-postal-root";
   return null;
