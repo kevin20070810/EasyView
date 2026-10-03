@@ -539,7 +539,13 @@
 
   function activate(action, card) {
     const id = action.target_element_id;
-    const element = id && resolveElement ? resolveElement(id) : null;
+    // 取节点时优先走 nodeForElement —— 它会用上"升到可见祖先"的地址。
+    // 直接用 resolveElement 会拿回那个零尺寸的隐藏节点，等于点了个看不见的东西。
+    const elementEntry = (pendingElements && pendingElements.elements
+      ? pendingElements.elements.find((x) => x.id === id) : null);
+    const element = elementEntry
+      ? nodeForElement(elementEntry)
+      : (id && resolveElement ? resolveElement(id) : null);
 
     // 先看是不是"一组要填的字段"（12306 的「我要买火车票」带着
     // 出发地/到达地/出发日期）→ 把购票流程铺成卡片，点哪步指哪格。
@@ -627,37 +633,83 @@
    */
   function stripHiddenDuplicates(doc) {
     const elements = doc.elements || [];
+
+    // 建两张表：id → 节点，节点 → 元素。用于把隐藏条目"升"到可见祖先。
+    const nodeById = new Map();
+    const elementByNode = new Map();
+    for (const e of elements) {
+      const node = resolveElement ? resolveElement(e.id) : null;
+      if (node) {
+        nodeById.set(e.id, node);
+        if (!elementByNode.has(node)) elementByNode.set(node, e);
+      }
+    }
+
+    /** 沿 DOM 往上找第一个"在元素表里且可见"的祖先。找不到返回 null。 */
+    function visibleAncestorElement(id) {
+      let node = nodeById.get(id);
+      let hops = 0;
+      while (node && hops < 12) {
+        node = node.parentElement;
+        hops += 1;
+        if (!node) break;
+        const candidate = elementByNode.get(node);
+        if (candidate && candidate.visible && candidate.id !== id) return candidate;
+      }
+      return null;
+    }
+
     const visibleKeys = new Set();
     for (const e of elements) {
       if (!e.visible) continue;
       const label = (e.label || e.placeholder || e.text || "").trim();
       if (label) visibleKeys.add(`${e.type}::${label}`);
     }
+
     const removed = new Set();
-    const kept = elements.filter((e) => {
-      if (e.visible) return true;
+    const kept = [];
+    for (const e of elements) {
+      if (e.visible) { kept.push(e); continue; }
+
       const bbox = e.bbox || {};
       const w = Number(bbox.width) || 0;
       const h = Number(bbox.height) || 0;
-      // 零尺寸的隐藏元素是模板壳子，用户永远点不到。
-      //
-      // 12306 首页的「退票 / 改签」未登录时就是这个样子：
-      //   <li class="nav_ref item"><a href="javascript:;">退票</a></li>
-      // rect 全是 0，没有 onclick，点了没有任何反应。
-      // 模型只看得到文字，就给它生成卡片 —— 这就是"退票/改签点了没反应"的根因。
-      // 真入口在登录后才会出现，那时它是可见的，自然会被收进来。
-      if (w < 2 || h < 2) {
-        removed.add(e.id);
-        return false;
-      }
       const label = (e.label || e.placeholder || e.text || "").trim();
+
+      if (w < 2 || h < 2) {
+        // 零尺寸 = 用户点不到。但**不要直接扔掉**。
+        //
+        // 零点：12306 首页未登录时的「退票 / 改签」是
+        //   <li class="nav_ref item"><a href="javascript:;">退票</a></li>
+        // rect 全 0、没有 onclick，连祖先也没有 —— 这种是死壳子，必须剔。
+        //
+        // 但北京公交的「乘车须知」也是零尺寸隐藏：它藏在悬浮菜单里，
+        // 直接剔掉就等于把老人真要办的事丢了（实测卡片从 5~6 张掉到 3 张）。
+        // 所以先试着沿 DOM 往上找一个【在元素表里且可见】的祖先 ——
+        // 那个祖先通常就是"展开这个菜单"的可见入口，卡片指向它既看得见也点得到。
+        const up = visibleAncestorElement(e.id);
+        if (up) {
+          // 保留条目，但把定位【覆盖】成可见祖先。
+          // 不能新增字段（target_selector 之类）：0.3 schema 不允许额外属性，
+          // 加了会让校验报 "schema additionalProperties"（实测 26 项错误）。
+          // 所以只改已有字段，由 nodeForElement 负责"优先取看得见的那个节点"。
+          kept.push({ ...e, visible: true,
+                      selector: up.selector || e.selector,
+                      bbox: up.bbox || e.bbox });
+        } else {
+          removed.add(e.id);
+        }
+        continue;
+      }
+
       if (label && visibleKeys.has(`${e.type}::${label}`)) {
         removed.add(e.id);
-        return false;
+        continue;
       }
-      return true;
-    });
-    if (!removed.size) return doc;
+      kept.push(e);
+    }
+
+    if (!removed.size && kept.length === elements.length) return doc;
     const stats = { ...(doc.stats || {}) };
     stats.total = kept.length;
     stats.visible = kept.filter((e) => e.visible).length;
@@ -738,6 +790,26 @@
     // 二是改了站点自己的元素外观，收尾还要还原，容易留残留。
     stepHighlighted = element;
     if (typeof element.focus === "function") element.focus({ preventScroll: true });
+  }
+
+  /** 取元素对应的真实节点，**优先要看得见的那个**。
+   *
+   * 零尺寸隐藏条目被"升到可见祖先"时，只覆盖了 selector 字段（不能加新字段，
+   * schema 不允许），它的 id 仍然映射到那个隐藏节点。所以这里必须先试选择器、
+   * 或者先确认 id 映射出来的节点是可见的 —— 否则会拿回那个看不见的节点，
+   * 等于点了个不存在的东西。
+   */
+  function nodeForElement(e) {
+    if (!e) return null;
+    const mapped = resolveElement ? resolveElement(e.id) : null;
+    if (mapped && mapped.isConnected && elementIsVisible(mapped)) return mapped;
+    if (e.selector) {
+      try {
+        const bySelector = document.querySelector(e.selector);
+        if (bySelector && bySelector.isConnected) return bySelector;
+      } catch (_) { /* 选择器不合法就退回 id 映射 */ }
+    }
+    return mapped && mapped.isConnected ? mapped : null;
   }
 
   /** 把聚光灯的四块挡板、高亮圈和批注气泡摆到目标元素周围。
@@ -981,17 +1053,7 @@
     // 早先这里 map 的是整组 elements，结果三步每次框出来的都是同一个大框
     // （覆盖三个输入格），"一步步来"就没有意义了。
     const nodes = [current]
-      .map((e) => {
-        let node = resolveElement ? resolveElement(e.id) : null;
-        if ((!node || !node.isConnected) && e.selector) {
-          try {
-            node = document.querySelector(e.selector);
-          } catch (_) {
-            node = null;
-          }
-        }
-        return node;
-      })
+      .map((e) => nodeForElement(e))
       .filter((n) => n && n.isConnected);
     if (!nodes.length) { clearStepBar(); return; }
 
