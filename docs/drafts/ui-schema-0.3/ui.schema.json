@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://easyview.local/drafts/ui-schema/0.3.0",
   "title": "EasyView ui_schema 0.3.0-draft",
-  "description": "评审草案；不替换 docs/ui.schema.json。由 B 生成草稿、绑定器核实来源与策略后交 A。人工标准样例 artifact_kind=reference、generator=null。",
+  "description": "当前 0.3 协议：模型或规则生成草稿，绑定器核实来源与策略后渲染。人工标准样例 artifact_kind=reference、generator=null。",
   "type": "object",
   "additionalProperties": false,
   "required": [

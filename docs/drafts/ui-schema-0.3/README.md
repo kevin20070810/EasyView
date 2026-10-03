@@ -1,6 +1,6 @@
 # ui_schema 0.3.0-draft：评审草案与人工标准样例
 
-状态：**供 A/B/C 评审，尚未接入运行中的 Chrome 扩展**。本目录不会自动替换 `docs/ui.schema.json`（0.2.0-draft）或改变现有执行器。
+状态：0.3 是当前 `ai-service/pipeline.py` 使用的协议与服务端校验器。扩展在本地运行对应的绑定与风险策略；本目录的人工样例仍是参考材料，尚未经老人使用测试。
 
 本次交付包括可校验的 JSON Schema、三份人工编排参考样例、人工评审标准和独立的离线校验脚本。样例由助手根据现有快照起草，尚未经过团队确认或老人使用测试。“标准”表示拟采用的质量目标，不表示已证明适用于所有网站。
 
@@ -15,7 +15,7 @@
 | [交通样例](examples/ui_schema.traffic.json) | 81 个采集元素 → 7 张任务卡 |
 | [validate.py](validate.py) | 草案结构、来源、动作约束的离线校验和负向自检 |
 
-在项目根目录执行（使用 backend 已有的 jsonschema 依赖）：
+在项目根目录安装 `ai-service/requirements.txt` 后执行：
 
 ```powershell
 python -X utf8 -B docs/drafts/ui-schema-0.3/validate.py

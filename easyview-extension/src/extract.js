@@ -10,23 +10,14 @@
  *   // elements → 一份完整的 elements.json（docs/elements.schema.json v1.1.0）
  *   // resolve  → 把 elements 里的 el_xxxxxxxx 换回真实 DOM 元素，供渲染层定位
  *
- * 与退役的服务端方案（backend/app/extract_dom.js + backend/app/builder.py）的差异，只剩
- * 三点，其余逻辑照搬：
- *   1. ID 不再用 sha1(selector) 派生，改为按文档序的递增计数器 el_00000001（提取与渲染同进程，
- *      不存在跨进程对不上的问题；计数器比哈希更好排查）。selector / xpath 字段**照样输出**，
- *      下游 0.3 协议绑定器仍然需要它们。
- *   2. resolve(id) 在本进程内直接返回元素：优先查 Map，元素已被页面替换（!isConnected）时
- *      回退用 selector 重新 querySelector。不往页面元素上打任何属性，页面零污染。
- *   3. 分组 ID 同理改为计数器：form_00000001 / grp_00000001。
- *
- * 文本/标签取值优先级、可见性判定、cssPath、xpath、候选收集、radio/checkbox 合并、
- * 分组归属、可见优先截断、统计口径，全部与服务端参考实现保持一致
- * （见 backend/app/extract_dom.js 与 backend/app/builder.py 的注释）。
+ * 元素与分组按文档顺序分配稳定的会话内 ID；selector / xpath 也会记录供绑定器核对。
+ * resolve(id) 优先返回当前页面的元素，节点被替换时再用 selector 定位。
+ * 可见性、截断和统计规则以本文件与 docs/elements.schema.json 为准。
  */
 (function () {
   'use strict';
 
-  /* ---------- 上限与常量（与 backend/app/extract_dom.js、config.py 一致） ---------- */
+  /* ---------- 上限与常量 ---------- */
   const MAX_TEXT = 200;        // 单个文本/标签字段上限
   const MAX_VALUE = 120;       // 表单 value 上限
   // value 只在"value 本身就是标签"的按钮类控件上采集。
@@ -34,7 +25,7 @@
   // 而 text / number / date / textarea / select 的 value 是**用户已经填进去的内容**，
   // 一律不采集 —— 老人可能先填了身份证号、手机号、住址，再点「适老」。
   const VALUE_AS_LABEL_TYPES = new Set(['submit', 'button', 'reset', 'image']);
-  const MAX_ELEMENTS = 400;    // backend/app/config.py MAX_ELEMENTS
+  const MAX_ELEMENTS = 400;
   const SCHEMA_VERSION = '1.1.0';
 
   const INTERACTIVE = 'a[href], button, input, select, textarea, summary, ' +
@@ -548,7 +539,6 @@
 
   /* =====================================================================
    * 封装：把原始结构包装成符合 docs/elements.schema.json 的文档。
-   * 对应退役的 backend/app/builder.py（ID 生成、分组归属、截断、统计）。
    * 返回 { document, registry }，registry 是 id -> {node, selector} 的查找表。
    * ===================================================================== */
   function buildDocument(raw) {

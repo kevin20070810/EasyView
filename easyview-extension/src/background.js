@@ -3,6 +3,215 @@
 const DEFAULT_TITLE = "为当前网页生成敬老版";
 const DEFAULT_ENDPOINT = "http://127.0.0.1:8787";
 const ANALYZE_TIMEOUT_MS = 120000;
+const PAGE_ZOOM_PREFIX = "easyview.pageZoom.";
+let speechOwner = null;
+let pendingSpeech = null;
+let speechRequest = 0;
+
+function speechEvent(owner, state, extra = {}) {
+  chrome.tabs.sendMessage(owner.tabId, {
+    type: "easyview:speech-event",
+    sessionId: owner.sessionId,
+    state,
+    index: owner.index,
+    label: owner.segments[owner.index]?.label || "",
+    ...extra
+  }).catch(() => {});
+}
+
+function stopSpeech(owner = speechOwner) {
+  if (!owner || speechOwner !== owner) return;
+  speechOwner = null;
+  speechRequest += 1;
+  chrome.tts.stop();
+  speechEvent(owner, "stopped");
+}
+
+async function playSpeechSegment(owner) {
+  if (speechOwner !== owner) return false;
+  const segment = owner.segments[owner.index];
+  if (!segment) {
+    speechOwner = null;
+    speechEvent(owner, "ended");
+    return true;
+  }
+  try {
+    const segmentIndex = owner.index;
+    await chrome.tts.speak(segment.text, {
+      lang: "zh-CN",
+      voiceName: owner.voiceName,
+      rate: owner.rate,
+      onEvent(event) {
+        if (speechOwner !== owner) return;
+        if (event.type === "start") speechEvent(owner, "speaking");
+        else if (event.type === "end") {
+          owner.index += 1;
+          playSpeechSegment(owner);
+        } else if (event.type === "error") {
+          speechOwner = null;
+          speechEvent(owner, "error", { error: "朗读失败，请检查设备的中文语音设置" });
+        }
+      }
+    });
+    if (speechOwner === owner && owner.index === segmentIndex) speechEvent(owner, "speaking");
+    return true;
+  } catch (_) {
+    if (speechOwner === owner) {
+      speechOwner = null;
+      speechEvent(owner, "error", { error: "朗读失败，请检查设备的中文语音设置" });
+    }
+    return false;
+  }
+}
+
+async function startSpeech(message, sender) {
+  const tabId = sender.tab?.id;
+  if (sender.frameId !== 0 || typeof tabId !== "number") {
+    return { ok: false, error: "无法在当前页面朗读" };
+  }
+  const segments = Array.isArray(message.segments) ? message.segments.slice(0, 9)
+    .map((item) => ({
+      label: String(item?.label || "").slice(0, 40),
+      text: String(item?.text || "")
+        .replace(/https?:\/\/\S+|www\.\S+/gi, "")
+        .replace(/[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}/g, "")
+        .replace(/\s+/g, " ").trim().slice(0, 240)
+    })).filter((item) => item.text) : [];
+  if (!segments.length || !message.sessionId || segments.some((item) => /\b(?:\d[ -]?){11,24}\b/.test(item.text))) {
+    return { ok: false, error: "没有可安全朗读的内容" };
+  }
+  stopSpeech();
+  const request = ++speechRequest;
+  pendingSpeech = { tabId, sessionId: String(message.sessionId).slice(0, 80), request };
+  let voices;
+  try {
+    voices = await chrome.tts.getVoices();
+  } catch (_) {
+    if (pendingSpeech?.request === request) pendingSpeech = null;
+    return { ok: false, error: "无法读取设备语音，请检查浏览器设置" };
+  }
+  if (request !== speechRequest) return { ok: false, error: "朗读已取消" };
+  pendingSpeech = null;
+  const systemVoice = (item) => item.remote !== true && !item.extensionId;
+  const voice = voices.find((item) => /^zh[-_]cn$/i.test(item.lang || "") && systemVoice(item))
+    || voices.find((item) => /^zh(?:[-_]|$)/i.test(item.lang || "") && systemVoice(item));
+  if (!voice) {
+    return { ok: false, error: "设备缺少可用的系统中文语音，请在语音设置中安装" };
+  }
+  const owner = {
+    tabId,
+    sessionId: String(message.sessionId).slice(0, 80),
+    segments,
+    index: 0,
+    rate: [0.8, 1, 1.2].includes(message.rate) ? message.rate : 0.8,
+    voiceName: voice.voiceName
+  };
+  speechOwner = owner;
+  const started = await playSpeechSegment(owner);
+  return started ? { ok: true } : { ok: false, error: "朗读没有启动，请检查设备语音设置" };
+}
+
+function controlSpeech(message, sender) {
+  const owner = speechOwner;
+  if (message.action === "stop" && pendingSpeech?.tabId === sender.tab?.id &&
+      pendingSpeech.sessionId === message.sessionId) {
+    speechRequest += 1;
+    pendingSpeech = null;
+    return { ok: true };
+  }
+  if (message.action === "stop" && !owner && typeof sender.tab?.id === "number") {
+    chrome.tts.stop();
+    return { ok: true };
+  }
+  if (!owner || owner.tabId !== sender.tab?.id || owner.sessionId !== message.sessionId) {
+    return { ok: false, error: "当前没有正在朗读的内容" };
+  }
+  if (message.action === "stop") stopSpeech(owner);
+  else if (message.action === "pause") {
+    chrome.tts.pause();
+    speechEvent(owner, "paused");
+  } else if (message.action === "resume") {
+    chrome.tts.resume();
+    speechEvent(owner, "speaking");
+  } else if (message.action === "rate") {
+    if (![0.8, 1, 1.2].includes(message.rate)) return { ok: false, error: "不支持的语速" };
+    owner.rate = message.rate;
+  } else return { ok: false, error: "不支持的朗读操作" };
+  return { ok: true };
+}
+
+function pageZoomKey(tabId) {
+  return `${PAGE_ZOOM_PREFIX}${tabId}`;
+}
+
+async function pageZoomState(tabId) {
+  const key = pageZoomKey(tabId);
+  const stored = await chrome.storage.session.get(key);
+  return stored[key] || null;
+}
+
+function senderOrigin(sender) {
+  try {
+    const url = new URL(sender.url || sender.tab?.url || "");
+    return url.protocol === "https:" || url.protocol === "http:" ? url.origin : null;
+  } catch (_) {
+    return null;
+  }
+}
+
+async function handlePageZoom(message, sender) {
+  const tabId = sender.tab?.id;
+  const origin = senderOrigin(sender);
+  if (typeof tabId !== "number" || !origin) {
+    return { ok: false, error: "当前页面不能放大" };
+  }
+
+  let state = await pageZoomState(tabId);
+  if (state && state.origin !== origin) {
+    await chrome.storage.session.remove(pageZoomKey(tabId));
+    state = null;
+  }
+  if (message.operation === "get") return { ok: true, state };
+  if (!["activate", "step", "reset"].includes(message.operation)) {
+    return { ok: false, error: "不支持的放大操作" };
+  }
+  if (!state && message.operation !== "activate") {
+    return { ok: true, state: null };
+  }
+
+  if (message.operation === "activate" && !state) {
+    const baseline = await chrome.tabs.getZoom(tabId);
+    const settings = await chrome.tabs.getZoomSettings(tabId);
+    if (settings.mode && settings.mode !== "automatic") {
+      return { ok: false, error: "当前网页的缩放由浏览器或其他扩展控制" };
+    }
+    state = {
+      origin,
+      baseline,
+      factor: Math.max(1.25, baseline),
+      originalScope: settings.scope === "per-tab" ? "per-tab" : "per-origin"
+    };
+  } else if (message.operation === "step") {
+    const direction = message.direction === 1 ? 1 : message.direction === -1 ? -1 : 0;
+    if (!direction) return { ok: false, error: "不支持的放大方向" };
+    state.factor = Math.min(Math.max(2, state.baseline),
+      Math.max(state.baseline, Math.round((state.factor + direction * 0.25) * 100) / 100));
+  }
+
+  // per-tab 只放大当前标签页，不改用户在这个网站的全局浏览器缩放设置。
+  await chrome.tabs.setZoomSettings(tabId, { mode: "automatic", scope: "per-tab" });
+  await chrome.tabs.setZoom(tabId,
+    message.operation === "reset" ? state.baseline : state.factor);
+  if (message.operation === "reset") {
+    await chrome.tabs.setZoomSettings(tabId, {
+      mode: "automatic", scope: state.originalScope || "per-origin"
+    });
+    await chrome.storage.session.remove(pageZoomKey(tabId));
+    return { ok: true, state: null };
+  }
+  await chrome.storage.session.set({ [pageZoomKey(tabId)]: state });
+  return { ok: true, state };
+}
 
 /* 注入顺序即依赖顺序：
  *   brand → privacy → digest / binder / extract → ai-content
@@ -16,30 +225,11 @@ const CONTENT_FILES = [
   "src/digest.js",
   "src/binder.js",
   "src/extract.js",
+  "src/page-assist.js",
+  "src/speech-controls.js",
   "src/ai-content.js"
 ];
 globalThis.__easyviewContentFiles = CONTENT_FILES;
-
-let brandLogoBase64Promise = null;
-
-function brandLogoBase64() {
-  if (!brandLogoBase64Promise) {
-    brandLogoBase64Promise = (async () => {
-      const response = await fetch(chrome.runtime.getURL("assets/easyview-logo-v2.png"));
-      if (!response.ok) throw new Error(`Logo resource HTTP ${response.status}`);
-      const bytes = new Uint8Array(await response.arrayBuffer());
-      let binary = "";
-      for (let offset = 0; offset < bytes.length; offset += 32768) {
-        binary += String.fromCharCode(...bytes.subarray(offset, offset + 32768));
-      }
-      return btoa(binary);
-    })().catch((error) => {
-      brandLogoBase64Promise = null;
-      throw error;
-    });
-  }
-  return brandLogoBase64Promise;
-}
 
 /* ---------- 专用站点 ---------- */
 
@@ -112,8 +302,18 @@ async function aiEndpoint() {
   }
 }
 
+async function aiAccessToken() {
+  try {
+    const stored = await chrome.storage.local.get({ "easyview.accessToken": "" });
+    return String(stored["easyview.accessToken"] || "").trim();
+  } catch (_) {
+    return "";
+  }
+}
+
 async function analyzeViaService(bodyText, kind, useAi) {
   const endpoint = await aiEndpoint();
+  const accessToken = await aiAccessToken();
   const isDraft = kind === "digest";
   // digest 走 /draft：服务器只做「文字进、模型出、JSON 回」，
   // 定位字段和风险策略都在扩展里，服务器看不到。
@@ -127,7 +327,10 @@ async function analyzeViaService(bodyText, kind, useAi) {
   try {
     const response = await fetch(url, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        ...(accessToken ? { "Authorization": `Bearer ${accessToken}` } : {})
+      },
       body: requestBody,
       signal: controller.signal
     });
@@ -169,6 +372,57 @@ async function analyzeViaService(bodyText, kind, useAi) {
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (!message || typeof message.type !== "string") return undefined;
 
+  if (message.type === "easyview:speech-play") {
+    startSpeech(message, sender)
+      .then(sendResponse)
+      .catch(() => sendResponse({ ok: false, error: "朗读没有启动" }));
+    return true;
+  }
+
+  if (message.type === "easyview:speech-control") {
+    sendResponse(controlSpeech(message, sender));
+    return false;
+  }
+
+  if (message.type === "easyview:open-from-page") {
+    if (sender.frameId !== 0 || typeof sender.tab?.id !== "number") {
+      sendResponse({ ok: false, error: "找不到当前网页" });
+      return false;
+    }
+    handleActionClick(sender.tab)
+      .then((ok) => sendResponse({ ok, error: ok ? undefined : "没有打开，请刷新网页后重试" }))
+      .catch(() => sendResponse({ ok: false, error: "没有打开，请刷新网页后重试" }));
+    return true;
+  }
+
+  if (message.type === "easyview:quick-zoom") {
+    const tabId = sender.frameId === 0 ? sender.tab?.id : null;
+    if (typeof tabId !== "number" || !senderOrigin(sender)) {
+      sendResponse({ ok: false, error: "当前网页不能放大" });
+      return false;
+    }
+    (async () => {
+      await chrome.scripting.executeScript({
+        target: { tabId }, files: ["src/brand.js", "src/page-assist.js"]
+      });
+      const result = await chrome.scripting.executeScript({
+        target: { tabId },
+        func: () => globalThis.EasyViewPageAssist?.activate() || false
+      });
+      return { ok: Boolean(result[0]?.result), error: "放大原网页失败" };
+    })()
+      .then(sendResponse)
+      .catch(() => sendResponse({ ok: false, error: "放大原网页失败" }));
+    return true;
+  }
+
+  if (message.type === "easyview:page-zoom") {
+    handlePageZoom(message, sender)
+      .then(sendResponse)
+      .catch(() => sendResponse({ ok: false, error: "放大原网页失败，请用浏览器的缩放功能" }));
+    return true;
+  }
+
   // 关掉当前标签页。车次结果页是新标签页、history 只有一条，
   // history.back() 在那种情况下什么都不会发生，所以回去只能靠关页。
   if (message.type === "easyview:close-tab") {
@@ -177,13 +431,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
     sendResponse({ ok: true });
     return false;
-  }
-
-  if (message.type === "easyview:brand-logo") {
-    brandLogoBase64()
-      .then((base64) => sendResponse({ ok: true, base64 }))
-      .catch((error) => sendResponse({ ok: false, error: String(error) }));
-    return true;
   }
 
   if (message.type === "easyview:analyze") {
@@ -226,7 +473,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       return undefined;
     }
     chrome.scripting
-      .executeScript({ target: { tabId }, files: ["src/generic-content.js"] })
+      .executeScript({ target: { tabId }, files: ["src/speech-controls.js", "src/generic-content.js"] })
       .then(() => sendResponse({ ok: true }))
       .catch((error) => sendResponse({ ok: false, error: String(error) }));
     return true;
@@ -241,7 +488,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
  * 代码路径。之前测试直接调 chrome.scripting.executeScript 注入，绕过了
  * 这里的专用站点分支，于是"测试全过、用户看不到"—— 这个坑踩过一次了。 */
 async function handleActionClick(tab) {
-  if (typeof tab.id !== "number") return;
+  if (typeof tab?.id !== "number") return false;
   const tabId = tab.id;
   await clearStatus(tabId);
 
@@ -250,12 +497,12 @@ async function handleActionClick(tab) {
     url = new URL(tab.url || tab.pendingUrl || "");
   } catch (_) {
     await showFailure(tabId, "无法读取当前网页地址，请打开普通网页后重试");
-    return;
+    return false;
   }
 
   if (url.protocol !== "http:" && url.protocol !== "https:") {
     await showFailure(tabId, "此页面不支持敬老版，请打开普通网页后重试");
-    return;
+    return false;
   }
 
   try {
@@ -271,9 +518,11 @@ async function handleActionClick(tab) {
       target: { tabId },
       files: CONTENT_FILES
     });
+    return true;
   } catch (error) {
     console.warn("[EasyView] Could not open the current page:", error);
     await showFailure(tabId, "无法打开此页面的敬老版，请刷新网页后重试");
+    return false;
   }
 }
 
@@ -281,5 +530,47 @@ chrome.action.onClicked.addListener(handleActionClick);
 globalThis.__easyviewHandleClick = handleActionClick;
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
+  if (changeInfo.status === "loading" && speechOwner?.tabId === tabId) stopSpeech();
+  if (changeInfo.status === "loading" && pendingSpeech?.tabId === tabId) {
+    speechRequest += 1;
+    pendingSpeech = null;
+  }
   if (changeInfo.status === "loading") clearStatus(tabId).catch(() => {});
+  if (changeInfo.status !== "complete") return;
+  (async () => {
+    const state = await pageZoomState(tabId);
+    if (!state) return;
+    const tab = await chrome.tabs.get(tabId);
+    const origin = senderOrigin({ url: tab.url });
+    if (!origin) return;
+    if (origin !== state.origin) {
+      await chrome.storage.session.remove(pageZoomKey(tabId));
+      return;
+    }
+    await chrome.tabs.setZoomSettings(tabId, { mode: "automatic", scope: "per-tab" });
+    await chrome.tabs.setZoom(tabId, state.factor);
+    await chrome.scripting.executeScript({
+      target: { tabId },
+      files: ["src/page-assist.js"]
+    });
+  })().catch(() => {
+    // 页面可能已关闭或失去注入权限；原网页始终保持可用。
+  });
+});
+
+chrome.tabs.onRemoved.addListener((tabId) => {
+  if (speechOwner?.tabId === tabId) stopSpeech();
+  if (pendingSpeech?.tabId === tabId) {
+    speechRequest += 1;
+    pendingSpeech = null;
+  }
+  chrome.storage.session.remove(pageZoomKey(tabId)).catch(() => {});
+});
+
+chrome.tabs.onActivated.addListener(({ tabId }) => {
+  if (speechOwner && speechOwner.tabId !== tabId) stopSpeech();
+  if (pendingSpeech && pendingSpeech.tabId !== tabId) {
+    speechRequest += 1;
+    pendingSpeech = null;
+  }
 });

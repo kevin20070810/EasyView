@@ -1,16 +1,9 @@
 # -*- coding: utf-8 -*-
-"""EasyView B 模块 · 卡片构建核心（规则引擎）
+"""规则引擎：从 elements.json 构造候选卡片。
 
-把 C 组的 elements.json（协议 v1.0.0）转成 A 组可渲染的 ui_schema.json（协议 0.1.0-draft）。
-
-设计原则（这是「JSON 稳定」的保证）：
-    大模型只做语义判断，**结构由本文件用纯 Python 组装**。
-    即使完全不联网、不调用任何模型，本文件也能独立产出通过
-    `backend/tools/check_ui.py` 全部校验的合规结果。
-
-对应协议：
-    docs/elements.schema.json   v1.0.0
-    docs/ui.schema.json         v0.1.0-draft
+本模块保留旧结构作为规则草稿的内部来源；pipeline.rules_draft()
+会提取任务，再由 0.3 绑定器和校验器生成最终 ui_schema。
+当前输出协议见 docs/drafts/ui-schema-0.3/ui.schema.json。
 """
 
 from __future__ import annotations
@@ -23,7 +16,7 @@ from urllib.parse import urlsplit
 UI_SCHEMA_VERSION = "0.1.0-draft"
 TZ_CST = timezone(timedelta(hours=8))
 
-# 协议冻结的 16 个图标名（见 docs/ui.schema.json），填错会让卡片退化为默认图标
+# 协议冻结的图标名（见 docs/drafts/ui-schema-0.3/ui.schema.json）
 ICON_NAMES = (
     "home", "calendar", "document", "payment", "phone", "user", "search",
     "location", "bus", "train", "hospital", "government", "warning",
@@ -1207,7 +1200,7 @@ def build_ui_schema(
         *,
         generated_at: datetime | None = None,
 ) -> dict[str, Any]:
-    """生成符合 docs/ui.schema.json 的完整对象。"""
+    """生成旧结构的规则结果，供 pipeline 转为 0.3 草稿。"""
     if not isinstance(elements_data, Mapping):
         raise BuilderError("输入必须是 JSON 对象")
 

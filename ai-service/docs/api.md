@@ -1,117 +1,29 @@
-# EasyView B 组接口说明
+# HTTP 接口
 
-协议版本：`ui_schema.json v0.1.0-draft`
+服务默认监听 `127.0.0.1:8787`。公开部署时由 HTTPS 反向代理转发，不直接开放 8787。若设置 `EASYVIEW_ACCESS_TOKEN`，所有 POST 请求须带 `Authorization: Bearer <token>`；令牌错误返回 401。
 
-## HTTP 服务
+## `GET /health`
 
-启动：
+返回 `ok`、`service`、`schema_version`、`ai_configured`、`model` 和 `reasoning`。不调用模型。
 
-```powershell
-python .\ai-service\app.py --host 127.0.0.1 --port 8787
-```
+## `POST /draft`
 
-### GET /health
+扩展当前使用的接口。请求体：
 
 ```json
-{
-  "ok": true,
-  "service": "easyview-ai",
-  "schema_version": "0.1.0-draft",
-  "ai_configured": false
-}
+{"digest": "[page] ..."}
 ```
 
-### POST /analyze
+成功返回 `{"ok": true, "draft": {...}, "prompt_version": "..."}`。加 `?debug=1` 时额外返回耗时、用量和说明书字数。此接口需要配置模型密钥；它只返回语义草稿，不包含原站定位字段。扩展在本地绑定元素并校验后才渲染卡片。
 
-请求体直接传 C 组的 `elements.json`。默认只使用规则引擎。
+## `POST /analyze`
 
-```powershell
-$body = Get-Content -Raw .\docs\examples\elements.hospital.json
-Invoke-RestMethod -Method Post -Uri http://127.0.0.1:8787/analyze -ContentType application/json -Body $body
-```
+离线分析接口。请求体直接为 `elements.json`，或 `{"elements_data": {...}, "_easyview_ai": true}`。默认走规则生成；加 `?ai=1` 或设置 `_easyview_ai` 才调用模型。成功返回 `{"ok": true, "data": <ui_schema 0.3>}`。加 `?debug=1` 时返回诊断摘要。
 
-成功响应：
+`/analyze` 调用 [0.3 校验器](../../docs/drafts/ui-schema-0.3/validate.py)，需要安装 `jsonschema`。当前扩展主路径使用 `/draft`。
 
-```json
-{
-  "ok": true,
-  "data": {
-    "schema_version": "0.1.0-draft",
-    "source_elements_schema_version": "1.0.0",
-    "page_url": "https://example.com/",
-    "page_title": "页面标题",
-    "source": "fallback",
-    "generated_at": "2026-10-02T10:35:00+08:00",
-    "page": {
-      "greeting": "您好，这里是页面标题",
-      "summary": "这里可以挂号、查看报告、缴费和查医保"
-    },
-    "cards": [],
-    "extensions": {
-      "input_stats": {
-        "total": 93,
-        "visible": 93,
-        "truncated": false,
-        "visible_ratio": 1.0,
-        "card_count": 6,
-        "external_count": 0,
-        "scroll_count": 0,
-        "sparse_fallback_used": false
-      }
-    }
-  }
-}
-```
+## 错误与数据边界
 
-启用模型增强时加查询参数：
+错误统一为 `{"ok": false, "error": {"code": "...", "message": "..."}}`。常见状态：400 请求错误、401 令牌无效、413 体积超限、422 元素不合规、503 模型不可用、500 服务内部错误。
 
-```text
-POST /analyze?ai=1
-```
-
-模型不可用会返回 `503 ai_unavailable`，不自动静默调用。命令行和单元测试中的降级路径仍保证基础功能可用。
-
-### 错误格式
-
-```json
-{
-  "ok": false,
-  "error": {
-    "code": "invalid_elements",
-    "message": "缺少必填字段: page_url"
-  }
-}
-```
-
-| HTTP | code | 说明 |
-|---|---|---|
-| 400 | `bad_request` | 请求体不是合法 JSON |
-| 413 | `bad_request` | 请求体为空或超过 8MB |
-| 422 | `invalid_elements` | elements 数据不满足最小构造条件 |
-| 503 | `ai_unavailable` | 请求了 AI，但配置或连接失败 |
-| 500 | `internal_error` | 未预期错误 |
-
-## 命令行
-
-```powershell
-python .\ai-service\app.py --file .\docs\examples\elements.hospital.json
-python .\ai-service\app.py --file .\docs\examples\elements.hospital.json --output .\out.json
-python .\ai-service\app.py --file .\docs\examples\elements.hospital.json --ai
-```
-
-## AI 环境变量
-
-| 变量 | 必填 | 默认值 | 说明 |
-|---|---|---|---|
-| `EASYVIEW_API_KEY` | 启用 AI 时必填 | 无 | API 密钥 |
-| `EASYVIEW_BASE_URL` | 否 | `https://api.openai.com/v1` | OpenAI 兼容接口地址 |
-| `EASYVIEW_MODEL` | 否 | `gpt-4.1-mini` | 模型名 |
-| `EASYVIEW_TIMEOUT` | 否 | `20` | 超时秒数 |
-| `EASYVIEW_JSON_MODE` | 否 | `0` | 设为 `1` 时发送 JSON 模式参数 |
-
-## 安全边界
-
-- 模型永远不能构造新的元素 ID。
-- AI 返回值由 `pipeline.apply_ai_hints()` 做白名单校验；标题只能改成明确的动作短语。
-- 最终 JSON 始终由 `builder.py` 组装。
-- 不生成 HTML/CSS，不控制浏览器，不修改原网页。
+服务不记录请求体，响应带 `Cache-Control: no-store`。日志只应包含请求路径与状态，不应放入页面正文。浏览器扩展生成的说明书不含已填写的表单值；网页原文仍可能包含个人信息，部署者需控制访问和模型服务的数据处理设置。

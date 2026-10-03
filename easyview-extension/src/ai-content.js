@@ -51,6 +51,24 @@
     sensitive: "打开前确认"
   };
 
+  // 只解释稳定的铁路常用词；车票价格、办理资格和实时状态仍以 12306 为准。
+  const RAILWAY_TERMS = [
+    ["候补", "暂时没票时登记购票需求，不保证买到。"],
+    ["改签", "已买的票想换时间或车次，能否办理看订单页。"],
+    ["检票口", "上车前到这里检票，出发前再看车站提示。"],
+    ["二等座", "高铁、动车的一种坐席，实际票价看当前车次。"]
+  ];
+
+  function railwayTermHelp(...parts) {
+    if (!/(^|\.)12306\.cn$/i.test(location.hostname)) return null;
+    const copy = parts.filter(Boolean).join(" ");
+    if (copy.includes("改签") && copy.includes("退票")) {
+      return el("span", "ev-term-help", "改签是换时间或车次，退票是取消车票；费用看订单页。");
+    }
+    const found = RAILWAY_TERMS.find(([term]) => copy.includes(term));
+    return found ? el("span", "ev-term-help", `${found[0]}：${found[1]}`) : null;
+  }
+
   function iconMarkup(name) {
     return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name] || ICONS.info}</svg>`;
   }
@@ -71,7 +89,6 @@
   let lastDropped = [];
   let lastElementsJson = null;
   let busy = false;
-  let brandLogoBitmapPromise = null;
 
   /* ---------- 小工具 ---------- */
 
@@ -80,46 +97,6 @@
     if (className) node.className = className;
     if (text !== undefined) node.textContent = text;
     return node;
-  }
-
-  function brandLogoBitmap() {
-    if (!brandLogoBitmapPromise) {
-      brandLogoBitmapPromise = new Promise((resolve, reject) => {
-        chrome.runtime.sendMessage({ type: "easyview:brand-logo" }, (reply) => {
-          if (chrome.runtime.lastError || !reply?.ok || !reply.base64) {
-            reject(new Error(chrome.runtime.lastError?.message || reply?.error || "Logo unavailable"));
-            return;
-          }
-          try {
-            const binary = atob(reply.base64);
-            const bytes = new Uint8Array(binary.length);
-            for (let index = 0; index < binary.length; index += 1) {
-              bytes[index] = binary.charCodeAt(index);
-            }
-            resolve(createImageBitmap(new Blob([bytes], { type: "image/png" })));
-          } catch (error) {
-            reject(error);
-          }
-        });
-      }).catch((error) => {
-        brandLogoBitmapPromise = null;
-        throw error;
-      });
-    }
-    return brandLogoBitmapPromise;
-  }
-
-  async function paintBrandLogo(canvas, fallback) {
-    try {
-      const bitmap = await brandLogoBitmap();
-      if (!canvas.isConnected) return;
-      const context = canvas.getContext("2d");
-      if (!context) return;
-      context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-      fallback.hidden = true;
-    } catch (_) {
-      fallback.hidden = false;
-    }
   }
 
   function button(label, onClick, primary) {
@@ -230,6 +207,8 @@
     host = document.createElement("div");
     host.id = ROOT_ID;
     shadow = host.attachShadow({ mode: "open" });
+    // 原站的全局点击监听不应把敬老版卡片当作自己的图片或链接处理。
+    shadow.addEventListener("click", (event) => event.stopPropagation());
 
     const link = document.createElement("link");
     link.rel = "stylesheet";
@@ -242,14 +221,14 @@
         background: #fff6e5; color: #7a5200; font-size: 17px; line-height: 1.5; }
       .ev-ai-note { display: block; margin-top: 4px; font-size: 15px; color: #8a6d3b; }
       .ev-ai-risk-blocked .ev-card-copy > span { color: #8a6d3b; }
-      .ev-ai-confirm { margin-top: 14px; padding: 16px; border: 2px solid #0b5cad;
-        border-radius: 10px; background: #f2f7fd; }
+      .ev-ai-confirm { margin-top: 14px; padding: 16px; border: 2px solid var(--ev-brand);
+        border-radius: 10px; background: var(--ev-mist); }
       .ev-ai-confirm p { margin: 0 0 14px; font-size: 20px; line-height: 1.6; }
       .ev-ai-confirm .ev-actions { display: flex; gap: 12px; }
       .ev-ai-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 16px; }
       .ev-ai-stats { margin-top: 18px; font-size: 14px; color: #5c6b7a; line-height: 1.7; }
-      .ev-ai-consent { margin-top: 14px; padding: 14px 16px; border: 2px solid #0b5cad;
-        border-radius: 10px; background: #f2f7fd; }
+      .ev-ai-consent { margin-top: 14px; padding: 14px 16px; border: 2px solid var(--ev-brand);
+        border-radius: 10px; background: var(--ev-mist); }
       .ev-ai-consent ul { margin: 8px 0 0; padding-left: 22px; font-size: 17px; line-height: 1.8; }
       .ev-ai-preview { margin-top: 12px; max-height: 260px; overflow: auto; padding: 12px;
         border: 1px solid #c3ccd6; border-radius: 8px; background: #fff;
@@ -312,11 +291,12 @@
     return title.split(/[|｜_—–]/)[0].trim().slice(0, 18);
   }
 
-  function header(title, summary) {
+  function header(title, summary, speechSegments = null) {
+    globalThis.EasyViewSpeech?.detach();
     panel.replaceChildren();
     const bar = el("header", "ev-header");
     const brand = el("div", "ev-brandline");
-    // 通用层的标题是问候语（不是站名），所以这里只加 Logo，不做标题隐藏。
+    // 敬老版页头只显示当前网站的标识，不叠加 EasyView 项目 Logo。
     if (brandTheme && brandTheme.logoUrl && window.EasyViewBrand) {
       const slot = el("div", "ev-logoslot");
       window.EasyViewBrand.mountLogo(slot, brandTheme, { textFallback: false });
@@ -329,8 +309,11 @@
     const exit = el("button", "ev-exit", "退出敬老版");
     exit.type = "button";
     exit.addEventListener("click", close);
-    bar.append(brand, exit);
+    const actions = el("div", "ev-header-actions");
+    actions.appendChild(exit);
+    bar.append(brand, actions);
     panel.appendChild(bar);
+    if (speechSegments) globalThis.EasyViewSpeech?.attach(actions, panel, speechSegments);
     const body = el("div", "ev-content");
     panel.appendChild(body);
     panel.focus({ preventScroll: true });
@@ -340,7 +323,9 @@
   /* ---------- 同意界面 ---------- */
 
   function showConsent(payload, onAgree) {
-    const body = header("先确认一件事", "您可以先看看会发送什么。");
+    const body = header("先确认一件事", "您可以先看看会发送什么。", [
+      { label: "发送前确认", text: "为整理这页的服务入口，需要把部分网页文字发送到简界的分析服务。只读页面上的文字，不读您填进去的内容和密码。您可以先查看将发送的内容，再决定是否继续。" }
+    ]);
 
     body.appendChild(el("p", "ev-message",
       "为整理这页的服务入口，需要把部分网页文字发送到 EasyView 的分析服务。"));
@@ -384,7 +369,9 @@
   }
 
   function showError(message, endpoint) {
-    const body = header("暂时没整理好", "您仍可以使用原网页。");
+    const body = header("暂时没整理好", "您仍可以使用原网页。", [
+      { label: "当前提示", text: "暂时没整理好。您可以再试一次，查看基础版，或者返回原网页。" }
+    ]);
     body.appendChild(el("p", "ev-message ev-error", message));
     if (endpoint) {
       const details = el("details", "ev-ai-details");
@@ -402,7 +389,18 @@
 
   function renderResult(ui) {
     const cards = Array.isArray(ui.cards) ? ui.cards : [];
-    const body = header("请选择事项", "选一项，我们带您找到原网页的入口。");
+    const speechSegments = [{
+      label: "页面说明",
+      text: "请选择事项。选一项，我们带您找到原网页的入口。"
+    }, ...cards.slice(0, 7).map((card, index) => {
+      const explanation = railwayTermHelp(card.title, card.subtitle)?.textContent || "";
+      return {
+        label: card.title || `第 ${index + 1} 项`,
+        text: `第 ${index + 1} 项，${card.title || "未命名"}。${card.subtitle || ""}。${explanation}`
+      };
+    })];
+    if (!cards.length) speechSegments.push({ label: "当前结果", text: "这个页面上暂时没找到能替您整理的事情。" });
+    const body = header("请选择事项", "选一项，我们带您找到原网页的入口。", speechSegments);
 
     const banners = [];
     if (ui.generator && ui.generator.mode === "rules") {
@@ -429,8 +427,23 @@
     section.append(el("h2", "", "为您找到的入口"), el("span", "", `${cards.length} 项`));
     body.appendChild(section);
     const list = el("div", "ev-actions");
-    cards.forEach((card, index) => list.appendChild(renderCard(card, index)));
+    cards.forEach((card, index) => list.appendChild(renderCard(card, index, speechSegments[index + 1])));
     body.appendChild(list);
+    const zoomActions = el("div", "ev-ai-actions");
+    const zoomMessage = el("p", "ev-message", "");
+    zoomMessage.setAttribute("role", "alert");
+    const zoomButton = button("放大原网页", async () => {
+      zoomButton.disabled = true;
+      const enlarged = await globalThis.EasyViewPageAssist?.activate();
+      if (enlarged) {
+        close();
+        return;
+      }
+      zoomButton.disabled = false;
+      zoomMessage.textContent = "暂时无法放大，请使用浏览器的缩放功能。";
+    });
+    zoomActions.appendChild(zoomButton);
+    body.append(zoomActions, zoomMessage);
     appendDataFoot(body);
   }
 
@@ -468,7 +481,7 @@
     body.appendChild(actions);
   }
 
-  function renderCard(card, index) {
+  function renderCard(card, index, speechSegment) {
     const risk = (card.risk && card.risk.level) || "normal";
     const node = el("button", `ev-card${index === 0 ? " ev-ai-featured" : ""}${risk === "blocked" ? " ev-ai-risk-blocked" : ""}`);
     node.type = "button";
@@ -485,18 +498,26 @@
     if (RISK_NOTE[risk]) heading.appendChild(el("span", "ev-ai-note", RISK_NOTE[risk]));
     copy.appendChild(heading);
     if (card.subtitle) copy.appendChild(el("span", "", card.subtitle));
+    const explanation = railwayTermHelp(card.title, card.subtitle);
+    if (explanation) copy.appendChild(explanation);
 
     const arrow = el("span", "ev-ai-card-arrow", "→");
     arrow.setAttribute("aria-hidden", "true");
     node.append(icon, copy, arrow);
     node.addEventListener("click", () => performAction(card));
-    return node;
+    const listen = globalThis.EasyViewSpeech?.cardButton(speechSegment);
+    if (!listen) return node;
+    const wrapper = el("div", "ev-card-with-listen");
+    wrapper.append(node, listen);
+    return wrapper;
   }
 
   /* ---------- 二次确认 ---------- */
 
   function showConfirm(card, confirmation, onConfirm) {
-    const body = header(card.title || "请确认", "");
+    const body = header(card.title || "请确认", "", [
+      { label: "办理前确认", text: `${card.title || "请确认"}。${confirmation.message || "确定要继续吗？"}。请在原网页核对并完成操作。` }
+    ]);
     const box = el("div", "ev-ai-confirm");
     box.appendChild(el("p", "", confirmation.message || "确定要继续吗？"));
     const actions = el("div", "ev-actions");
@@ -540,6 +561,9 @@
    * 用邻居去猜，猜错的代价比漏判大得多。
    */
   function hasFormGroup(card) {
+    // 下面的表单卡片是 12306 专用购票界面。其它网站即使有多个字段，
+    // 也只能走通用的原网页定位流程，不能显示铁路购票内容。
+    if (!/(^|\.)12306\.cn$/i.test(location.hostname) || !globalThis.EasyView12306) return false;
     if (!pendingElements) return false;
     const action = card.action || {};
     const provenance = card.provenance || {};
@@ -567,7 +591,7 @@
     activate(action, card);
   }
 
-  function activate(action, card) {
+  async function activate(action, card) {
     const id = action.target_element_id;
     // 取节点时优先走 nodeForElement —— 它会用上"升到可见祖先"的地址。
     // 直接用 resolveElement 会拿回那个零尺寸的隐藏节点，等于点了个看不见的东西。
@@ -607,6 +631,13 @@
         location.href = href;
         return;
       }
+      if (action.kind === "navigate") {
+        try {
+          if (new URL(href, location.href).origin === location.origin) {
+            await globalThis.EasyViewPageAssist?.activate();
+          }
+        } catch (_) { /* 地址校验仍由原有导航逻辑处理。 */ }
+      }
       close();
       if (action.kind === "navigate") location.assign(href);
       else window.open(href, "_blank", "noopener,noreferrer");
@@ -630,6 +661,7 @@
     // 所以替它点一下。风险不是 normal 的（涉钱、涉病、涉身份）不代点，
     // 仍旧只定位、由用户自己在原网页操作 —— 这是我们的底线。
     if (risk === "normal" && looksClickable(element)) {
+      await globalThis.EasyViewPageAssist?.activate();
       close();
       try {
         element.click();
@@ -640,6 +672,7 @@
     }
 
     // 情况三：其它（高风险的、或目标不是可点控件的）→ 聚光灯框出来，用户自己操作。
+    await globalThis.EasyViewPageAssist?.activate();
     if (startSteps(card)) return;
 
     close();
@@ -1000,11 +1033,12 @@
     }, 120);
   }
 
-  function showGroupGuide(elements, index) {
+  function showGroupGuide(elements, index, nodeOverride = null) {
     if (!stepHost) {
       stepHost = document.createElement("div");
       stepHost.id = "easyview-step-host";
       const shadow = stepHost.attachShadow({ mode: "open" });
+      if (brandTheme && window.EasyViewBrand) window.EasyViewBrand.apply(brandTheme, stepHost);
       const link = document.createElement("link");
       link.rel = "stylesheet";
       link.href = chrome.runtime.getURL("src/styles.css");
@@ -1028,7 +1062,7 @@
           box-shadow: 0 0 0 4px rgba(255,176,32,.28), 0 0 26px rgba(255,176,32,.6); }
         .ev-spot-bubble { position: fixed; z-index: 2147483602; pointer-events: auto;
           max-width: min(340px, calc(100vw - 32px)); box-sizing: border-box;
-          background: #0b5cad; color: #fff; padding: 11px 13px;
+          background: var(--ev-brand, #0b5cad); color: #fff; padding: 11px 13px;
           border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,.45);
           font: 16px/1.45 "Microsoft YaHei", system-ui, sans-serif; }
         .ev-spot-bubble .ev-step-count { font-size: 17px; font-weight: 700; margin-bottom: 3px; }
@@ -1082,9 +1116,9 @@
     // 只框【当前这一步】那一格。
     // 早先这里 map 的是整组 elements，结果三步每次框出来的都是同一个大框
     // （覆盖三个输入格），"一步步来"就没有意义了。
-    const nodes = [current]
-      .map((e) => nodeForElement(e))
-      .filter((n) => n && n.isConnected);
+    const nodes = nodeOverride && nodeOverride.isConnected
+      ? [nodeOverride]
+      : [current].map((e) => nodeForElement(e)).filter((n) => n && n.isConnected);
     if (!nodes.length) { clearStepBar(); return; }
 
     const label = (current.label || current.text || current.placeholder || "").trim();
@@ -1161,12 +1195,13 @@
    * 用途：核对无误之后，把用户送回原网页，并把该点的那个按钮框出来批注。
    * 那个按钮不在 elements.json 里（它属于下一页），所以走不了元素表那条路。
    */
-  function spotlightNode(node, headText, bodyText) {
+  async function spotlightNode(node, headText, bodyText) {
     if (!node || !node.isConnected) return false;
-    close();
+    await globalThis.EasyViewPageAssist?.activate();
     // 复用同一套壳：四块挡板 + 黄圈 + 批注气泡
-    showGroupGuide([{ id: "__spot__", label: bodyText || "", type: "button" }], 0);
+    showGroupGuide([{ id: "__spot__", label: bodyText || "", type: "button" }], 0, node);
     if (!stepHost) return false;
+    close();
     stepHost.__nodes = [node];
     stepHost.__current = node;
     const bubble = stepHost.__bubble;
@@ -1370,6 +1405,10 @@
     bars.appendChild(makeRow("出发时段", TIMES, "time"));
     bars.appendChild(count);
     body.appendChild(bars);
+    if (trains.some((train) => train.priceClass === "二等座")) {
+      const overview = railwayTermHelp("二等座");
+      if (overview) body.appendChild(overview);
+    }
 
     const wrap = el("div", "ev-trains");
     for (const t of trains) {
@@ -1400,14 +1439,16 @@
           `余票 ${t.left}`));
       }
       card.appendChild(meta);
+      if (/候补/.test(t.left || "")) {
+        const waitlistHelp = railwayTermHelp("候补");
+        if (waitlistHelp) card.appendChild(waitlistHelp);
+      }
 
       const cta = el("div", "ev-train-cta");
       cta.append(el("span", "", "选这一趟"), el("span", "", "→"));
       card.appendChild(cta);
 
-      // 点车次 → 在面板里给一张确认卡（带大号「预订这趟车」）。
-      // 不再只是"滚到原网页的预订按钮描个框" —— 那样用户看不出自己选了哪一趟，
-      // 提示也太弱（用户反馈）。
+      // 点车次 → 先在面板里核对，再引导用户点击原网页的预订按钮。
       card.addEventListener("click", () => showView(renderTrainConfirm, t));
       wrap.appendChild(card);
       pairs.push({ train: t, node: card });
@@ -1587,10 +1628,9 @@
    *     G531
    *     北京南 06:08 → 上海虹桥 12:04
    *     历时 05:56   二等座 525 元
-   *     [      预订这趟车      ]
+   *     [      去 12306 预订      ]
    *
-   * 点「预订这趟车」才去点原网页上那一行的「预订」。是否真的下单仍由用户
-   * 在原网页上完成 —— 我们只把他送到门口。
+   * 点确认卡后照亮原网页上这一趟的「预订」。登录和下单由用户在 12306 完成。
    */
   const TRAINCONFIRM_CSS = `
     .ev-confirm-card { display: grid; gap: 14px; padding: 30px 32px 28px;
@@ -1612,21 +1652,19 @@
       background: #0b5cad; color: #fff; font: 34px/1 "Microsoft YaHei", system-ui, sans-serif;
       font-weight: 800; box-shadow: 0 12px 28px rgba(11,92,173,.3); }
     .ev-confirm-go:hover { background: #0a4e93; }
+    .ev-confirm-go:disabled { opacity: .65; cursor: wait; box-shadow: none; }
     .ev-confirm-msg { font-size: 20px; font-weight: 700; color: #8a4a12; min-height: 24px; }
-    /* 核对屏：和车次卡片同一套设计语言 */
-    .ev-order { display: grid; gap: 0; padding: 0; overflow: hidden;
-      border-radius: 26px;
-      background:
-        radial-gradient(120% 90% at 8% 0%, #ffffff 0%, rgba(255,255,255,0) 60%),
-        linear-gradient(160deg, #eaf5ff 0%, #f8fcff 48%, #ffffff 100%);
-      box-shadow: 0 14px 34px rgba(23,72,124,.16), 0 2px 6px rgba(23,72,124,.07),
-                  inset 0 1px 0 rgba(255,255,255,.92);
-      backdrop-filter: blur(14px) saturate(140%);
-      -webkit-backdrop-filter: blur(14px) saturate(140%);
+    /* 核对屏：每件要核对的事各占一张卡，不把信息挤进一整块面板。 */
+    .ev-ai-orderbox { margin-top: 16px; }
+    .ev-order { display: grid; gap: 14px; padding: 0;
       color: #10314f;
       font: 20px/1.45 "Microsoft YaHei", "PingFang SC", system-ui, sans-serif; }
     .ev-order-sec { display: grid; gap: 8px; padding: 22px 28px;
-      border-bottom: 1px solid rgba(23,72,124,.1); }
+      border: 2px solid #cddfec; border-radius: 20px; background: #fff;
+      box-shadow: 0 3px 10px rgba(23,72,124,.06); }
+    .ev-order-sec:first-child { border-color: #9dc7e6; background: #f1f8fe; }
+    .ev-order-sec:nth-child(2) { display: flex; align-items: center;
+      justify-content: space-between; flex-wrap: wrap; padding: 18px 28px; }
     .ev-order-sec.ev-order-inline { grid-template-columns: 1fr auto; align-items: end; }
     .ev-order-label { font-size: 17px; font-weight: 700; letter-spacing: .08em; color: #6b93b5; }
     .ev-order-code { font-size: 60px; font-weight: 800; line-height: 1; color: #0b4f86; }
@@ -1641,21 +1679,17 @@
     .ev-order-right { text-align: right; }
     .ev-order-price { font-size: 32px; font-weight: 800; color: #b3521a;
       font-variant-numeric: tabular-nums; }
-    .ev-order-people { display: flex; gap: 12px; flex-wrap: wrap; }
-    /* 乘车人卡片：和 renderPassengerCards 同尺寸（62px 头像 / 32px 名字），
-       和车次卡片同质感（渐变 + 圆角 + 阴影 + 悬浮）。 */
+    /* 乘车人保留大点击区域，选中状态用清楚的边框和对勾表示。 */
     .ev-order-people { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 14px; }
     @media (max-width: 900px) { .ev-order-people { grid-template-columns: 1fr; } }
     .ev-order-pcard { display: flex; align-items: center; gap: 16px; width: 100%;
       box-sizing: border-box; padding: 18px 20px; cursor: pointer; text-align: left;
-      border: 3px solid transparent; border-radius: 20px;
-      background: linear-gradient(160deg, #f2f9ff 0%, #ffffff 100%);
-      box-shadow: 0 8px 20px rgba(23,72,124,.11), inset 0 1px 0 rgba(255,255,255,.9);
+      border: 3px solid #cddfec; border-radius: 18px; background: #fff;
       color: #10314f; font: 20px/1.4 "Microsoft YaHei", system-ui, sans-serif;
-      transition: transform .12s ease, box-shadow .12s ease; }
-    .ev-order-pcard:hover { transform: translateY(-2px);
-      box-shadow: 0 14px 28px rgba(23,72,124,.17), inset 0 1px 0 rgba(255,255,255,.95); }
+      transition: border-color .12s ease, background-color .12s ease; }
+    .ev-order-pcard:hover { border-color: #0b5cad; }
+    .ev-order-pcard:focus-visible { outline: 4px solid #0b5cad; outline-offset: 3px; }
     .ev-order-pcard.ev-on { border-color: #0b5cad; background: #dcecfb; }
     .ev-order-pface { flex: 0 0 auto; width: 62px; height: 62px; border-radius: 50%;
       display: grid; place-items: center; background: #cfe4f7; color: #0b5cad;
@@ -1672,15 +1706,18 @@
     .ev-order-input:focus { outline: none; border-color: #0b5cad;
       box-shadow: 0 0 0 4px rgba(11,92,173,.16); }
     .ev-order-note { font-size: 17px; color: #5b7f9e; }
+    .ev-order-note:empty { display: none; }
     .ev-order-total { display: flex; align-items: baseline; justify-content: space-between;
-      gap: 16px; padding: 22px 28px; background: rgba(11,92,173,.07); }
+      gap: 16px; padding: 22px 28px; border: 2px solid #9dc7e6;
+      border-radius: 20px; background: #eaf5ff; }
+    .ev-order .ev-confirm-msg:empty { display: none; }
     .ev-order-total-label { font-size: 24px; font-weight: 700; color: #14507f; }
     .ev-order-total-price { font-size: 44px; font-weight: 800; color: #b3521a;
       font-variant-numeric: tabular-nums; }
   `;
 
   function renderTrainConfirm(train) {
-    const body = backBar(header("您选的这趟车", "看好了就点下面的按钮，这是您自己确认的。"));
+    const body = backBar(header("您选的这趟车", "核对车次后，我们会指出原网页的预订按钮。"));
     const style = document.createElement("style");
     style.textContent = TRAINCONFIRM_CSS;
     body.appendChild(style);
@@ -1706,9 +1743,11 @@
     }
     if (train.left) meta.appendChild(el("span", "", `余票 ${train.left}`));
     card.appendChild(meta);
+    const seatHelp = railwayTermHelp(train.left, train.priceClass || "二等座");
+    if (seatHelp) card.appendChild(seatHelp);
 
     const msg = el("div", "ev-confirm-msg", "");
-    const go = el("button", "ev-confirm-go", "预订这趟车");
+    const go = el("button", "ev-confirm-go", "去 12306 预订");
     go.type = "button";
     card.append(msg, go);
 
@@ -1717,22 +1756,13 @@
     body.appendChild(box);
 
     const foot = el("div", "ev-ai-foot");
-    foot.appendChild(el("div", "", "接下来在原网页上选乘车人、确认付款，都由您自己完成。"));
+    foot.appendChild(el("div", "", "请点击亮起来的预订按钮；进入乘车人页后，敬老版会继续显示核对卡。"));
     foot.appendChild(el("div", "ev-ai-foot-meta",
       `EasyView v${chrome.runtime.getManifest().version}`));
     body.appendChild(foot);
 
     go.addEventListener("click", async () => {
-      // 【点击时重新找】这一趟的「预订」按钮，不用渲染列表时抓下的那个引用。
-      //
-      // 用户报的现象：第一次点没反应，第二次才弹登录框。
-      // 原因是 12306 的「预订」长这样：
-      //   <a href="javascript:" onclick="checkG1234('T4Zj9OCe...', '06:08', ...)" class="btn72">
-      // 第一个参数是跟当次搜索会话绑定的加密令牌。结果页会定时刷新车次表，
-      // 刷新后旧引用指向的行已被替换，带着【过期令牌】—— checkG1234 静默失败，
-      // 表现就是"点了没反应"；等页面再刷一次，第二次点用的令牌是新的，就弹框了。
-      //
-      // 所以每一趟都按车次号回页面里重新定位。
+      // 查票结果会刷新，进入引导前重新定位当前车次的真实预订按钮。
       function findBookLink() {
         if (train.code) {
           const rows = [...document.querySelectorAll('tr[id^="ticket_"]')];
@@ -1740,30 +1770,25 @@
             const n = r.querySelector(".number");
             return n && n.innerText.trim() === train.code;
           });
-          if (row) {
-            const link = [...row.querySelectorAll("a")]
-              .find((a) => /预订/.test((a.innerText || "").trim()));
-            if (link) return link;
-          }
+          if (row) return [...row.querySelectorAll("a")]
+            .find((a) => /预订/.test((a.innerText || "").trim()) && elementIsVisible(a)) || null;
         }
-        // 回不到就退回渲染时的引用，至少不比原来差
-        return train.bookButton && train.bookButton.isConnected ? train.bookButton : null;
+        return null;
       }
 
-      const target = findBookLink();
-      if (!target) {
-        msg.textContent = "这一趟的「预订」按钮找不到了，请返回重新选一趟。";
-        return;
-      }
+      go.disabled = true;
+      msg.textContent = "正在找这趟车的预订按钮…";
       try {
-        // 【必须先 await 存好再点】。点「预订」会导航，内容脚本随即被销毁，
-        // 没写完的存储操作会一起丢掉（实测踩过）。
+        // 原网页按钮可能导航；先保存车次，再交给用户亲自点击。
         await savePendingTrain(train);
-        // 12306 的「预订」是 javascript: 链接，点它就进下单流程
-        target.click();
-        close();
+        const target = findBookLink();
+        if (!target || !(await spotlightNode(target, "请点这里预订", "点亮起来的 12306 预订按钮。若还没登录，请按原网站提示登录。"))) {
+          msg.textContent = "这一趟的「预订」按钮找不到了，请返回重新选一趟。";
+        }
       } catch (_) {
-        msg.textContent = "没能打开这一趟，请刷新网页后重试。";
+        msg.textContent = "没能找到这一趟，请刷新网页后重试。";
+      } finally {
+        go.disabled = false;
       }
     });
   }
@@ -1812,7 +1837,7 @@
   }
 
   function renderOrderConfirm(train, passengers) {
-    const body = backBar(header("请核对一下", "这是您要买的车票，看清楚了再提交。"));
+    const body = backBar(header("核对车票", "请确认车次、座位和乘车人，再到原网页提交。"));
 
     // 【必须注入样式】。
     // 这一屏用的 .ev-order-* 规则都写在 TRAINCONFIRM_CSS 里，而那段样式原先
@@ -1844,31 +1869,37 @@
     const sec2 = el("div", "ev-order-sec");
     sec2.appendChild(el("div", "ev-order-label", "座位"));
     sec2.appendChild(el("div", "ev-order-seat", train.priceClass || "二等座"));
+    const seatHelp = railwayTermHelp(train.priceClass || "二等座");
+    if (seatHelp) sec2.appendChild(seatHelp);
     card.appendChild(sec2);
 
-    // ---- 乘车人 ----
-    // 用户反馈核对屏"设计太差"，要求乘车人这里和乘车人卡片一致。
-    // 原来是 44px 头像 + 26px 名字的小胶囊，现在是 62px 圆头像 + 32px 名字的
-    // 大卡，两列排 —— 和 renderPassengerCards 同一套尺寸，也和车次卡片同一套
-    // 渐变/圆角/阴影/悬浮。
+    // ---- 乘车人：直接切换原网页的选择框，并按原网页的结果更新卡片 ----
     const picked = new Set((passengers || []).filter((p) => p.checked).map((p) => p.name));
     const sec3 = el("div", "ev-order-sec");
-    sec3.appendChild(el("div", "ev-order-label", "乘车人（点一下选中）"));
+    sec3.appendChild(el("div", "ev-order-label", "乘车人（再点一下可取消）"));
     const people = el("div", "ev-order-people");
+    const peopleStatus = el("div", "ev-order-note", "");
+    peopleStatus.setAttribute("role", "status");
     if ((passengers || []).length) {
       for (const person of passengers) {
         const card = el("button", `ev-order-pcard${person.checked ? " ev-on" : ""}`);
         card.type = "button";
+        card.setAttribute("aria-pressed", String(Boolean(person.checked)));
         card.appendChild(el("span", "ev-order-pface", person.name.slice(0, 1)));
         card.appendChild(el("span", "ev-order-pname", person.name));
         card.appendChild(el("span", "ev-order-ptick", person.checked ? "✓" : ""));
         card.addEventListener("click", () => {
           const result = globalThis.EasyViewPassengers
-            ? globalThis.EasyViewPassengers.select(person) : { ok: false };
-          if (!result.ok) return;
-          const now = Boolean(person.node && person.node.checked);
+            ? globalThis.EasyViewPassengers.toggle(person) : { ok: false };
+          if (!result.ok) {
+            peopleStatus.textContent = "未能更改乘车人，请在原网页上操作。";
+            return;
+          }
+          peopleStatus.textContent = "";
+          const now = result.checked;
           person.checked = now;
           card.classList.toggle("ev-on", now);
+          card.setAttribute("aria-pressed", String(now));
           card.querySelector(".ev-order-ptick").textContent = now ? "✓" : "";
           if (now) picked.add(person.name); else picked.delete(person.name);
           refreshTotal();
@@ -1878,7 +1909,7 @@
     } else {
       people.appendChild(el("span", "ev-order-warn", "原网页上还没勾乘车人"));
     }
-    sec3.appendChild(people);
+    sec3.append(people, peopleStatus);
     card.appendChild(sec3);
 
     // ---- 乘车人信息填写（新增一位）。只在本机用，不发送。----
@@ -1921,7 +1952,7 @@
     body.appendChild(box);
 
     const foot = el("div", "ev-ai-foot");
-    foot.appendChild(el("div", "", "点下面的按钮不会替您下单，只会把原网页上该按的地方指给您。"));
+    foot.appendChild(el("div", "", "敬老版会指出原网页的提交位置，订单仍由您自己确认。"));
     foot.appendChild(el("div", "ev-ai-foot-meta",
       `EasyView v${chrome.runtime.getManifest().version}`));
     body.appendChild(foot);
@@ -1951,7 +1982,7 @@
 
       if (submit) {
         // 用户要的效果：背景变暗 + 高亮批注，把人送回原页面自己按。
-        spotlightNode(submit, "最后一步，在原网页上按这里", tip);
+        await spotlightNode(submit, "最后一步，在原网页上按这里", tip);
         return;
       }
       msg.textContent = "没找到原网页上的提交按钮，请自己找一下。";
@@ -1982,7 +2013,7 @@
   `;
 
   function renderPassengerCards(passengers) {
-    const body = backBar(header("这是给谁买票？", "点一下名字就是选他了，可以选多位。"));
+    const body = backBar(header("这是给谁买票？", "点一下选中，再点一下取消，可以选多位。"));
     const style = document.createElement("style");
     style.textContent = PASSENGER_CSS;
     body.appendChild(style);
@@ -1993,6 +2024,7 @@
     for (const p of passengers) {
       const card = el("button", `ev-passenger${p.checked ? " ev-picked" : ""}`);
       card.type = "button";
+      card.setAttribute("aria-pressed", String(Boolean(p.checked)));
       card.appendChild(el("span", "ev-passenger-face", p.name.slice(0, 1)));
       card.appendChild(el("span", "ev-passenger-name", p.name));
       const tick = el("span", "ev-passenger-tick", p.checked ? "✓" : "");
@@ -2000,15 +2032,16 @@
 
       card.addEventListener("click", () => {
         const result = globalThis.EasyViewPassengers
-          ? globalThis.EasyViewPassengers.select(p)
+          ? globalThis.EasyViewPassengers.toggle(p)
           : { ok: false };
         if (!result.ok) {
-          showError("这一位没能选上，页面可能刚变过。请在原网页上自己勾一下。", null);
+          showError("未能更改这位乘车人，请在原网页上操作。", null);
           return;
         }
-        const nowChecked = Boolean(p.node && p.node.checked);
+        const nowChecked = result.checked;
         p.checked = nowChecked;
         card.classList.toggle("ev-picked", nowChecked);
+        card.setAttribute("aria-pressed", String(nowChecked));
         tick.textContent = nowChecked ? "✓" : "";
       });
 
@@ -2220,11 +2253,14 @@
   /* ---------- 生命周期 ---------- */
 
   function close() {
+    globalThis.EasyViewSpeech?.detach();
     if (host) host.remove();
     host = null;
     shadow = null;
     panel = null;
     busy = false;
+    globalThis.EasyViewPageAssist?.show();
+    globalThis.EasyViewQuickLauncher?.show();
     if (previousFocus && previousFocus.isConnected) previousFocus.focus({ preventScroll: true });
   }
 
@@ -2306,6 +2342,8 @@
   async function open() {
     if (busy) return;
     busy = true;
+    globalThis.EasyViewPageAssist?.hide();
+    globalThis.EasyViewQuickLauncher?.hide();
     ensureMount();
     if (!previousFocus) previousFocus = document.activeElement;
     showLoading("正在读取这个页面…");

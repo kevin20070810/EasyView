@@ -3,6 +3,7 @@
 
 HTTP:
     GET  /health
+    POST /draft          body 为 {"digest": "..."}；调用模型返回任务草稿
     POST /analyze        body 直接传 elements.json；加 ?ai=1 启用模型
                          ?debug=1 时额外返回本次生成的诊断信息
 
@@ -15,7 +16,9 @@ CLI:
 from __future__ import annotations
 
 import argparse
+import hmac
 import json
+import os
 import sys
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -75,7 +78,7 @@ class Handler(BaseHTTPRequestHandler):
         self.send_response(status)
         self.send_header("Content-Type", content_type)
         self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
         # 页面内容既不落盘也不该被任何中间层缓存
         self.send_header("Cache-Control", "no-store")
@@ -115,6 +118,13 @@ class Handler(BaseHTTPRequestHandler):
         if parsed.path not in ("/analyze", "/draft"):
             self._error(404, "接口不存在", "not_found")
             return
+        access_token = os.getenv("EASYVIEW_ACCESS_TOKEN", "").strip()
+        if access_token:
+            provided = self.headers.get("Authorization", "")
+            expected = f"Bearer {access_token}"
+            if not hmac.compare_digest(provided, expected):
+                self._error(401, "访问令牌无效", "unauthorized")
+                return
         try:
             length = int(self.headers.get("Content-Length", "0"))
         except ValueError:

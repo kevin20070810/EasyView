@@ -1,9 +1,4 @@
-"""EasyView 提取层配置。
-
-服务端抓取已经退役（产品改为浏览器扩展在页面内提取），所以这里不再有
-Playwright 超时、浏览器通道、SSRF 防护、拦截关键词等抓取期参数。
-剩下的只有校验工具和提取参考实现需要的路径与输出上限。
-"""
+"""本地 fixture 与 elements 协议校验工具使用的路径和输出上限。"""
 
 from __future__ import annotations
 

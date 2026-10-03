@@ -199,7 +199,8 @@
     return node;
   }
 
-  function pageHeader(summary) {
+  function pageHeader(summary, speechSegments = null) {
+    globalThis.EasyViewSpeech?.detach();
     panel.replaceChildren();
     const header = element("header", "ev-header");
     const copy = element("div");
@@ -207,8 +208,11 @@
     const exit = element("button", "ev-exit", "退出敬老版");
     exit.type = "button";
     exit.addEventListener("click", close);
-    header.append(copy, exit);
+    const actions = element("div", "ev-header-actions");
+    actions.append(exit);
+    header.append(copy, actions);
     panel.append(header);
+    if (speechSegments) globalThis.EasyViewSpeech?.attach(actions, panel, speechSegments);
     const content = element("div", "ev-content");
     panel.append(content);
     panel.focus({ preventScroll: true });
@@ -220,7 +224,14 @@
   }
 
   function renderPreview(message = "") {
-    const content = pageHeader(`从 ${location.hostname} 当前页面找到的入口，请先选择。`);
+    const candidatesToRead = state.candidates.slice(0, MAX_CARDS);
+    const content = pageHeader(`从 ${location.hostname} 当前页面找到的入口，请先选择。`, [
+      { label: "页面说明", text: "请选择要显示的事项。点选之后，再按生成敬老版。" },
+      ...candidatesToRead.map((item, index) => ({
+        label: item.title,
+        text: `第 ${index + 1} 项，${item.title}。`
+      }))
+    ]);
     content.append(element("p", "ev-message ev-generic-intro", "候选卡只来自这张网页的可见内容。打开入口后，业务仍在原网页办理。"));
     if (message) notice(content, message, true);
     if (!state.candidates.length) {
@@ -264,12 +275,19 @@
   }
 
   function renderCards(message = "") {
-    const content = pageHeader(`当前网页：${clean(document.title || location.hostname, 42)}`);
+    const selected = state.candidates.filter(item => state.selected.has(item.id)).slice(0, MAX_CARDS);
+    const speechSegments = [
+      { label: "页面说明", text: "以下是为您找到的入口。点击卡片后，请在原网页核对并完成业务。" },
+      ...selected.map((item, index) => ({
+        label: item.title,
+        text: `第 ${index + 1} 项，${item.title}。${item.kind === "form" ? "回到原网页填写。" : item.kind === "section" ? "找到原网页的这一段。" : "打开原网页的对应页面。"}`
+      }))
+    ];
+    const content = pageHeader(`当前网页：${clean(document.title || location.hostname, 42)}`, speechSegments);
     content.append(element("p", "ev-message ev-generic-intro", "点击卡片会打开当前站点的页面，或返回原网页定位。请在原网页核对并完成业务。"));
     if (message) notice(content, message, true);
     const list = element("div", "ev-actions");
-    const selected = state.candidates.filter(item => state.selected.has(item.id)).slice(0, MAX_CARDS);
-    for (const item of selected) {
+    for (const [index, item] of selected.entries()) {
       const card = element("button", "ev-card");
       card.type = "button";
       const [name, symbol] = iconFor(item.title);
@@ -280,7 +298,12 @@
       copy.append(element("strong", "", item.title), element("span", "", item.detail));
       card.append(icon, copy);
       card.addEventListener("click", () => activate(item));
-      list.append(card);
+      const listen = globalThis.EasyViewSpeech?.cardButton(speechSegments[index + 1]);
+      if (listen) {
+        const wrapper = element("div", "ev-card-with-listen");
+        wrapper.append(card, listen);
+        list.append(wrapper);
+      } else list.append(card);
     }
     content.append(list);
     const controls = element("div", "ev-generic-controls");
@@ -321,6 +344,7 @@
   }
 
   function close() {
+    globalThis.EasyViewSpeech?.detach();
     overlay.hidden = true;
     if (state.previousFocus?.isConnected) state.previousFocus.focus({ preventScroll: true });
   }

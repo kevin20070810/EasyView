@@ -70,14 +70,17 @@
     return out;
   }
 
-  /** 勾上某一位乘车人。只勾，不提交 —— 提交仍由用户在原网页上确认。 */
-  function select(passenger) {
+  /** 切换原网页的乘车人勾选状态；不提交订单。 */
+  function toggle(passenger) {
     const box = passenger && passenger.node;
     if (!box || !box.isConnected) return { ok: false, reason: "gone" };
-    if (box.checked) return { ok: true, already: true };
+    if (box.disabled) return { ok: false, reason: "disabled" };
+    const before = Boolean(box.checked);
     box.click();
-    return { ok: Boolean(box.checked), checked: Boolean(box.checked) };
+    const checked = Boolean(box.checked);
+    return { ok: checked !== before, checked,
+      reason: checked === before ? "unchanged" : undefined };
   }
 
-  globalThis.EasyViewPassengers = { read, select };
+  globalThis.EasyViewPassengers = { read, toggle };
 })();

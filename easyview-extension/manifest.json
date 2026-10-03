@@ -1,16 +1,30 @@
 {
   "manifest_version": 3,
   "name": "EasyView 简界 · 敬老版",
-  "version": "0.35.0",
+  "version": "0.48.0",
   "description": "为常用网站提供敬老版，并可在当前网页生成候选敬老版。",
-  "permissions": ["activeTab", "scripting", "storage"],
+  "permissions": ["activeTab", "scripting", "storage", "tts"],
   "host_permissions": [
     "http://127.0.0.1/*",
     "http://localhost/*",
-    "https://*.12306.cn/*"
+    "https://*.12306.cn/*",
+    "http://*/*",
+    "https://*/*"
   ],
   "background": { "service_worker": "src/background.js" },
-  "action": { "default_title": "为当前网页生成敬老版" },
+  "icons": {
+    "16": "assets/easyview-icon-16.png",
+    "32": "assets/easyview-icon-32.png",
+    "48": "assets/easyview-icon-48.png",
+    "128": "assets/easyview-icon-128.png"
+  },
+  "action": {
+    "default_title": "为当前网页生成敬老版",
+    "default_icon": {
+      "16": "assets/easyview-icon-16.png",
+      "32": "assets/easyview-icon-32.png"
+    }
+  },
   "commands": {
     "_execute_action": {
       "suggested_key": { "default": "Alt+Shift+E" },
@@ -18,6 +32,11 @@
     }
   },
   "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["src/quick-launcher.js"],
+      "run_at": "document_idle"
+    },
     {
       "matches": [
         "https://kyfw.12306.cn/otn/leftTicket/*",
@@ -31,6 +50,8 @@
         "src/digest.js",
         "src/binder.js",
         "src/extract.js",
+        "src/page-assist.js",
+        "src/speech-controls.js",
         "src/ai-content.js"
       ],
       "css": [],
@@ -40,6 +61,7 @@
       "matches": ["https://*.12306.cn/*"],
       "js": [
         "src/brand.js",
+        "src/page-assist.js",
         "src/site/12306.js"
       ],
       "css": [],
@@ -48,7 +70,7 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["src/styles.css"],
+      "resources": ["src/styles.css", "assets/easyview-logo-v2.png"],
       "matches": ["<all_urls>"]
     }
   ]
