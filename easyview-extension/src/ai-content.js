@@ -482,6 +482,30 @@
 
   /* ---------- 执行动作 ---------- */
 
+  /** 目标是不是"点得动"的东西 —— 决定我们能不能替用户点。
+   *  只在风险为 normal 时使用；高风险卡片一律不代点。 */
+  function looksClickable(element) {
+    if (!element || !element.isConnected) return false;
+    const tag = element.tagName;
+    if (tag === "BUTTON" || tag === "A") return true;
+    if (tag === "INPUT") {
+      const t = (element.getAttribute("type") || "text").toLowerCase();
+      return t === "button" || t === "submit" || t === "image" || t === "reset";
+    }
+    if (element.getAttribute("role") === "button" || element.getAttribute("role") === "link") return true;
+    return typeof element.onclick === "function";
+  }
+
+  /** 这张卡是不是"一组要填的字段"（而不是"带我去某个入口"）。 */
+  function hasFormGroup(card) {
+    if (!pendingElements) return false;
+    const action = card.action || {};
+    const provenance = card.provenance || {};
+    const ids = [action.target_element_id, ...(provenance.source_element_ids || [])];
+    if (stepsFromIds(ids, pendingElements).length >= 2) return true;
+    return stepsNearTarget(action.target_element_id, pendingElements, 140).length >= 2;
+  }
+
   /** 元素在页面上是否真的看得见（不是 display:none / visibility:hidden / 零尺寸）。 */
   function elementIsVisible(element) {
     if (!element || !element.isConnected) return false;
@@ -532,22 +556,28 @@
       return;
     }
 
-    // scroll / form：只定位，不替他点
+    // scroll / form：分三种情况，顺序不能换
     if (!element) {
       showError("页面上找不到这个位置了，页面可能刚刚变过。请退出后重试。", null);
       return;
     }
-
-    // 目标不可见时，滚过去等于什么都没发生 —— 用户看到的就是"面板关了，没反应"。
-    //
-    // 12306 首页的「退票 / 改签 / 查正晚点 / 查检票口」全在悬浮菜单里，是隐藏的
-    // javascript: 链接：高亮不了（聚光灯框的是看不见的东西），滚动也没意义，
-    // 而这种链接偏偏只有被点击才生效 —— 隐藏也照样能点。
-    //
-    // 所以这里替它触发一次点击。对纯导航无害；风险不是 normal 的（涉钱、涉病、
-    // 涉身份）一律不代点，仍旧只定位、由用户自己在原网页操作。
     const risk = (card && card.risk && card.risk.level) || "normal";
-    if (risk === "normal" && !elementIsVisible(element)) {
+
+    // 情况一：这张卡的来源里有一组表单字段（12306 的出发地/到达地/日期）
+    // → 在当前页面一步步带他填，比跳走有用。
+    if (hasFormGroup(card)) {
+      if (startSteps(card)) return;
+    }
+
+    // 情况二：这是"带我去某个入口"的卡，目标是个链接/按钮。
+    //
+    // 12306 首页那些「退票 / 改签 / 查正晚点 / 查车次时刻」全是
+    // <a href="javascript:;">，这种链接只有被点击才生效 —— 滚动和高亮都不会让它
+    // 跳转。只做"定位 + 让他自己点"，用户看到的就是"面板关了，没反应"。
+    //
+    // 所以替它点一下。风险不是 normal 的（涉钱、涉病、涉身份）不代点，
+    // 仍旧只定位、由用户自己在原网页操作 —— 这是我们的底线。
+    if (risk === "normal" && looksClickable(element)) {
       close();
       try {
         element.click();
@@ -556,6 +586,9 @@
       }
       return;
     }
+
+    // 情况三：其它（高风险的、或目标不是可点控件的）→ 聚光灯框出来，用户自己操作。
+    if (startSteps(card)) return;
 
     close();
     element.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -587,6 +620,20 @@
     const removed = new Set();
     const kept = elements.filter((e) => {
       if (e.visible) return true;
+      const bbox = e.bbox || {};
+      const w = Number(bbox.width) || 0;
+      const h = Number(bbox.height) || 0;
+      // 零尺寸的隐藏元素是模板壳子，用户永远点不到。
+      //
+      // 12306 首页的「退票 / 改签」未登录时就是这个样子：
+      //   <li class="nav_ref item"><a href="javascript:;">退票</a></li>
+      // rect 全是 0，没有 onclick，点了没有任何反应。
+      // 模型只看得到文字，就给它生成卡片 —— 这就是"退票/改签点了没反应"的根因。
+      // 真入口在登录后才会出现，那时它是可见的，自然会被收进来。
+      if (w < 2 || h < 2) {
+        removed.add(e.id);
+        return false;
+      }
       const label = (e.label || e.placeholder || e.text || "").trim();
       if (label && visibleKeys.has(`${e.type}::${label}`)) {
         removed.add(e.id);
