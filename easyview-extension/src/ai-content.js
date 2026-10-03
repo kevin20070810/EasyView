@@ -496,14 +496,25 @@
     return typeof element.onclick === "function";
   }
 
-  /** 这张卡是不是"一组要填的字段"（而不是"带我去某个入口"）。 */
+  /** 这张卡是不是"一组要填的字段"（而不是"带我去某个入口"）。
+   *
+   * 【只卡片自己的证据元素】，不看目标周围有什么。
+   *
+   * 这里曾经有一层"目标附近 140px 内找表单控件"的兜底（v0.10.1 加的，
+   * 本意是让分步引导在更多页面上能触发）。结果在 12306 上出了大问题：
+   * 购物表单就在首页顶部导航旁边，于是「我要退改签」「查车次时刻」这些
+   * 跟填表毫无关系的卡片，全都撞见购票表单、全都被判成填表任务 ——
+   * 用户点任何一张卡，弹出的都是购票三步引导。
+   *
+   * 模型在 also_cite 里已经给出了支撑这张卡的元素，够用了；
+   * 用邻居去猜，猜错的代价比漏判大得多。
+   */
   function hasFormGroup(card) {
     if (!pendingElements) return false;
     const action = card.action || {};
     const provenance = card.provenance || {};
     const ids = [action.target_element_id, ...(provenance.source_element_ids || [])];
-    if (stepsFromIds(ids, pendingElements).length >= 2) return true;
-    return stepsNearTarget(action.target_element_id, pendingElements, 140).length >= 2;
+    return stepsFromIds(ids, pendingElements).length >= 2;
   }
 
   /** 元素在页面上是否真的看得见（不是 display:none / visibility:hidden / 零尺寸）。 */
@@ -1061,19 +1072,15 @@
     const ids = [action.target_element_id, ...(provenance.source_element_ids || [])];
 
     let steps = stepsFromIds(ids, pendingElements);
-    if (steps.length < 2) {
-      steps = stepsNearTarget(action.target_element_id, pendingElements, 140);
-    }
+    // 这里不再有"看目标周围有什么"的兜底 —— 理由见 hasFormGroup 的注释：
+    // 那层兜底会让不相干的卡片劫持购票表单。
+    //
     // 凑不成一组时，至少把目标本身框出来。
     //
     // 这一步是关键：12306 首页 210 个链接里 167 个是 javascript:，
     // 这种链接只有被【真正点击】才跳转。而 scroll 降级只做了
     // scrollIntoView + focus —— 没有高亮、没有提示，用户看到的是
-    // "面板关了，然后什么都没发生"。所以点「我要改签」「查正晚点」
-    // 一直像是坏的。
-    //
-    // 目标不是表单控件（是链接）时 stepsFromIds 会把它过滤掉，
-    // 所以这里单独兜一层，只要可见就框出来。
+    // "面板关了，然后什么都没发生"。
     if (!steps.length) {
       const own = (pendingElements.elements || []).find((e) => e.id === action.target_element_id);
       if (own && own.visible) steps = [own];
