@@ -482,6 +482,17 @@
 
   /* ---------- 执行动作 ---------- */
 
+  /** 元素在页面上是否真的看得见（不是 display:none / visibility:hidden / 零尺寸）。 */
+  function elementIsVisible(element) {
+    if (!element || !element.isConnected) return false;
+    const rect = element.getBoundingClientRect();
+    if (rect.width < 2 || rect.height < 2) return false;
+    const style = window.getComputedStyle(element);
+    if (style.display === "none" || style.visibility === "hidden") return false;
+    if (Number(style.opacity) === 0) return false;
+    return true;
+  }
+
   function performAction(card) {
     const action = (card && card.action) || {};
     if (action.confirmation) {
@@ -526,6 +537,26 @@
       showError("页面上找不到这个位置了，页面可能刚刚变过。请退出后重试。", null);
       return;
     }
+
+    // 目标不可见时，滚过去等于什么都没发生 —— 用户看到的就是"面板关了，没反应"。
+    //
+    // 12306 首页的「退票 / 改签 / 查正晚点 / 查检票口」全在悬浮菜单里，是隐藏的
+    // javascript: 链接：高亮不了（聚光灯框的是看不见的东西），滚动也没意义，
+    // 而这种链接偏偏只有被点击才生效 —— 隐藏也照样能点。
+    //
+    // 所以这里替它触发一次点击。对纯导航无害；风险不是 normal 的（涉钱、涉病、
+    // 涉身份）一律不代点，仍旧只定位、由用户自己在原网页操作。
+    const risk = (card && card.risk && card.risk.level) || "normal";
+    if (risk === "normal" && !elementIsVisible(element)) {
+      close();
+      try {
+        element.click();
+      } catch (_) {
+        showError("这一项没能打开，请刷新网页后重试。", null);
+      }
+      return;
+    }
+
     close();
     element.scrollIntoView({ behavior: "smooth", block: "center" });
     if (typeof element.focus === "function") {
@@ -877,16 +908,41 @@
     // 所以回到分步，但保留 v0.13.0 的排版重构（旋转到当前这一步的元素）。
     const total = elements.length;
     const current = elements[Math.min(index, total - 1)] || elements[0];
-    const nodes = [resolveElement ? resolveElement(current.id) : null].filter((n) => n && n.isConnected);
+    // 取 DOM 节点：先用扩展自己的 id → 节点映射，失败再按提取时记下的选择器找。
+    //
+    // 只靠 resolveElement 不够：12306 首页的导航链接有一堆是 javascript:，
+    // 页面 JS 会替换/重建这些节点，映射就失效了。失效时 showGroupGuide 会走到
+    // clearStepBar()，表现是"面板关了、什么提示都没有" —— 正是用户报的
+    // "其他功能点了没反应"。选择器是提取那一刻记下来的，能兜住这种情况。
+    const nodes = elements
+      .map((e) => {
+        let node = resolveElement ? resolveElement(e.id) : null;
+        if ((!node || !node.isConnected) && e.selector) {
+          try {
+            node = document.querySelector(e.selector);
+          } catch (_) {
+            node = null;
+          }
+        }
+        return node;
+      })
+      .filter((n) => n && n.isConnected);
     if (!nodes.length) { clearStepBar(); return; }
 
     const label = (current.label || current.text || current.placeholder || "").trim();
-    const verb = current.type === "button" ? "点一下" : "填写";
+    // 链接也要说"点一下"，不能因为不是 input 就说"填写"
+    const clicky = current.type === "button" || current.type === "submit" || current.type === "link";
+    const verb = clicky ? "点一下" : "填写";
 
     const bubble = stepHost.__bubble;
     bubble.replaceChildren();
-    bubble.appendChild(el("div", "ev-step-count", `第 ${index + 1} 步 / 共 ${total} 步`));
-    bubble.appendChild(el("div", "ev-step-text", `请在「${label}」里${verb}`));
+    if (total === 1) {
+      // 只有一个目标时不必报"第 1 步 / 共 1 步"，那是废话
+      bubble.appendChild(el("div", "ev-step-count", "请点下面亮起来的这一行"));
+    } else {
+      bubble.appendChild(el("div", "ev-step-count", `第 ${index + 1} 步 / 共 ${total} 步`));
+    }
+    bubble.appendChild(el("div", "ev-step-text", label ? `「${label}」${verb}` : "就在这里操作"));
 
     const actions = el("div", "ev-step-actions");
     const prev = button("上一步", () => {
@@ -899,7 +955,8 @@
     });
     const exit = button("退出", () => clearStepBar());
     exit.className = "ev-step-exit";
-    actions.append(prev, next, exit);
+    if (total === 1) actions.append(exit);
+    else actions.append(prev, next, exit);
     bubble.appendChild(actions);
 
     stepHost.__nodes = nodes;
@@ -960,7 +1017,21 @@
     if (steps.length < 2) {
       steps = stepsNearTarget(action.target_element_id, pendingElements, 140);
     }
-    if (steps.length < 2) return false;
+    // 凑不成一组时，至少把目标本身框出来。
+    //
+    // 这一步是关键：12306 首页 210 个链接里 167 个是 javascript:，
+    // 这种链接只有被【真正点击】才跳转。而 scroll 降级只做了
+    // scrollIntoView + focus —— 没有高亮、没有提示，用户看到的是
+    // "面板关了，然后什么都没发生"。所以点「我要改签」「查正晚点」
+    // 一直像是坏的。
+    //
+    // 目标不是表单控件（是链接）时 stepsFromIds 会把它过滤掉，
+    // 所以这里单独兜一层，只要可见就框出来。
+    if (!steps.length) {
+      const own = (pendingElements.elements || []).find((e) => e.id === action.target_element_id);
+      if (own && own.visible) steps = [own];
+    }
+    if (!steps.length) return false;
 
     close();
     showGroupGuide(steps, 0);
