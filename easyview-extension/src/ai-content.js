@@ -610,6 +610,8 @@
   let stepHighlighted = null;
 
   function clearStepBar() {
+    window.removeEventListener("scroll", onStepViewportChange, true);
+    window.removeEventListener("resize", onStepViewportChange);
     if (stepHighlighted && stepHighlighted.isConnected) {
       stepHighlighted.style.outline = "";
       stepHighlighted.style.outlineOffset = "";
@@ -635,11 +637,53 @@
     element.style.scrollMarginTop = "24px";
     element.style.scrollMarginBottom = "120px";
     element.scrollIntoView({ behavior: "smooth", block: "center" });
-    element.style.outline = "4px solid #0b5cad";
-    element.style.outlineOffset = "3px";
-    element.style.backgroundColor = "#eaf3ff";
+    // 高亮交给聚光灯的黄圈（.ev-spot-ring）—— 那里不受页面自身样式影响。
+    // 不再往元素上写 outline / backgroundColor：一是可能被站点样式覆盖，
+    // 二是改了站点自己的元素外观，收尾还要还原，容易留残留。
     stepHighlighted = element;
     if (typeof element.focus === "function") element.focus({ preventScroll: true });
+  }
+
+  /** 把聚光灯的四块挡板、高亮圈和批注气泡摆到目标元素周围。
+   *
+   * 四块挡板拼出一个"洞"，而不是一整层蒙版挖圆角：
+   * 洞里的元素**照常能点**（那是老人要操作的东西），
+   * 洞外的点击被挡板接住，防止误点别处。
+   */
+  function layoutSpotlight(element) {
+    if (!stepHost || !element || !element.isConnected) return;
+    const rect = element.getBoundingClientRect();
+    const pad = 6;
+    const top = Math.max(0, rect.top - pad);
+    const left = Math.max(0, rect.left - pad);
+    const bottom = Math.min(window.innerHeight, rect.bottom + pad);
+    const right = Math.min(window.innerWidth, rect.right + pad);
+    const bandH = Math.max(0, bottom - top);
+
+    stepHost.__panelTop.style.cssText = `top:0;left:0;right:0;height:${top}px`;
+    stepHost.__panelBottom.style.cssText = `top:${bottom}px;left:0;right:0;bottom:0`;
+    stepHost.__panelLeft.style.cssText = `top:${top}px;left:0;width:${left}px;height:${bandH}px`;
+    stepHost.__panelRight.style.cssText = `top:${top}px;left:${right}px;right:0;height:${bandH}px`;
+
+    const ring = stepHost.__ring;
+    ring.style.cssText =
+      `top:${top}px;left:${left}px;width:${Math.max(0, right - left)}px;height:${bandH}px`;
+
+    // 批注气泡：优先贴在洞口下方；下方放不下就翻到上方，横向也不出屏
+    const bubble = stepHost.__bubble;
+    const bw = bubble.offsetWidth || 380;
+    const bh = bubble.offsetHeight || 140;
+    let by = bottom + 14;
+    if (by + bh > window.innerHeight - 10) by = Math.max(10, top - bh - 14);
+    let bx = left;
+    if (bx + bw > window.innerWidth - 10) bx = Math.max(10, window.innerWidth - bw - 10);
+    bubble.style.top = `${by}px`;
+    bubble.style.left = `${bx}px`;
+  }
+
+  function onStepViewportChange() {
+    const current = stepHost && stepHost.__current;
+    if (current) layoutSpotlight(current);
   }
 
   function showStepBar(steps, index) {
@@ -653,65 +697,80 @@
       shadow.appendChild(link);
       const extra = document.createElement("style");
       extra.textContent = `
-        /* 底部、单行、收窄、圆角。
-           两版教训：顶部通栏会盖住页面顶部；即使移到底部，
-           一旦换行堆成三四行（实测高 273px）照样挡掉三成屏幕。
-           所以这里禁止换行，文字超长省略，整体压到一行 ~60px。 */
-        .ev-stepbar { position: fixed; left: 50%; bottom: 20px;
-          transform: translateX(-50%);
-          z-index: 2147483600;
-          max-width: min(920px, calc(100vw - 32px));
-          box-sizing: border-box;
-          background: #0b5cad; color: #fff; padding: 10px 14px;
-          border-radius: 12px;
-          display: flex; align-items: center; gap: 12px;
-          flex-wrap: nowrap;
-          font: 17px/1.4 "Microsoft YaHei", system-ui, sans-serif;
-          box-shadow: 0 6px 26px rgba(0,0,0,.32); }
-        .ev-stepbar .ev-step-count { font-size: 18px; font-weight: 700; white-space: nowrap; }
-        .ev-stepbar .ev-step-text { flex: 1 1 auto; min-width: 0;
-          overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .ev-stepbar button { flex: 0 0 auto;
-          font: 17px/1 "Microsoft YaHei", system-ui, sans-serif;
-          padding: 9px 14px; border: 0; border-radius: 8px; cursor: pointer;
-          background: rgba(255,255,255,.18); color: #fff; }
-        .ev-stepbar button:hover { background: rgba(255,255,255,.32); }
-        .ev-stepbar button:disabled { opacity: .4; cursor: default; }
-        .ev-stepbar button.ev-step-exit { background: rgba(0,0,0,.25); }
+        /* 聚光灯：页面压暗，只在目标位置留一个洞。
+           早先两版都是"一条横条"—— 顶部通栏挡住页面顶部，移到底部又因为
+           换行堆到 273px。横条这个形态本身就和"指引"冲突：它总得占一块地方。
+           改成挖洞之后，被指的元素自己就是最亮的地方，不需要额外占位。 */
+        .ev-spot-panel { position: fixed; background: rgba(15,23,42,.68);
+          z-index: 2147483600; pointer-events: auto; }
+        .ev-spot-ring { position: fixed; z-index: 2147483601; pointer-events: none;
+          border: 3px solid #ffb020; border-radius: 10px;
+          box-shadow: 0 0 0 4px rgba(255,176,32,.28), 0 0 26px rgba(255,176,32,.6); }
+        .ev-spot-bubble { position: fixed; z-index: 2147483602; pointer-events: auto;
+          max-width: min(420px, calc(100vw - 32px)); box-sizing: border-box;
+          background: #0b5cad; color: #fff; padding: 14px 16px;
+          border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,.45);
+          font: 17px/1.5 "Microsoft YaHei", system-ui, sans-serif; }
+        .ev-spot-bubble .ev-step-count { font-size: 19px; font-weight: 700; margin-bottom: 4px; }
+        .ev-spot-bubble .ev-step-text { margin-bottom: 12px; }
+        .ev-spot-bubble .ev-step-actions { display: flex; gap: 10px; justify-content: flex-end; }
+        .ev-spot-bubble button { font: 17px/1 "Microsoft YaHei", system-ui, sans-serif;
+          padding: 10px 16px; border: 0; border-radius: 8px; cursor: pointer;
+          background: rgba(255,255,255,.2); color: #fff; }
+        .ev-spot-bubble button:hover { background: rgba(255,255,255,.34); }
+        .ev-spot-bubble button:disabled { opacity: .4; cursor: default; }
+        .ev-spot-bubble button.ev-step-exit { background: rgba(0,0,0,.25); }
       `;
       shadow.appendChild(extra);
-      const bar = el("div", "ev-stepbar");
-      shadow.appendChild(bar);
-      (document.documentElement || document.body).appendChild(stepHost);
-      stepHost.__bar = bar;
-    }
 
-    const bar = stepHost.__bar;
-    bar.replaceChildren();
+      stepHost.__panelTop = el("div", "ev-spot-panel");
+      stepHost.__panelBottom = el("div", "ev-spot-panel");
+      stepHost.__panelLeft = el("div", "ev-spot-panel");
+      stepHost.__panelRight = el("div", "ev-spot-panel");
+      stepHost.__ring = el("div", "ev-spot-ring");
+      stepHost.__bubble = el("div", "ev-spot-bubble");
+      shadow.append(stepHost.__panelTop, stepHost.__panelBottom,
+                    stepHost.__panelLeft, stepHost.__panelRight,
+                    stepHost.__ring, stepHost.__bubble);
+      (document.documentElement || document.body).appendChild(stepHost);
+
+      // 滚动或改窗口大小时洞要跟着走，否则一滚就指错地方
+      window.addEventListener("scroll", onStepViewportChange, true);
+      window.addEventListener("resize", onStepViewportChange);
+    }
 
     const current = steps[index];
     const label = (current.label || current.text || current.placeholder || "").trim();
     const kindName = current.type === "button" ? "按钮" : "输入框";
 
-    bar.appendChild(el("span", "ev-step-count", `第 ${index + 1} 步 / 共 ${steps.length} 步`));
-    bar.appendChild(el("span", "ev-step-text", `请在「${label}」这个${kindName}里填写`));
+    const bubble = stepHost.__bubble;
+    bubble.replaceChildren();
+    bubble.appendChild(el("div", "ev-step-count", `第 ${index + 1} 步 / 共 ${steps.length} 步`));
+    bubble.appendChild(el("div", "ev-step-text", `请在「${label}」这个${kindName}里操作`));
 
+    const actions = el("div", "ev-step-actions");
     const prev = button("上一步", () => {
       if (index > 0) showStepBar(steps, index - 1);
     });
     prev.disabled = index === 0;
-
     const next = button(index === steps.length - 1 ? "完成" : "下一步", () => {
       if (index === steps.length - 1) { clearStepBar(); return; }
       showStepBar(steps, index + 1);
     });
-
     const exit = button("退出", () => clearStepBar());
     exit.className = "ev-step-exit";
+    actions.append(prev, next, exit);
+    bubble.appendChild(actions);
 
-    bar.append(prev, next, exit);
-
-    highlightStep(resolveElement ? resolveElement(current.id) : null);
+    const element = resolveElement ? resolveElement(current.id) : null;
+    stepHost.__current = element;
+    if (element) {
+      highlightStep(element);
+      // 等一帧再量位置：scrollIntoView 是平滑滚动，立刻量会拿到旧坐标
+      layoutSpotlight(element);
+      requestAnimationFrame(() => layoutSpotlight(element));
+      setTimeout(() => layoutSpotlight(element), 350);
+    }
   }
 
   /** 目标元素视觉邻域里的可见表单控件 —— 来源里凑不出步骤时的兜底。 */
