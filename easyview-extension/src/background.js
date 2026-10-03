@@ -8,13 +8,6 @@ let speechOwner = null;
 let pendingSpeech = null;
 let speechRequest = 0;
 
-chrome.runtime.onInstalled.addListener((details) => {
-  if (details.reason !== "install") return;
-  chrome.tabs.create({ url: chrome.runtime.getURL("setup.html") }, () => {
-    void chrome.runtime.lastError;
-  });
-});
-
 function speechEvent(owner, state, extra = {}) {
   chrome.tabs.sendMessage(owner.tabId, {
     type: "easyview:speech-event",
@@ -310,18 +303,8 @@ async function aiEndpoint() {
   }
 }
 
-async function aiAccessToken() {
-  try {
-    const stored = await chrome.storage.local.get({ "easyview.accessToken": "" });
-    return String(stored["easyview.accessToken"] || "").trim();
-  } catch (_) {
-    return "";
-  }
-}
-
 async function analyzeViaService(bodyText, kind, useAi) {
   const endpoint = await aiEndpoint();
-  const accessToken = await aiAccessToken();
   const isDraft = kind === "digest";
   // digest 走 /draft：服务器只做「文字进、模型出、JSON 回」，
   // 定位字段和风险策略都在扩展里，服务器看不到。
@@ -336,8 +319,7 @@ async function analyzeViaService(bodyText, kind, useAi) {
     const response = await fetch(url, {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
-        ...(accessToken ? { "Authorization": `Bearer ${accessToken}` } : {})
+        "Content-Type": "application/json"
       },
       body: requestBody,
       signal: controller.signal

@@ -6,9 +6,7 @@ Manifest V3 扩展。每次更新扩展代码或资源，都递增 [manifest.jso
 
 1. 打开 [EasyView 体验页](https://ev.jvda.online/)，下载插件体验包并解压。
 2. 在 Chrome 打开 `chrome://extensions`，开启开发者模式，选择「加载已解压的扩展程序」，选中解压得到的 `EasyView/` 文件夹。360 浏览器请在极速模式的扩展管理页查找对应入口；具体能否加载取决于所用版本。
-3. 首次安装会打开大字设置页。输入团队提供的评委体验码，点击「保存并检查连接」。之后打开普通网页，点击「敬老版」。没有体验码时，可在服务错误页选择本地规则版。
-
-设置页也能从扩展管理页的 EasyView「扩展选项」再次打开。体验码只保存在该浏览器的扩展本地存储中；不要把体验码或模型密钥写进源码。
+3. 打开普通网页，点击页面上的「敬老版」或浏览器工具栏中的 EasyView 图标，即可直接生成任务卡，无需体验码。服务繁忙时可选择本地规则版。
 
 ## 本地加载
 
@@ -29,20 +27,11 @@ Manifest V3 扩展。每次更新扩展代码或资源，都递增 [manifest.jso
 
 ## 分析服务设置
 
-默认地址是 `https://ev.jvda.online`。该服务的 `/draft` 接口需要访问令牌；根路径是公开体验页，`/health` 是状态接口。优先使用扩展的设置页录入体验码。云端配置见 [部署说明](../ai-service/DEPLOY.md)。本地调试时也可在扩展的 Service Worker DevTools 控制台设置令牌：
-
-```js
-await chrome.storage.local.set({
-  "easyview.accessToken": "云端设置的访问令牌"
-});
-```
-
-若曾手动设置旧地址，还需执行 `await chrome.storage.local.remove("easyview.aiEndpoint")`，让新默认地址生效。本地调试时可将 `easyview.aiEndpoint` 设为 `http://127.0.0.1:8787`。设置后刷新目标网页；若刚更新扩展代码，还需在 `chrome://extensions` 刷新扩展。不要把访问令牌写进扩展源码或上传到 GitHub。
+默认地址是 `https://ev.jvda.online`。公开 `/draft` 接口不需要体验码；根路径是体验页，`/health` 是状态接口。云端配置见 [部署说明](../ai-service/DEPLOY.md)。若曾手动设置旧地址，可在扩展的 Service Worker DevTools 控制台执行 `await chrome.storage.local.remove("easyview.aiEndpoint")`，让新默认地址生效。本地调试时可将 `easyview.aiEndpoint` 设为 `http://127.0.0.1:8787`。设置后刷新目标网页；若刚更新扩展代码，还需在 `chrome://extensions` 刷新扩展。模型密钥只放服务端环境变量，不写入扩展或 GitHub。
 
 ## 目录
 
 - `src/background.js`：分析请求、朗读、缩放状态。
-- `setup.html` / `setup.js`：首次安装引导与体验码设置。
 - `src/quick-launcher.js`：网页快捷入口。
 - `src/extract.js` / `digest.js` / `binder.js`：提取、压缩与本地绑定。
 - `src/ai-content.js`：任务卡和确认页。

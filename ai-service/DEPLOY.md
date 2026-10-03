@@ -2,7 +2,7 @@
 
 云端运行 `ai-service/`。Chrome 扩展留在用户电脑上；`backend/` 不是线上服务。为方便安装，可以在服务器克隆整个仓库，实际进程只运行 `ai-service/app.py`；体验页的下载接口会读取 `easyview-extension/`，`/analyze` 的校验还会读取 `docs/drafts/ui-schema-0.3/` 和 `docs/elements.schema.json`。
 
-公开 `GET /` 是评委体验页，`GET /download/easyview-extension.zip` 动态打包当前仓库的扩展文件；两者不需要访问令牌。设置页通过 `GET /access/check` 验证体验码，不触发模型调用。`POST /draft` 和 `POST /analyze` 仍由 `EASYVIEW_ACCESS_TOKEN` 保护。
+公开 `GET /` 是评委体验页，`GET /download/easyview-extension.zip` 动态打包当前仓库的扩展文件。插件直接调用公开 `POST /draft`，无需体验码；服务端限制请求体、并发和调用次数。内部 `POST /analyze` 仍由 `EASYVIEW_ACCESS_TOKEN` 保护。
 
 以下以 `api.example.com` 为例，请换成你的域名。先把域名 A/AAAA 记录指向服务器，并在云平台安全组开放 22、80、443；**不要开放 8787**。需要能访问模型服务的出站网络。
 
@@ -41,7 +41,7 @@ EASYVIEW_REASONING=off
 EASYVIEW_ACCESS_TOKEN=请生成独立的长随机令牌
 ```
 
-`EASYVIEW_ACCESS_TOKEN` 是给插件访问 EasyView 服务用的，和模型密钥是两个不同的值。可用 `openssl rand -hex 32` 生成。不要把任一密钥写到 README、插件源码或 GitHub。
+`EASYVIEW_ACCESS_TOKEN` 只保护内部 `/analyze`，插件不需要它。可用 `openssl rand -hex 32` 生成。不要把它或模型密钥写到 README、插件源码或 GitHub。
 
 创建 `/etc/systemd/system/easyview.service`：
 
@@ -120,21 +120,12 @@ sudo certbot --nginx -d api.example.com
 sudo certbot renew --dry-run
 ```
 
-确认 `https://api.example.com/health` 可访问，且无令牌的 `POST /draft` 返回 401。Nginx 负责 TLS、限流与请求体大小；Python 服务只监听 `127.0.0.1`。
+确认 `https://api.example.com/health` 可访问；无令牌、空说明书的 `POST /draft` 应返回 400，而无令牌的 `POST /analyze` 应返回 401。Nginx 负责 TLS、按来源限流与请求体大小；Python 服务额外限制公开模型调用量，只监听 `127.0.0.1`。
 
-## 4. 配置 Chrome 扩展
+## 4. 使用 Chrome 扩展
 
-在 `chrome://extensions` 打开 EasyView 的 Service Worker“检查视图”，于其 DevTools 控制台执行：
-
-```js
-await chrome.storage.local.set({
-  "easyview.aiEndpoint": "https://api.example.com",
-  "easyview.accessToken": "上面生成的长随机令牌"
-});
-```
-
-然后刷新目标网页，再点击「敬老版」。服务器只保存模型密钥；插件本地只保存 EasyView 访问令牌。扩展现有 `https://*/*` host permission 已允许请求 HTTPS 域名，不需把密钥打包进扩展。
+官方演示扩展默认连接 `https://ev.jvda.online`，安装后打开普通网页即可点击「敬老版」。若部署到其他域名，本地调试时可在扩展 Service Worker DevTools 中设置 `easyview.aiEndpoint`；无需给插件分发令牌。扩展现有 `https://*/*` host permission 已允许请求 HTTPS 域名，不需把模型密钥打包进扩展。
 
 ## 范围
 
-这套配置适合个人或受控团队演示。共享访问令牌可从已安装扩展的本机设置中读取，不能当成公众产品的用户身份验证。面向公众开放前，还需要按用户计费额度、撤销机制和运维监控。
+这套配置适合黑客松公开体验。进程内限额会在重启后清空，也不能代替云端预算和监控；长期面向公众开放前，还需要按用户的额度、滥用防护和运维监控。

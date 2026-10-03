@@ -22,8 +22,8 @@ python ai-service/app.py --host 127.0.0.1 --port 8787
 | `EASYVIEW_TIMEOUT` | 模型请求超时，秒 | `60` |
 | `EASYVIEW_REASONING` | `off/low/high/max` | `off` |
 | `EASYVIEW_JSON_MODE` | 是否发送 JSON 模式参数 | `0` |
-| `EASYVIEW_ACCESS_TOKEN` | 非空时，要求所有 POST 请求携带 `Authorization: Bearer <token>` | 无 |
+| `EASYVIEW_ACCESS_TOKEN` | 保护内部 `/analyze` 接口；公开 `/draft` 不使用此令牌 | 无 |
 
-公开部署必须配置访问令牌，并在反向代理设置 HTTPS 和请求限流。部署步骤见 [DEPLOY.md](DEPLOY.md)，接口说明见 [docs/api.md](docs/api.md)。访问令牌只适合内部演示或受控团队，不是面向公众的用户账户体系。
+公开 `/draft` 限制为每份说明书最多 4 万字符、每进程最多 4 个并发调用、每小时最多 120 次、24 小时内最多 500 次；计数在进程重启后清空。公开部署仍应在反向代理设置 HTTPS 和按来源限流，并为内部 `/analyze` 配置访问令牌。部署步骤见 [DEPLOY.md](DEPLOY.md)，接口说明见 [docs/api.md](docs/api.md)。
 
 `/analyze` 使用 [0.3 协议校验器](../docs/drafts/ui-schema-0.3/validate.py)，所以需要安装 `jsonschema`。浏览器插件的主要请求链是 `/draft`。

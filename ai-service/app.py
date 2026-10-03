@@ -16,11 +16,14 @@ CLI:
 from __future__ import annotations
 
 import argparse
+from collections import deque
 import hmac
 import io
 import json
 import os
 import sys
+from threading import BoundedSemaphore, Lock
+from time import monotonic
 import zipfile
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -41,8 +44,14 @@ except ImportError:  # 允许从仓库根目录以包方式导入
 
 
 MAX_BODY_BYTES = 8 * 1024 * 1024
-# 说明书是压缩过的精选文字，正常几 KB；给足余量但别让人拿它当文件上传通道
-MAX_DIGEST_CHARS = 200_000
+# 说明书是压缩过的精选文字，正常几 KB；公开体验入口仍限制体积与调用量。
+PUBLIC_DRAFT_MAX_BODY_BYTES = 256 * 1024
+PUBLIC_DRAFT_MAX_DIGEST_CHARS = 40_000
+PUBLIC_DRAFT_HOURLY_LIMIT = 120
+PUBLIC_DRAFT_DAILY_LIMIT = 500
+_public_draft_calls: deque[float] = deque()
+_public_draft_lock = Lock()
+_public_draft_slots = BoundedSemaphore(4)
 SERVICE_DIR = Path(__file__).resolve().parent
 EXTENSION_DIR = SERVICE_DIR.parent / "easyview-extension"
 
@@ -53,7 +62,7 @@ def _extension_archive() -> tuple[bytes, str]:
     version = json.loads(manifest_path.read_text(encoding="utf-8"))["version"]
     files = [
         EXTENSION_DIR / name
-        for name in ("manifest.json", "README.md", "setup.html", "setup.js", "setup.css")
+        for name in ("manifest.json", "README.md")
     ]
     for folder in ("src", "assets"):
         files.extend(
@@ -65,6 +74,34 @@ def _extension_archive() -> tuple[bytes, str]:
         for path in files:
             archive.write(path, f"EasyView/{path.relative_to(EXTENSION_DIR).as_posix()}")
     return output.getvalue(), f"EasyView-{version}.zip"
+
+
+def _token_matches(provided: str, access_token: str) -> bool:
+    """恒定时间比较访问令牌。
+
+    必须按字节比较：令牌里混进非 ASCII 字符（例如全角字符、中文）时，
+    str 版的 hmac.compare_digest 会抛 TypeError。异常逃出 do_POST 会让
+    连接直接断掉，反向代理只能回 502 —— 前端看到的是"服务坏了"，
+    而不是一个能看懂的 401。
+    """
+    return hmac.compare_digest(
+        provided.encode("utf-8"), f"Bearer {access_token}".encode("utf-8")
+    )
+
+
+def _reserve_public_draft() -> bool:
+    """给公开演示接口限制模型调用量；进程重启后重新计数。"""
+    now = monotonic()
+    with _public_draft_lock:
+        while _public_draft_calls and now - _public_draft_calls[0] >= 86_400:
+            _public_draft_calls.popleft()
+        if len(_public_draft_calls) >= PUBLIC_DRAFT_DAILY_LIMIT:
+            return False
+        recent_hour = sum(now - used_at < 3_600 for used_at in _public_draft_calls)
+        if recent_hour >= PUBLIC_DRAFT_HOURLY_LIMIT:
+            return False
+        _public_draft_calls.append(now)
+        return True
 
 
 def _ai_client() -> OpenAICompatibleClient:
@@ -139,18 +176,6 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self) -> None:  # noqa: N802
         path = urlparse(self.path).path
-        if path == "/access/check":
-            access_token = os.getenv("EASYVIEW_ACCESS_TOKEN", "").strip()
-            if not access_token:
-                self._error(503, "服务尚未配置体验码", "unavailable")
-                return
-            provided = self.headers.get("Authorization", "")
-            if not hmac.compare_digest(provided, f"Bearer {access_token}"):
-                self._error(401, "访问令牌无效", "unauthorized")
-                return
-            self._headers(204)
-            self.end_headers()
-            return
         if path in ("/", "/index.html"):
             try:
                 page = (SERVICE_DIR / "public" / "index.html").read_bytes()
@@ -194,10 +219,12 @@ class Handler(BaseHTTPRequestHandler):
             self._error(404, "接口不存在", "not_found")
             return
         access_token = os.getenv("EASYVIEW_ACCESS_TOKEN", "").strip()
-        if access_token:
+        if parsed.path == "/analyze":
+            if not access_token:
+                self._error(503, "内部分析接口未配置访问令牌", "unavailable")
+                return
             provided = self.headers.get("Authorization", "")
-            expected = f"Bearer {access_token}"
-            if not hmac.compare_digest(provided, expected):
+            if not _token_matches(provided, access_token):
                 self._error(401, "访问令牌无效", "unauthorized")
                 return
         try:
@@ -207,6 +234,9 @@ class Handler(BaseHTTPRequestHandler):
             return
         if length <= 0 or length > MAX_BODY_BYTES:
             self._error(413, "请求体为空或超过 8MB")
+            return
+        if parsed.path == "/draft" and length > PUBLIC_DRAFT_MAX_BODY_BYTES:
+            self._error(413, "页面说明书过长，请换一个网页重试")
             return
 
         raw = self.rfile.read(length)
@@ -264,8 +294,8 @@ class Handler(BaseHTTPRequestHandler):
         if not isinstance(digest, str) or not digest.strip():
             self._error(400, "缺少 digest 字段（页面说明书文本）")
             return
-        if len(digest) > MAX_DIGEST_CHARS:
-            self._error(413, f"说明书过长（上限 {MAX_DIGEST_CHARS} 字符）")
+        if len(digest) > PUBLIC_DRAFT_MAX_DIGEST_CHARS:
+            self._error(413, "页面说明书过长，请换一个网页重试")
             return
 
         try:
@@ -274,15 +304,24 @@ class Handler(BaseHTTPRequestHandler):
             self._error(503, str(exc), "ai_unavailable")
             return
 
+        if not _public_draft_slots.acquire(blocking=False):
+            self._error(429, "当前体验人数较多，请稍后重试", "busy")
+            return
         try:
-            reply = client.analyze_draft(digest)
-        except AIError as exc:
-            self._error(503, str(exc), "ai_unavailable")
-            return
-        except Exception as exc:  # noqa: BLE001
-            self.log_error("draft internal error: %s", type(exc).__name__)
-            self._error(500, "服务内部错误", "internal_error")
-            return
+            if not _reserve_public_draft():
+                self._error(429, "近期公开体验次数已用完，请稍后重试", "rate_limited")
+                return
+            try:
+                reply = client.analyze_draft(digest)
+            except AIError as exc:
+                self._error(503, str(exc), "ai_unavailable")
+                return
+            except Exception as exc:  # noqa: BLE001
+                self.log_error("draft internal error: %s", type(exc).__name__)
+                self._error(500, "服务内部错误", "internal_error")
+                return
+        finally:
+            _public_draft_slots.release()
 
         payload: dict[str, Any] = {
             "ok": True,
