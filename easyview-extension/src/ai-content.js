@@ -1126,6 +1126,36 @@
     }
   }
 
+  /** 直接照亮一个 DOM 节点（不经过元素表）。
+   *
+   * 用途：核对无误之后，把用户送回原网页，并把该点的那个按钮框出来批注。
+   * 那个按钮不在 elements.json 里（它属于下一页），所以走不了元素表那条路。
+   */
+  function spotlightNode(node, headText, bodyText) {
+    if (!node || !node.isConnected) return false;
+    close();
+    // 复用同一套壳：四块挡板 + 黄圈 + 批注气泡
+    showGroupGuide([{ id: "__spot__", label: bodyText || "", type: "button" }], 0);
+    if (!stepHost) return false;
+    stepHost.__nodes = [node];
+    stepHost.__current = node;
+    const bubble = stepHost.__bubble;
+    bubble.replaceChildren();
+    bubble.appendChild(el("div", "ev-step-count", headText || "就在这里"));
+    if (bodyText) bubble.appendChild(el("div", "ev-step-text", bodyText));
+    const actions = el("div", "ev-step-actions");
+    const exit = button("知道了", () => clearStepBar());
+    exit.className = "ev-step-exit";
+    actions.append(exit);
+    bubble.appendChild(actions);
+    // 这段提示是在原网页上操作的，位置以真实节点为准
+    node.scrollIntoView({ behavior: "smooth", block: "center" });
+    layoutSpotlight();
+    requestAnimationFrame(layoutSpotlight);
+    setTimeout(layoutSpotlight, 350);
+    return true;
+  }
+
   /** 进入步骤引导。凑不出两个表单控件就返回 false，交回单次定位。
    *
    * 两级策略：
@@ -1582,14 +1612,21 @@
     .ev-order-price { font-size: 32px; font-weight: 800; color: #b3521a;
       font-variant-numeric: tabular-nums; }
     .ev-order-people { display: flex; gap: 12px; flex-wrap: wrap; }
-    .ev-order-person { display: inline-flex; align-items: center; gap: 10px;
-      padding: 8px 18px 8px 8px; border-radius: 999px;
-      background: #e3f0fb; color: #0b4f86;
-      font-size: 26px; font-weight: 800; }
-    .ev-order-face { width: 44px; height: 44px; border-radius: 50%;
-      display: grid; place-items: center; background: #0b5cad; color: #fff;
-      font-size: 22px; font-weight: 800; }
-    .ev-order-warn { font-size: 22px; font-weight: 700; color: #8a4a12; }
+    .ev-order-chip { display: inline-flex; align-items: center; gap: 10px;
+      padding: 8px 18px 8px 8px; border: 3px solid transparent; border-radius: 999px;
+      background: #eef6fd; color: #14507f; cursor: pointer;
+      font: 26px/1.2 "Microsoft YaHei", system-ui, sans-serif; font-weight: 800; }
+    .ev-order-chip:hover { background: #e0eefb; }
+    .ev-order-chip.ev-on { border-color: #0b5cad; background: #d8eafc; color: #0b4f86; }
+    .ev-order-fields { display: grid; grid-template-columns: 1fr 1.4fr; gap: 12px; }
+    @media (max-width: 760px) { .ev-order-fields { grid-template-columns: 1fr; } }
+    .ev-order-input { box-sizing: border-box; width: 100%; min-height: 68px;
+      padding: 12px 18px; border: 2px solid #b8d5ec; border-radius: 14px;
+      background: #fff; color: #10314f;
+      font: 26px/1.2 "Microsoft YaHei", system-ui, sans-serif; }
+    .ev-order-input:focus { outline: none; border-color: #0b5cad;
+      box-shadow: 0 0 0 4px rgba(11,92,173,.16); }
+    .ev-order-note { font-size: 17px; color: #5b7f9e; }
     .ev-order-total { display: flex; align-items: baseline; justify-content: space-between;
       gap: 16px; padding: 22px 28px; background: rgba(11,92,173,.07); }
     .ev-order-total-label { font-size: 24px; font-weight: 700; color: #14507f; }
@@ -1705,10 +1742,9 @@
   function renderOrderConfirm(train, passengers) {
     const body = backBar(header("请核对一下", "这是您要买的车票，看清楚了再提交。"));
 
-    // 分区块 + 标签 + 形状，和车次卡片同一套设计语言。
-    // 之前是一堆白底文字堆在一起，用户反馈"只是白纸黑字"。
     const card = el("div", "ev-order");
 
+    // ---- 车次区（和车次卡片同一套：大号车次号 + 线路 + 时刻）----
     const sec1 = el("div", "ev-order-sec");
     sec1.appendChild(el("div", "ev-order-label", "车次"));
     sec1.appendChild(el("div", "ev-order-code", train.code));
@@ -1722,47 +1758,73 @@
     sec1.appendChild(times);
     card.appendChild(sec1);
 
-    const sec2 = el("div", "ev-order-sec ev-order-inline");
-    const seatBox = el("div", "");
-    seatBox.appendChild(el("div", "ev-order-label", "座位"));
-    seatBox.appendChild(el("div", "ev-order-seat", train.priceClass || "二等座"));
-    sec2.appendChild(seatBox);
-    if (train.price) {
-      const priceBox = el("div", "ev-order-right");
-      priceBox.appendChild(el("div", "ev-order-label", "每张"));
-      priceBox.appendChild(el("div", "ev-order-price", `${train.price} 元`));
-      sec2.appendChild(priceBox);
-    }
+    // ---- 席别 ----（不写单价，价钱只在最后合计那一处出现，少一处让人对不上）
+    const sec2 = el("div", "ev-order-sec");
+    sec2.appendChild(el("div", "ev-order-label", "座位"));
+    sec2.appendChild(el("div", "ev-order-seat", train.priceClass || "二等座"));
     card.appendChild(sec2);
 
-    // 乘车人做成头像胶囊 —— 和车次卡片一样有形状，不是一行文字
-    const who = (passengers || []).filter((p) => p.checked);
+    // ---- 乘车人：已存的做成可选胶囊，另外可以直接补一位 ----
+    const picked = new Set((passengers || []).filter((p) => p.checked).map((p) => p.name));
     const sec3 = el("div", "ev-order-sec");
-    sec3.appendChild(el("div", "ev-order-label", "乘车人"));
+    sec3.appendChild(el("div", "ev-order-label", "乘车人（点名字选中）"));
     const people = el("div", "ev-order-people");
-    if (who.length) {
-      for (const person of who) {
-        const chip = el("span", "ev-order-person");
+    if ((passengers || []).length) {
+      for (const person of passengers) {
+        const chip = el("button", `ev-order-chip${person.checked ? " ev-on" : ""}`);
+        chip.type = "button";
         chip.appendChild(el("span", "ev-order-face", person.name.slice(0, 1)));
         chip.appendChild(el("span", "", person.name));
+        chip.addEventListener("click", () => {
+          const result = globalThis.EasyViewPassengers
+            ? globalThis.EasyViewPassengers.select(person) : { ok: false };
+          if (!result.ok) { return; }
+          const now = Boolean(person.node && person.node.checked);
+          person.checked = now;
+          chip.classList.toggle("ev-on", now);
+          if (now) picked.add(person.name); else picked.delete(person.name);
+          refreshTotal();
+        });
         people.appendChild(chip);
       }
     } else {
-      people.appendChild(el("span", "ev-order-warn", "还没选乘车人，请回原网页上勾一下"));
+      people.appendChild(el("span", "ev-order-warn", "原网页上还没勾乘车人"));
     }
     sec3.appendChild(people);
     card.appendChild(sec3);
 
-    // 合计单独一块，最大最显眼
+    // ---- 乘车人信息填写（新增一位）。只在本机用，不发送。----
+    const sec4 = el("div", "ev-order-sec");
+    sec4.appendChild(el("div", "ev-order-label", "要新增一位乘车人？在这里填"));
+    const row = el("div", "ev-order-fields");
+    const nameInput = el("input", "ev-order-input");
+    nameInput.type = "text";
+    nameInput.placeholder = "姓名";
+    const idInput = el("input", "ev-order-input");
+    idInput.type = "text";
+    idInput.placeholder = "身份证号";
+    row.append(nameInput, idInput);
+    sec4.appendChild(row);
+    sec4.appendChild(el("div", "ev-order-note",
+      "填在这里的内容不会发到任何服务器，只在您这台电脑上用。"));
+    card.appendChild(sec4);
+
+    // ---- 合计：单独一块，全屏最大 ----
     const total = el("div", "ev-order-total");
-    total.appendChild(el("span", "ev-order-total-label",
-      who.length ? `共 ${who.length} 位` : "合计"));
-    total.appendChild(el("span", "ev-order-total-price",
-      train.price && who.length ? `${train.price * who.length} 元` : "—"));
+    const totalLabel = el("span", "ev-order-total-label", "");
+    const totalPrice = el("span", "ev-order-total-price", "");
+    total.append(totalLabel, totalPrice);
     card.appendChild(total);
 
+    function refreshTotal() {
+      const n = picked.size;
+      totalLabel.textContent = n ? `共 ${n} 位` : "还没选乘车人";
+      totalPrice.textContent = (train.price && n) ? `${train.price * n} 元` : "—";
+    }
+    refreshTotal();
+
     const msg = el("div", "ev-confirm-msg", "");
-    const go = el("button", "ev-confirm-go", "核对无误，去提交");
+    const go = el("button", "ev-confirm-go", "核对无误，去原网页预定");
     go.type = "button";
     card.append(msg, go);
 
@@ -1771,27 +1833,40 @@
     body.appendChild(box);
 
     const foot = el("div", "ev-ai-foot");
-    foot.appendChild(el("div", "", "点上面那个按钮只会带您到原网页的提交按钮，按不按由您决定。"));
+    foot.appendChild(el("div", "", "点下面的按钮不会替您下单，只会把原网页上该按的地方指给您。"));
     foot.appendChild(el("div", "ev-ai-foot-meta",
       `EasyView v${chrome.runtime.getManifest().version}`));
     body.appendChild(foot);
 
-    go.addEventListener("click", () => {
-      // 找原网页上的提交按钮。找不到就如实说，不硬点别的东西。
+    go.addEventListener("click", async () => {
+      const extraName = nameInput.value.trim();
+      const extraId = idInput.value.trim();
+      if (!picked.size && !extraName) {
+        msg.textContent = "先选一位乘车人，或者把姓名填上。";
+        return;
+      }
+      if (extraName && !extraId) {
+        msg.textContent = "新增乘车人需要填身份证号。";
+        return;
+      }
+
+      // 原网页上可能是"提交订单"，也可能是"下一步"，都试
       const candidates = [...document.querySelectorAll("a, button, input[type='submit']")];
       const submit = candidates.find((n) => {
         const t = (n.innerText || n.value || "").replace(/\s+/g, "");
-        return /提交订单|确认订单|提交|下一步/.test(t) && elementIsVisible(n);
+        return /提交订单|确认订单|提交|下一步|确认/.test(t) && elementIsVisible(n);
       });
-      if (!submit) {
-        msg.textContent = "没找到原网页上的提交按钮，请自己找一下。";
+
+      const tip = extraName
+        ? `原网页上请在「${extraName}」那一行点一下，然后按下面的按钮。`
+        : "请在原网页上确认订单。";
+
+      if (submit) {
+        // 用户要的效果：背景变暗 + 高亮批注，把人送回原页面自己按。
+        spotlightNode(submit, "最后一步，在原网页上按这里", tip);
         return;
       }
-      close();
-      submit.scrollIntoView({ behavior: "smooth", block: "center" });
-      submit.style.outline = "4px solid #ffb020";
-      submit.style.outlineOffset = "3px";
-      submit.focus({ preventScroll: true });
+      msg.textContent = "没找到原网页上的提交按钮，请自己找一下。";
     });
   }
 
