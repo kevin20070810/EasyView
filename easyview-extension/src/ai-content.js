@@ -1283,18 +1283,10 @@
       cta.append(el("span", "", "选这一趟"), el("span", "", "→"));
       card.appendChild(cta);
 
-      card.addEventListener("click", () => {
-        const target = t.bookButton;
-        if (target && target.isConnected) {
-          close();
-          target.scrollIntoView({ behavior: "smooth", block: "center" });
-          target.style.outline = "4px solid #ffb020";
-          target.style.outlineOffset = "3px";
-          target.focus({ preventScroll: true });
-        } else {
-          showError("这一趟的「预订」按钮找不到了，页面可能刚刷新过。", null);
-        }
-      });
+      // 点车次 → 在面板里给一张确认卡（带大号「预订这趟车」）。
+      // 不再只是"滚到原网页的预订按钮描个框" —— 那样用户看不出自己选了哪一趟，
+      // 提示也太弱（用户反馈）。
+      card.addEventListener("click", () => showView(renderTrainConfirm, t));
       wrap.appendChild(card);
       pairs.push({ train: t, node: card });
     }
@@ -1464,6 +1456,102 @@
     return ui;
   }
 
+  /* ---------- 选中一趟车之后的确认卡 ----------
+   *
+   * 用户反馈：点了车次卡片只是"滚到原网页的预订按钮并描个框"，提示太弱，
+   * 而且看不出自己选的是哪一趟。所以改成在面板里给一张确认卡 + 大号预订按钮：
+   *
+   *     您选的这趟车
+   *     G531
+   *     北京南 06:08 → 上海虹桥 12:04
+   *     历时 05:56   二等座 525 元
+   *     [      预订这趟车      ]
+   *
+   * 点「预订这趟车」才去点原网页上那一行的「预订」。是否真的下单仍由用户
+   * 在原网页上完成 —— 我们只把他送到门口。
+   */
+  const TRAINCONFIRM_CSS = `
+    .ev-confirm-card { display: grid; gap: 14px; padding: 30px 32px 28px;
+      border-radius: 26px;
+      background: linear-gradient(160deg, #eaf5ff 0%, #ffffff 62%);
+      box-shadow: 0 14px 34px rgba(23,72,124,.16), inset 0 1px 0 rgba(255,255,255,.92); }
+    .ev-confirm-code { font-size: 64px; font-weight: 800; line-height: 1; color: #0b4f86; }
+    .ev-confirm-route { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap;
+      font-size: 34px; font-weight: 700; color: #10314f; }
+    .ev-confirm-times { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+      font-size: 38px; font-weight: 800; color: #0b4f86; font-variant-numeric: tabular-nums; }
+    .ev-confirm-times small { font-size: 20px; font-weight: 600; color: #5b7f9e; }
+    .ev-confirm-meta { display: flex; gap: 10px 18px; flex-wrap: wrap; align-items: center;
+      font-size: 22px; color: #43617c; }
+    .ev-confirm-price { font-size: 34px; font-weight: 800; color: #b3521a; }
+    .ev-confirm-rule { height: 1px;
+      background: linear-gradient(90deg, rgba(23,72,124,.18), rgba(23,72,124,0)); }
+    .ev-confirm-go { min-height: 92px; border: 0; border-radius: 20px; cursor: pointer;
+      background: #0b5cad; color: #fff; font: 34px/1 "Microsoft YaHei", system-ui, sans-serif;
+      font-weight: 800; box-shadow: 0 12px 28px rgba(11,92,173,.3); }
+    .ev-confirm-go:hover { background: #0a4e93; }
+    .ev-confirm-msg { font-size: 20px; font-weight: 700; color: #8a4a12; min-height: 24px; }
+  `;
+
+  function renderTrainConfirm(train) {
+    const body = backBar(header("您选的这趟车", "看好了就点下面的按钮，这是您自己确认的。"));
+    const style = document.createElement("style");
+    style.textContent = TRAINCONFIRM_CSS;
+    body.appendChild(style);
+
+    const card = el("div", "ev-confirm-card");
+    card.appendChild(el("div", "ev-confirm-code", train.code));
+
+    const route = el("div", "ev-confirm-route");
+    route.append(train.from, el("span", "ev-arrow", "→"), train.to);
+    card.appendChild(route);
+
+    const times = el("div", "ev-confirm-times");
+    times.append(train.depart, el("small", "", "发车"), el("span", "ev-arrow", "→"),
+                 train.arrive, el("small", "", "到达"));
+    if (train.duration) times.appendChild(el("small", "", `历时 ${train.duration}`));
+    card.appendChild(times);
+
+    card.appendChild(el("div", "ev-confirm-rule"));
+
+    const meta = el("div", "ev-confirm-meta");
+    if (train.price) {
+      meta.append(el("span", "ev-confirm-price", `${train.priceClass || "二等座"} ${train.price} 元`));
+    }
+    if (train.left) meta.appendChild(el("span", "", `余票 ${train.left}`));
+    card.appendChild(meta);
+
+    const msg = el("div", "ev-confirm-msg", "");
+    const go = el("button", "ev-confirm-go", "预订这趟车");
+    go.type = "button";
+    card.append(msg, go);
+
+    const box = el("div", "ev-ai-confbox");
+    box.appendChild(card);
+    body.appendChild(box);
+
+    const foot = el("div", "ev-ai-foot");
+    foot.appendChild(el("div", "", "接下来在原网页上选乘车人、确认付款，都由您自己完成。"));
+    foot.appendChild(el("div", "ev-ai-foot-meta",
+      `EasyView v${chrome.runtime.getManifest().version}`));
+    body.appendChild(foot);
+
+    go.addEventListener("click", () => {
+      const target = train.bookButton;
+      if (!target || !target.isConnected) {
+        msg.textContent = "这一趟的「预订」按钮找不到了，请返回重新选一趟。";
+        return;
+      }
+      try {
+        // 12306 的「预订」是 javascript: 链接，点它就进下单流程
+        target.click();
+        close();
+      } catch (_) {
+        msg.textContent = "没能打开这一趟，请刷新网页后重试。";
+      }
+    });
+  }
+
   /* ---------- 乘车人卡片（12306 乘车人页）----------
    *
    * 这一页要登录态，我的自动化浏览器进不去，所以没有实测数据 ——
@@ -1568,6 +1656,15 @@
         try { window.history.back(); } catch (_) { /* 退不了就算了，不弹错 */ }
       });
       bar.appendChild(back);
+    } else {
+      // 新标签页里 history 只有一条，history.back() 不会发生任何事 ——
+      // 用户反馈"车次界面回不去"就是这个原因：按钮根本不出现。
+      // 改成请后台把这页关掉，关掉自然就回到原来那个标签页。
+      bar.appendChild(button("← 关上这页，回去", () => {
+        try {
+          chrome.runtime.sendMessage({ type: "easyview:close-tab" });
+        } catch (_) { /* 发不出去就算了，用户还能自己关标签页 */ }
+      }));
     }
     if (bar.childElementCount) body.insertBefore(bar, body.firstChild);
     return body;
@@ -1833,7 +1930,10 @@
         if (people.length) {
           lastPayload = null;
           busy = false;
-          renderPassengerCards(people);
+          // 用 showView 压栈（先清空）—— 否则确认卡上的「返回上一步」不会出现，
+          // 因为栈里没有这个根视图，栈深永远是 1。
+          viewStack.length = 0;
+          showView(renderPassengerCards, people);
           return;
         }
       }
@@ -1852,7 +1952,9 @@
         if (trains.length >= 3) {
           lastPayload = null;
           busy = false;
-          renderTrainCards(trains);
+          // 同上：车次列表是根视图，必须进栈，否则点车次之后退不回来。
+          viewStack.length = 0;
+          showView(renderTrainCards, trains);
           return;
         }
       }

@@ -167,6 +167,16 @@ async function analyzeViaService(bodyText, kind, useAi) {
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (!message || typeof message.type !== "string") return undefined;
 
+  // 关掉当前标签页。车次结果页是新标签页、history 只有一条，
+  // history.back() 在那种情况下什么都不会发生，所以回去只能靠关页。
+  if (message.type === "easyview:close-tab") {
+    if (sender && sender.tab && sender.tab.id != null) {
+      chrome.tabs.remove(sender.tab.id).catch(() => {});
+    }
+    sendResponse({ ok: true });
+    return false;
+  }
+
   if (message.type === "easyview:brand-logo") {
     brandLogoBase64()
       .then((base64) => sendResponse({ ok: true, base64 }))
