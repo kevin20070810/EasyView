@@ -1642,12 +1642,27 @@
     .ev-order-price { font-size: 32px; font-weight: 800; color: #b3521a;
       font-variant-numeric: tabular-nums; }
     .ev-order-people { display: flex; gap: 12px; flex-wrap: wrap; }
-    .ev-order-chip { display: inline-flex; align-items: center; gap: 10px;
-      padding: 8px 18px 8px 8px; border: 3px solid transparent; border-radius: 999px;
-      background: #eef6fd; color: #14507f; cursor: pointer;
-      font: 26px/1.2 "Microsoft YaHei", system-ui, sans-serif; font-weight: 800; }
-    .ev-order-chip:hover { background: #e0eefb; }
-    .ev-order-chip.ev-on { border-color: #0b5cad; background: #d8eafc; color: #0b4f86; }
+    /* 乘车人卡片：和 renderPassengerCards 同尺寸（62px 头像 / 32px 名字），
+       和车次卡片同质感（渐变 + 圆角 + 阴影 + 悬浮）。 */
+    .ev-order-people { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px; }
+    @media (max-width: 900px) { .ev-order-people { grid-template-columns: 1fr; } }
+    .ev-order-pcard { display: flex; align-items: center; gap: 16px; width: 100%;
+      box-sizing: border-box; padding: 18px 20px; cursor: pointer; text-align: left;
+      border: 3px solid transparent; border-radius: 20px;
+      background: linear-gradient(160deg, #f2f9ff 0%, #ffffff 100%);
+      box-shadow: 0 8px 20px rgba(23,72,124,.11), inset 0 1px 0 rgba(255,255,255,.9);
+      color: #10314f; font: 20px/1.4 "Microsoft YaHei", system-ui, sans-serif;
+      transition: transform .12s ease, box-shadow .12s ease; }
+    .ev-order-pcard:hover { transform: translateY(-2px);
+      box-shadow: 0 14px 28px rgba(23,72,124,.17), inset 0 1px 0 rgba(255,255,255,.95); }
+    .ev-order-pcard.ev-on { border-color: #0b5cad; background: #dcecfb; }
+    .ev-order-pface { flex: 0 0 auto; width: 62px; height: 62px; border-radius: 50%;
+      display: grid; place-items: center; background: #cfe4f7; color: #0b5cad;
+      font-size: 30px; font-weight: 800; }
+    .ev-order-pcard.ev-on .ev-order-pface { background: #0b5cad; color: #fff; }
+    .ev-order-pname { font-size: 32px; font-weight: 800; }
+    .ev-order-ptick { margin-left: auto; font-size: 30px; color: #0b5cad; font-weight: 800; }
     .ev-order-fields { display: grid; grid-template-columns: 1fr 1.4fr; gap: 12px; }
     @media (max-width: 760px) { .ev-order-fields { grid-template-columns: 1fr; } }
     .ev-order-input { box-sizing: border-box; width: 100%; min-height: 68px;
@@ -1799,6 +1814,16 @@
   function renderOrderConfirm(train, passengers) {
     const body = backBar(header("请核对一下", "这是您要买的车票，看清楚了再提交。"));
 
+    // 【必须注入样式】。
+    // 这一屏用的 .ev-order-* 规则都写在 TRAINCONFIRM_CSS 里，而那段样式原先
+    // 只在 renderTrainConfirm 里 append 过 —— 核对屏从来没注入，所以它一直是
+    // 无样式的裸文字：车次号该 60px 实际 20px，乘车人卡该 62px 头像实际是一行
+    // 13px 的字。用户说"设计太差"，根因就是这个漏掉的一行。
+    // 靠 tools/preview_views.py 量出字号不对才发现，肉眼审代码看不出来。
+    const style = document.createElement("style");
+    style.textContent = TRAINCONFIRM_CSS;
+    body.appendChild(style);
+
     const card = el("div", "ev-order");
 
     // ---- 车次区（和车次卡片同一套：大号车次号 + 线路 + 时刻）----
@@ -1821,28 +1846,34 @@
     sec2.appendChild(el("div", "ev-order-seat", train.priceClass || "二等座"));
     card.appendChild(sec2);
 
-    // ---- 乘车人：已存的做成可选胶囊，另外可以直接补一位 ----
+    // ---- 乘车人 ----
+    // 用户反馈核对屏"设计太差"，要求乘车人这里和乘车人卡片一致。
+    // 原来是 44px 头像 + 26px 名字的小胶囊，现在是 62px 圆头像 + 32px 名字的
+    // 大卡，两列排 —— 和 renderPassengerCards 同一套尺寸，也和车次卡片同一套
+    // 渐变/圆角/阴影/悬浮。
     const picked = new Set((passengers || []).filter((p) => p.checked).map((p) => p.name));
     const sec3 = el("div", "ev-order-sec");
-    sec3.appendChild(el("div", "ev-order-label", "乘车人（点名字选中）"));
+    sec3.appendChild(el("div", "ev-order-label", "乘车人（点一下选中）"));
     const people = el("div", "ev-order-people");
     if ((passengers || []).length) {
       for (const person of passengers) {
-        const chip = el("button", `ev-order-chip${person.checked ? " ev-on" : ""}`);
-        chip.type = "button";
-        chip.appendChild(el("span", "ev-order-face", person.name.slice(0, 1)));
-        chip.appendChild(el("span", "", person.name));
-        chip.addEventListener("click", () => {
+        const card = el("button", `ev-order-pcard${person.checked ? " ev-on" : ""}`);
+        card.type = "button";
+        card.appendChild(el("span", "ev-order-pface", person.name.slice(0, 1)));
+        card.appendChild(el("span", "ev-order-pname", person.name));
+        card.appendChild(el("span", "ev-order-ptick", person.checked ? "✓" : ""));
+        card.addEventListener("click", () => {
           const result = globalThis.EasyViewPassengers
             ? globalThis.EasyViewPassengers.select(person) : { ok: false };
-          if (!result.ok) { return; }
+          if (!result.ok) return;
           const now = Boolean(person.node && person.node.checked);
           person.checked = now;
-          chip.classList.toggle("ev-on", now);
+          card.classList.toggle("ev-on", now);
+          card.querySelector(".ev-order-ptick").textContent = now ? "✓" : "";
           if (now) picked.add(person.name); else picked.delete(person.name);
           refreshTotal();
         });
-        people.appendChild(chip);
+        people.appendChild(card);
       }
     } else {
       people.appendChild(el("span", "ev-order-warn", "原网页上还没勾乘车人"));
@@ -2362,7 +2393,15 @@
     open,
     // 测试钩子：让端到端测试能【确定性地】验证绑定校验，
     // 而不是干等那个间歇性错配自己出现。
-    fixMismatchedTargets
+          fixMismatchedTargets,
+      // 预览钩子：核对屏只在登录后的乘车人页出现，我没法走到那儿。
+      // 有了它，本地一个测试页就能把这几屏渲染出来量尺寸、查溢出。
+    preview: {
+      order: (train, passengers) => renderOrderConfirm(train, passengers),
+      passengers: (people) => renderPassengerCards(people),
+      booking: () => renderBookingForm(),
+      trains: (trains) => renderTrainCards(trains)
+    }
   };
   open();
 })();
