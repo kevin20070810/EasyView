@@ -1399,6 +1399,71 @@
     body.appendChild(foot);
   }
 
+  /** 两个字符串的最长公共子串长度。标题和标签都是短句，O(n*m) 足矣。 */
+  function longestCommonRun(a, b) {
+    let best = 0;
+    for (let i = 0; i < a.length; i += 1) {
+      for (let j = 0; j < b.length; j += 1) {
+        let k = 0;
+        while (i + k < a.length && j + k < b.length && a[i + k] === b[j + k]) k += 1;
+        if (k > best) best = k;
+      }
+    }
+    return best;
+  }
+
+  /** 卡片标题和它指向的元素对不上时，改指向文字更像的那个。
+   *
+   * 实测过模型张冠李戴：卡片写「重点旅客预约」，目标却指到「遗失物品查找」。
+   * 这类页面上元素的文字往往就是卡片标题本身，所以能机械校回来，
+   * 不依赖模型输出稳定。
+   *
+   * 判据是【最长公共子串 >= 3 个字】，不是"标题前三个字"：
+   *   「找遗失物品」 vs 「遗失物品查找」   公共"遗失物品" 4 字 → 同一个东西，不动
+   *   「重点旅客预约」vs 「遗失物品查找」   公共 0 字          → 对不上，才去纠
+   * 早先用"标题前三个字"，会把上面第一种误判成错配，然后把本来正确的卡改坏 ——
+   * 一个"修复"比原问题更危险。
+   *
+   * 找不到明显更像的元素就保持原样。宁可不改，也不能瞎改。
+   */
+  function fixMismatchedTargets(ui, doc) {
+    const elements = doc.elements || [];
+    const norm = (x) => String(x || "").replace(/[\s我要的了吗？?！!，,。]/g, "");
+    // 取"给人看的短标签"。
+    // 不能拿 text 直接比：容器元素的 text 是整页文字，里面什么都有 ——
+    // 拿它比对，公共子串永远 >= 3，校验会把任何绑定都判成"对得上"而永不修正。
+    // （实测：目标指到 el_00000001 整页正文，标题「退改签」被判为匹配。）
+    const labelOf = (e) => {
+      if (!e) return "";
+      const short = norm(e.label || e.placeholder);
+      if (short) return short;
+      const text = norm(e.text);
+      return text.length <= 20 ? text : "";
+    };
+
+    for (const card of ui.cards || []) {
+      const action = card.action || {};
+      const title = norm(card.title);
+      if (title.length < 2 || !action.target_element_id) continue;
+      const target = elements.find((e) => e.id === action.target_element_id);
+      if (!target) continue;
+      const targetLabel = labelOf(target);
+      // 目标本身就没个像样标签（容器），不能据它判断，直接去找更合适的
+      if (targetLabel && longestCommonRun(title, targetLabel) >= 3) continue;
+      let best = null;
+      let bestRun = 2;                                          // 至少 3 个字才算数
+      for (const e of elements) {
+        if (!e.visible || e.id === action.target_element_id) continue;
+        const label = labelOf(e);
+        if (!label) continue;
+        const run = longestCommonRun(title, label);
+        if (run > bestRun) { bestRun = run; best = e; }
+      }
+      if (best) action.target_element_id = best.id;
+    }
+    return ui;
+  }
+
   /* ---------- 视图栈：每一步都能退回去 ----------
    *
    * 面板内的几个视图（卡片列表 → 购票表单）压成一个栈，
@@ -1639,6 +1704,8 @@
         generator: { mode: "model", prompt_version: reply.promptVersion || null, fallback_reason: null },
         droppedReport: dropped
       });
+      // 绑定之后校验一次：卡片标题和它指向的元素是否真的对得上
+      fixMismatchedTargets(ui, pendingElements);
       lastDropped = dropped;
       lastElementsJson = elementsJson;
     } catch (error) {
@@ -1722,6 +1789,11 @@
     });
   }
 
-  globalThis.EasyViewAI = { open };
+  globalThis.EasyViewAI = {
+    open,
+    // 测试钩子：让端到端测试能【确定性地】验证绑定校验，
+    // 而不是干等那个间歇性错配自己出现。
+    fixMismatchedTargets
+  };
   open();
 })();
