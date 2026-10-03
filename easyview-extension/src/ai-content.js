@@ -552,7 +552,9 @@
       const ids = [act.target_element_id, ...(prov.source_element_ids || [])];
       const group = stepsFromIds(ids, pendingElements);
       if (group.length >= 2) {
-        renderBookingSteps(group);
+        // 用户要的是在卡片里直接填，不是聚光灯。所以这里走表单卡片，
+        // 不再调用 renderBookingSteps（那套会收起面板去高亮页面）。
+        renderBookingForm();
         return;
       }
     }
@@ -1394,6 +1396,131 @@
     foot.appendChild(el("div", "ev-ai-foot-meta",
       `这一步全在本机完成，没有把网页内容发出去。EasyView v${chrome.runtime.getManifest().version}`));
     body.appendChild(foot);
+  }
+
+  /* ---------- 购票表单卡片 ----------
+   *
+   * 用户要的是"在卡片里直接填"，不是聚光灯指来指去。所以这里不再高亮页面，
+   * 而是把出发地/到达地/日期做成卡片里的输入框，填完点一下直接查车次。
+   *
+   * 为什么能真正驱动 12306：站点的站名不能直接写值（实测过，站码不会写入），
+   * 必须设置后再去点自动补全的候选。那套逻辑在 site/12306.js 里，
+   * 而它和本文件在【同一个隔离世界】（实测 EasyView12306 可见），所以直接调。
+   */
+  const BOOKFORM_CSS = `
+    .ev-bookform { display: grid; gap: 22px; padding: 26px 28px 24px;
+      border-radius: 26px;
+      background: linear-gradient(160deg, #eef7ff 0%, #ffffff 62%);
+      box-shadow: 0 12px 30px rgba(23,72,124,.14), inset 0 1px 0 rgba(255,255,255,.92); }
+    .ev-bf-field { display: grid; gap: 10px; }
+    .ev-bf-q { font-size: 28px; font-weight: 800; color: #10314f; }
+    .ev-bf-input { width: 100%; box-sizing: border-box; min-height: 76px;
+      padding: 14px 20px; border: 2px solid #b8d5ec; border-radius: 16px;
+      background: #fff; color: #10314f; font: 30px/1.2 "Microsoft YaHei", system-ui, sans-serif;
+      font-variant-numeric: tabular-nums; }
+    .ev-bf-input:focus { outline: none; border-color: #0b5cad;
+      box-shadow: 0 0 0 4px rgba(11,92,173,.16); }
+    .ev-bf-quick { display: flex; gap: 10px; flex-wrap: wrap; }
+    .ev-bf-quick button { font: 19px/1 "Microsoft YaHei", system-ui, sans-serif;
+      padding: 12px 18px; border: 2px solid #b8d5ec; border-radius: 999px;
+      background: #fff; color: #14507f; cursor: pointer; font-weight: 700; }
+    .ev-bf-quick button:hover { background: #f0f8ff; border-color: #7fb2dd; }
+    .ev-bf-go { min-height: 84px; border: 0; border-radius: 18px; cursor: pointer;
+      background: #0b5cad; color: #fff; font: 30px/1 "Microsoft YaHei", system-ui, sans-serif;
+      font-weight: 800; box-shadow: 0 10px 24px rgba(11,92,173,.28); }
+    .ev-bf-go:hover { background: #0a4e93; }
+    .ev-bf-go:disabled { opacity: .55; cursor: default; box-shadow: none; }
+    .ev-bf-msg { font-size: 20px; font-weight: 700; color: #8a4a12; min-height: 26px; }
+  `;
+
+  function dateValue(daysAhead) {
+    const d = new Date();
+    d.setDate(d.getDate() + daysAhead);
+    const pad = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  }
+
+  function renderBookingForm() {
+    const site = globalThis.EasyView12306;
+    const body = header("买火车票", "在这几格里填好，点下面的按钮就能查车次。");
+    const style = document.createElement("style");
+    style.textContent = BOOKFORM_CSS;
+    body.appendChild(style);
+
+    const box = el("div", "ev-bookform");
+
+    function field(question) {
+      const wrap = el("div", "ev-bf-field");
+      wrap.appendChild(el("div", "ev-bf-q", question));
+      const input = el("input", "ev-bf-input");
+      input.type = "text";
+      wrap.appendChild(input);
+      return { wrap, input };
+    }
+
+    const from = field("您要从哪里出发？");
+    const to = field("您要去哪里？");
+    const when = field("哪天走？");
+
+    // 用页面上已有的值预填，省得重填一遍
+    const page = (selector) => {
+      const n = document.querySelector(selector);
+      return n && n.value ? String(n.value).trim() : "";
+    };
+    const pageFrom = page("#fromStationText");
+    const pageTo = page("#toStationText");
+    const pageDate = page("#train_date");
+    if (pageFrom && !/简拼|全拼|汉字/.test(pageFrom)) from.input.value = pageFrom;
+    if (pageTo && !/简拼|全拼|汉字/.test(pageTo)) to.input.value = pageTo;
+    when.input.value = /^\d{4}-\d{2}-\d{2}$/.test(pageDate) ? pageDate : dateValue(1);
+
+    const quick = el("div", "ev-bf-quick");
+    for (const [label, days] of [["今天", 0], ["明天", 1], ["后天", 2]]) {
+      quick.appendChild(button(label, () => { when.input.value = dateValue(days); }));
+    }
+    when.wrap.appendChild(quick);
+
+    box.append(from.wrap, to.wrap, when.wrap);
+
+    const msg = el("div", "ev-bf-msg", "");
+    const go = el("button", "ev-bf-go", "查车次");
+    go.type = "button";
+    box.append(msg, go);
+    body.appendChild(box);
+
+    const foot = el("div", "ev-ai-foot");
+    foot.appendChild(el("div", "", "填的内容不会发到任何服务器，只在您这台电脑上用。"));
+    foot.appendChild(el("div", "ev-ai-foot-meta", `EasyView v${chrome.runtime.getManifest().version}`));
+    body.appendChild(foot);
+
+    go.addEventListener("click", async () => {
+      const dep = from.input.value.trim();
+      const arr = to.input.value.trim();
+      const date = when.input.value.trim();
+      if (!dep || !arr) { msg.textContent = "出发地和目的地都要填上。"; return; }
+      if (!site || typeof site.setDeparture !== "function") {
+        msg.textContent = "这个页面暂时填不了，请刷新后重试。";
+        return;
+      }
+      go.disabled = true;
+      msg.textContent = "正在填，稍等…";
+      try {
+        const a = await site.setDeparture(dep);
+        const b = await site.setArrival(arr);
+        const c = await site.setDate(date);
+        if (!a || !a.ok) { msg.textContent = `「${dep}」这个站名没填进去，换个写法试试（比如"北京南"）。`; go.disabled = false; return; }
+        if (!b || !b.ok) { msg.textContent = `「${arr}」这个站名没填进去，换个写法试试。`; go.disabled = false; return; }
+        if (!c || !c.ok) { msg.textContent = "日期没填进去，换个日期试试。"; go.disabled = false; return; }
+        msg.textContent = "填好了，正在查车次…";
+        await site.submitSearch();
+        close();
+      } catch (error) {
+        msg.textContent = "没能填进去，请刷新网页后重试。";
+        go.disabled = false;
+      }
+    });
+
+    from.input.focus();
   }
 
   /* ---------- 本地规则兜底 ---------- */
