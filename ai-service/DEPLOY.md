@@ -9,11 +9,11 @@
 ```bash
 sudo apt update
 sudo apt install -y git python3 python3-venv nginx snapd
-sudo install -d -o "$USER" -g "$USER" /opt/easyview
+sudo install -d -o "$USER" -g "$(id -gn)" /opt/easyview
 git clone --branch backend https://github.com/kevin20070810/EasyView.git /opt/easyview
 python3 -m venv /opt/easyview/.venv
 /opt/easyview/.venv/bin/pip install -r /opt/easyview/ai-service/requirements.txt
-sudo useradd --system --no-create-home --shell /usr/sbin/nologin easyview
+sudo useradd --system --user-group --no-create-home --shell /usr/sbin/nologin easyview
 sudo chown -R easyview:easyview /opt/easyview
 ```
 
