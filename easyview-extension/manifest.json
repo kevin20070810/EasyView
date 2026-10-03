@@ -6,7 +6,8 @@
   "permissions": ["activeTab", "scripting", "storage"],
   "host_permissions": [
     "http://127.0.0.1/*",
-    "http://localhost/*"
+    "http://localhost/*",
+    "https://*.12306.cn/*"
   ],
   "background": { "service_worker": "src/background.js" },
   "action": { "default_title": "为当前网页生成敬老版" },
@@ -17,6 +18,21 @@
     }
   },
   "content_scripts": [
+    {
+      "matches": [
+        "https://kyfw.12306.cn/otn/leftTicket/*",
+        "https://kyfw.12306.cn/otn/confirmPassenger/*"
+      ],
+      "js": [
+        "src/privacy.js",
+        "src/digest.js",
+        "src/binder.js",
+        "src/extract.js",
+        "src/ai-content.js"
+      ],
+      "css": [],
+      "run_at": "document_idle"
+    },
     {
       "matches": ["https://*.12306.cn/*"],
       "js": [
