@@ -1,7 +1,7 @@
 "use strict";
 
 const DEFAULT_TITLE = "为当前网页生成敬老版";
-const DEFAULT_ENDPOINT = "http://127.0.0.1:8787";
+const DEFAULT_ENDPOINT = "https://ev.jvda.online";
 const ANALYZE_TIMEOUT_MS = 120000;
 const PAGE_ZOOM_PREFIX = "easyview.pageZoom.";
 let speechOwner = null;
@@ -221,6 +221,7 @@ async function handlePageZoom(message, sender) {
  * 测试里再硬编码一份，加了文件忘了改测试，就会静默失效。 */
 const CONTENT_FILES = [
   "src/brand.js",
+  "src/site/pay-page.js",
   "src/privacy.js",
   "src/digest.js",
   "src/binder.js",

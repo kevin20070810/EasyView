@@ -17,7 +17,7 @@ EasyView 是一个 Chrome 扩展：在当前网页提取可见入口，生成少
 ## 本地使用
 
 1. 在 Chrome 的 `chrome://extensions` 开启开发者模式，加载 `easyview-extension/`。
-2. 如需模型生成，在仓库根目录安装依赖并启动服务：
+2. 扩展默认连接 `https://ev.jvda.online`；该服务要求访问令牌，设置方式见 [扩展说明](easyview-extension/README.md)。如需改用本地模型服务，在仓库根目录安装依赖并启动：
 
    ```powershell
    python -m pip install -r ai-service/requirements.txt

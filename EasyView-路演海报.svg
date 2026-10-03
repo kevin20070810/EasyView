@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1440" viewBox="0 0 1080 1440" role="img" aria-labelledby="title desc">
+<title id="title">简界 EasyView 路演海报</title>
+<desc id="desc">不改造网站，也能把复杂页面变成清晰的大字办事入口。</desc>
+<defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fbf8ef"/><stop offset="1" stop-color="#f0f4eb"/></linearGradient>
+  <linearGradient id="hero" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#e2f1e9"/><stop offset="1" stop-color="#d4eae5"/></linearGradient>
+  <linearGradient id="screen" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#ffffff"/><stop offset="1" stop-color="#f7fbf8"/></linearGradient>
+  <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#17434b" flood-opacity=".13"/></filter>
+  <pattern id="dots" width="24" height="24" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1.3" fill="#347566" opacity=".2"/></pattern>
+</defs>
+<rect width="1080" height="1440" fill="url(#bg)"/>
+<circle cx="990" cy="88" r="210" fill="#e6efe5" opacity=".7"/><circle cx="76" cy="638" r="140" fill="#f5ead6" opacity=".52"/>
+<!-- masthead -->
+<g transform="translate(72 58)"><rect width="54" height="54" rx="17" fill="#075f70"/><path d="M15 37V17h7l6 8 6-8h6v20h-7V27l-5 7-5-7v10z" fill="#fff"/><text x="70" y="25" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="23" font-weight="800" fill="#123e46">简界 <tspan fill="#62817b" font-size="18" font-weight="600">EASYVIEW</tspan></text><text x="70" y="49" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="15" letter-spacing="2" fill="#66827a">让数字生活更好办</text></g>
+<g transform="translate(766 68)"><rect width="242" height="42" rx="21" fill="#fff" stroke="#c9dbd0"/><circle cx="22" cy="21" r="6" fill="#eea04b"/><text x="40" y="27" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="16" font-weight="700" fill="#47665c">银龄数字生活 · 浏览器扩展</text></g>
+<!-- headline -->
+<text x="72" y="197" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="64" font-weight="900" letter-spacing="-2" fill="#163b42">让每一个网站</text>
+<text x="72" y="277" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="64" font-weight="900" letter-spacing="-2" fill="#075f70">都更容易办事</text>
+<rect x="74" y="303" width="63" height="7" rx="3.5" fill="#ed9b48"/>
+<text x="72" y="352" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="24" font-weight="600" fill="#4c6962">不改造网站，也能把复杂页面</text>
+<text x="72" y="387" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="24" font-weight="600" fill="#4c6962">变成看得懂、点得准的大字入口。</text>
+<!-- hero scene -->
+<rect x="72" y="423" width="936" height="312" rx="34" fill="url(#hero)"/>
+<rect x="72" y="423" width="936" height="312" rx="34" fill="url(#dots)" opacity=".7"/>
+<!-- curved transformation ribbon -->
+<path d="M150 652C284 650 333 610 438 610c74 0 99-39 163-45" fill="none" stroke="#8ab9a7" stroke-width="10" stroke-linecap="round" stroke-dasharray="2 20"/>
+<path d="m583 552 32 11-25 23" fill="none" stroke="#4c947e" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+<!-- browser card -->
+<g filter="url(#shadow)"><rect x="134" y="470" width="377" height="221" rx="19" fill="#fff"/><path d="M153 470h339a19 19 0 0 1 19 19v23H134v-23a19 19 0 0 1 19-19" fill="#eaf1ee"/><circle cx="157" cy="493" r="4" fill="#de8d64"/><circle cx="172" cy="493" r="4" fill="#e9c474"/><circle cx="187" cy="493" r="4" fill="#7fb49c"/><rect x="210" y="486" width="236" height="13" rx="6" fill="#d4e0da"/>
+<rect x="157" y="530" width="328" height="14" rx="7" fill="#dce5df"/><rect x="157" y="556" width="247" height="10" rx="5" fill="#e7ece8"/>
+<g opacity=".86"><rect x="157" y="584" width="99" height="48" rx="9" fill="#f5f0e9"/><rect x="270" y="584" width="99" height="48" rx="9" fill="#eef1ec"/><rect x="383" y="584" width="102" height="48" rx="9" fill="#f5f0e9"/></g>
+<rect x="157" y="648" width="328" height="8" rx="4" fill="#e7ece8"/></g>
+<!-- direction / simplified task cards -->
+<g filter="url(#shadow)"><rect x="557" y="454" width="296" height="255" rx="23" fill="url(#screen)"/><rect x="581" y="477" width="51" height="51" rx="16" fill="#dff0e7"/><path d="M597 503l8 8 15-18" fill="none" stroke="#258269" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="646" y="497" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="18" font-weight="800" fill="#22494a">您好，这里可以办理</text><text x="646" y="521" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="14" fill="#7a9188">为您找到常用服务</text>
+<rect x="581" y="546" width="247" height="45" rx="13" fill="#075f70"/><circle cx="603" cy="568" r="10" fill="#b9e1d0"/><path d="M599 568h8m-4-4v8" stroke="#075f70" stroke-width="2"/><text x="622" y="575" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="19" font-weight="800" fill="#fff">我要挂号</text><path d="m803 562 7 6-7 6" fill="none" stroke="#d4eee3" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="581" y="601" width="247" height="43" rx="13" fill="#eff6f1"/><circle cx="603" cy="622" r="9" fill="#c7e7d7"/><path d="M599 622h8m-4-4v8" stroke="#378d74" stroke-width="2"/><text x="622" y="628" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="18" font-weight="700" fill="#285d57">查看检查报告</text>
+<rect x="581" y="653" width="247" height="38" rx="12" fill="#eff6f1"/><circle cx="603" cy="672" r="8" fill="#c7e7d7"/><text x="622" y="678" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="17" font-weight="700" fill="#285d57">联系医院</text>
+</g>
+<!-- friendly human portrait -->
+<g transform="translate(873 478)"><circle cx="65" cy="64" r="53" fill="#f6dfc3"/><path d="M22 139c5-36 23-54 47-54s42 18 47 54v61H22z" fill="#26756a"/><path d="M39 62c0-29 14-46 34-46 23 0 39 19 39 47 0 8-2 17-4 23H43c-2-7-4-15-4-24" fill="#f7f5e9"/><ellipse cx="67" cy="65" rx="29" ry="34" fill="#e7ae83"/><path d="M39 60c1-28 14-43 34-43 19 0 34 15 38 40-14-3-24-13-29-21-10 13-24 20-43 24" fill="#f7f5e9"/><path d="M53 70h3m24 0h3" stroke="#48514b" stroke-width="4" stroke-linecap="round"/><path d="M61 85q8 7 17 0" fill="none" stroke="#a95748" stroke-width="2.5" stroke-linecap="round"/><path d="M46 100l20 18 20-18" fill="#fff3df"/><path d="M42 132c18-10 42-10 60 0" fill="none" stroke="#f2a757" stroke-width="5" stroke-linecap="round"/></g>
+<!-- proof / metrics -->
+<g transform="translate(72 765)"><rect width="936" height="112" rx="23" fill="#fff" stroke="#e3e8de"/><path d="M312 24v64M624 24v64" stroke="#e7ebe3" stroke-width="2"/>
+<text x="156" y="55" text-anchor="middle" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="35" font-weight="900" fill="#075f70">1 次点击</text><text x="156" y="82" text-anchor="middle" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="16" fill="#71867c">从当前网页开始</text>
+<text x="468" y="55" text-anchor="middle" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="35" font-weight="900" fill="#075f70">本人做主</text><text x="468" y="82" text-anchor="middle" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="16" fill="#71867c">关键操作由本人确认</text>
+<text x="780" y="55" text-anchor="middle" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="35" font-weight="900" fill="#075f70">4 类专版</text><text x="780" y="82" text-anchor="middle" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="16" fill="#71867c">交通 · 通信 · 天气 · 邮政</text></g>
+<!-- features -->
+<text x="72" y="937" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="32" font-weight="900" fill="#173e44">不只是放大字体，更是把事说清楚</text>
+<g transform="translate(72 965)">
+<g><rect width="294" height="133" rx="19" fill="#fff"/><circle cx="34" cy="34" r="18" fill="#dff0e7"/><path d="M26 34h16m-8-8v16" stroke="#237c68" stroke-width="3" stroke-linecap="round"/><text x="64" y="40" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="21" font-weight="800" fill="#173e44">一页读懂 · 大字办事</text><text x="24" y="79" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="16" fill="#637a72">梳理挂号、查报告、缴费等</text><text x="24" y="104" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="16" fill="#637a72">真实入口；可朗读、调大网页。</text></g>
+<g transform="translate(321)"><rect width="294" height="133" rx="19" fill="#fff"/><circle cx="34" cy="34" r="18" fill="#f7ebd9"/><path d="M34 22v14m0 7v1" stroke="#bf7840" stroke-width="3.5" stroke-linecap="round"/><text x="64" y="40" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="21" font-weight="800" fill="#173e44">关键操作 · 用户做主</text><text x="24" y="79" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="16" fill="#637a72">敏感入口先确认；支付、提交</text><text x="24" y="104" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="16" fill="#637a72">仍在原站由本人办理。</text></g>
+<g transform="translate(642)"><rect width="294" height="133" rx="19" fill="#fff"/><circle cx="34" cy="34" r="18" fill="#e4ecf4"/><path d="M24 34h20M34 24v20" stroke="#477795" stroke-width="3" stroke-linecap="round"/><text x="64" y="40" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="21" font-weight="800" fill="#173e44">尊重现场 · 就地适配</text><text x="24" y="79" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="16" fill="#637a72">读取用户当前页面；不靠服务端</text><text x="24" y="104" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="16" fill="#637a72">重抓网页，保留官方流程。</text></g></g>
+<!-- site strip -->
+<g transform="translate(72 1121)"><text x="0" y="26" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="17" font-weight="700" fill="#6d8179">已制作专用适老入口</text><g transform="translate(0 43)" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="17" font-weight="800"><rect width="211" height="42" rx="21" fill="#e4eff4"/><text x="105" y="27" text-anchor="middle" fill="#276184">12306 · 铁路出行</text><rect x="226" width="211" height="42" rx="21" fill="#f7e6ef"/><text x="331" y="27" text-anchor="middle" fill="#a53b70">中国移动 · 通信</text><rect x="452" width="211" height="42" rx="21" fill="#e5f0e3"/><text x="557" y="27" text-anchor="middle" fill="#367950">中国天气网 · 天气</text><rect x="678" width="211" height="42" rx="21" fill="#e7eee4"/><text x="783" y="27" text-anchor="middle" fill="#357047">中国邮政 · 邮政</text></g></g>
+<!-- footer -->
+<path d="M72 1234h936" stroke="#d9e2d8" stroke-width="2"/>
+<text x="72" y="1272" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="18" font-weight="800" fill="#173e44">简界 EasyView</text><text x="72" y="1302" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="15" fill="#71867c">让数字生活更好办 · 当前产品阶段：Chrome 扩展原型</text>
+<rect x="690" y="1250" width="318" height="52" rx="15" fill="#edf2eb"/><text x="849" y="1272" text-anchor="middle" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="14" font-weight="700" fill="#47685c">本地规则可用 · 模型增强待接入</text><text x="849" y="1291" text-anchor="middle" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="12" fill="#72877e">分析服务当前需本地启动，尚未线上部署</text>
+<text x="72" y="1370" font-family="Microsoft YaHei,Noto Sans CJK SC,sans-serif" font-size="12" fill="#9aa79e">概念展示 · 页面可用性与语义效果仍需持续验证</text>
+</svg>
+
+
+

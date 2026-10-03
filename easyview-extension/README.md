@@ -21,16 +21,15 @@ Manifest V3 扩展。每次更新扩展代码或资源，都递增 [manifest.jso
 
 ## 分析服务设置
 
-默认地址是 `http://127.0.0.1:8787`。云端配置见 [部署说明](../ai-service/DEPLOY.md)。在扩展的 Service Worker DevTools 控制台设置：
+默认地址是 `https://ev.jvda.online`。该服务的 `/draft` 接口需要访问令牌；服务根路径返回 404 是正常的，`/health` 才是状态接口。云端配置见 [部署说明](../ai-service/DEPLOY.md)。在扩展的 Service Worker DevTools 控制台设置令牌：
 
 ```js
 await chrome.storage.local.set({
-  "easyview.aiEndpoint": "https://你的域名",
   "easyview.accessToken": "云端设置的访问令牌"
 });
 ```
 
-本地无令牌服务可以只设置 `easyview.aiEndpoint`。设置后刷新目标网页；若刚更新扩展代码，还需在 `chrome://extensions` 刷新扩展。
+若曾手动设置旧地址，还需执行 `await chrome.storage.local.remove("easyview.aiEndpoint")`，让新默认地址生效。本地调试时可将 `easyview.aiEndpoint` 设为 `http://127.0.0.1:8787`。设置后刷新目标网页；若刚更新扩展代码，还需在 `chrome://extensions` 刷新扩展。不要把访问令牌写进扩展源码或上传到 GitHub。
 
 ## 目录
 

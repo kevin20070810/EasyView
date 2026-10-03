@@ -1793,6 +1793,93 @@
     });
   }
 
+  /* ---------- 支付页大字核对（风险最高的一块）----------
+   *
+   * 别的功能指错了，老人最多白跑一趟；这一块指错了是钱没了。
+   * 所以：
+   *   - 认不认得出来由 site/pay-page.js 决定，读不到金额就返回 null，这里根本不会跑
+   *   - 这一屏只做两件事：把【金额和收款方】放到最大，然后把支付按钮框出来
+   *   - 绝不代点。手指头必须是老人自己的
+   */
+  const PAYCHECK_CSS = `
+    .ev-pay { display: grid; gap: 0; overflow: hidden; border-radius: 26px;
+      background:
+        radial-gradient(120% 90% at 8% 0%, #ffffff 0%, rgba(255,255,255,0) 60%),
+        linear-gradient(160deg, #fff4e8 0%, #fffaf4 46%, #ffffff 100%);
+      box-shadow: 0 14px 34px rgba(124,72,23,.16), 0 2px 6px rgba(124,72,23,.07),
+                  inset 0 1px 0 rgba(255,255,255,.92);
+      color: #3d2607;
+      font: 20px/1.45 "Microsoft YaHei", "PingFang SC", system-ui, sans-serif; }
+    .ev-pay-sec { display: grid; gap: 8px; padding: 24px 30px;
+      border-bottom: 1px solid rgba(124,72,23,.12); }
+    .ev-pay-label { font-size: 17px; font-weight: 700; letter-spacing: .08em; color: #a1753c; }
+    .ev-pay-amount { font-size: 64px; font-weight: 800; line-height: 1.05; color: #b3521a;
+      font-variant-numeric: tabular-nums; }
+    .ev-pay-amount small { font-size: 30px; font-weight: 700; margin-right: 6px; }
+    .ev-pay-payee { font-size: 36px; font-weight: 800; color: #3d2607; }
+    .ev-pay-unknown { font-size: 26px; font-weight: 700; color: #8a4a12; }
+    .ev-pay-warn { padding: 18px 30px; background: rgba(179,82,26,.08);
+      font-size: 21px; font-weight: 700; color: #8a4a12; line-height: 1.5; }
+    .ev-pay .ev-confirm-go { margin: 22px 30px 26px; background: #b3521a;
+      box-shadow: 0 12px 28px rgba(179,82,26,.3); }
+    .ev-pay .ev-confirm-go:hover { background: #994314; }
+    .ev-pay .ev-confirm-msg { margin: 0 30px; }
+  `;
+
+  function renderPayCheck(info) {
+    const body = backBar(header("请核对后再付款", "看清楚金额和收款方，对得上再点。"));
+    const style = document.createElement("style");
+    style.textContent = PAYCHECK_CSS + TRAINCONFIRM_CSS;
+    body.appendChild(style);
+
+    const card = el("div", "ev-pay");
+
+    const sec1 = el("div", "ev-pay-sec");
+    sec1.appendChild(el("div", "ev-pay-label", "要付多少钱"));
+    const amount = el("div", "ev-pay-amount");
+    amount.append(el("small", "", "¥"), info.amount);
+    sec1.appendChild(amount);
+    card.appendChild(sec1);
+
+    const sec2 = el("div", "ev-pay-sec");
+    sec2.appendChild(el("div", "ev-pay-label", "付给谁"));
+    if (info.payee) {
+      sec2.appendChild(el("div", "ev-pay-payee", info.payee));
+    } else {
+      // 读不到收款方就如实说，不编一个名字糊弄过去
+      sec2.appendChild(el("div", "ev-pay-unknown", "这一页上没写收款方，请自己看清楚"));
+    }
+    card.appendChild(sec2);
+
+    card.appendChild(el("div", "ev-pay-warn",
+      "钱一旦付出去就要不回来。看不明白就先别点，问一下家里人。"));
+
+    const msg = el("div", "ev-confirm-msg", "");
+    const go = el("button", "ev-confirm-go", "对得上，去付款");
+    go.type = "button";
+    card.append(msg, go);
+
+    const box = el("div", "ev-ai-paybox");
+    box.appendChild(card);
+    body.appendChild(box);
+
+    const foot = el("div", "ev-ai-foot");
+    foot.appendChild(el("div", "", "下面的按钮不会替您付款，只会把原网页上的支付按钮指给您。"));
+    foot.appendChild(el("div", "ev-ai-foot-meta",
+      `EasyView v${chrome.runtime.getManifest().version}`));
+    body.appendChild(foot);
+
+    go.addEventListener("click", () => {
+      if (!info.button || !info.button.isConnected) {
+        msg.textContent = "原网页上的支付按钮找不到了，请刷新后重试。";
+        return;
+      }
+      // 压暗整页，把支付按钮框出来批注 —— 但绝不代点
+      spotlightNode(info.button, "最后一步，看清楚再点",
+        `原网页上这个「${info.buttonLabel}」按钮，按不按由您决定。`);
+    });
+  }
+
   /* ---------- 提交订单前的大字核对 ----------
    *
    * 用户同意不做"支付页”，而是在【提交订单之前】给一屏大字核对 ——
@@ -2360,6 +2447,25 @@
       resolveElement = extracted.resolve;
       // 去掉同名的隐藏副本：模型可能挑中隐藏那份，"滚动+高亮"就白做了
       pendingElements = stripHiddenDuplicates(extracted.elements);
+
+      // 支付页：风险最高的一块，最先判。
+      // detect() 读不到金额就返回 null —— 那种情况这里什么都不会发生，
+      // 页面照常走通用卡片，绝不出现"没看清金额就引导付款"。
+      if (globalThis.EasyViewPayPage) {
+        let payInfo = null;
+        try {
+          payInfo = globalThis.EasyViewPayPage.detect();
+        } catch (_) {
+          payInfo = null;
+        }
+        if (payInfo) {
+          lastPayload = null;
+          busy = false;
+          viewStack.length = 0;
+          showView(renderPayCheck, payInfo);
+          return;
+        }
+      }
 
       // 12306 乘车人页：乘车人也是结构化数据，本地读，不调模型不用同意。
       // 这一页要登录，自动化测试进不去，所以解析器允许读不到 ——

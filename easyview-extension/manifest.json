@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "EasyView 简界 · 敬老版",
-  "version": "0.48.0",
+  "version": "0.49.0",
   "description": "为常用网站提供敬老版，并可在当前网页生成候选敬老版。",
   "permissions": ["activeTab", "scripting", "storage", "tts"],
   "host_permissions": [
@@ -46,6 +46,7 @@
         "src/brand.js",
         "src/site/train-list.js",
         "src/site/passenger-list.js",
+        "src/site/pay-page.js",
         "src/privacy.js",
         "src/digest.js",
         "src/binder.js",
