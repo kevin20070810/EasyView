@@ -8,6 +8,13 @@ let speechOwner = null;
 let pendingSpeech = null;
 let speechRequest = 0;
 
+chrome.runtime.onInstalled.addListener((details) => {
+  if (details.reason !== "install") return;
+  chrome.tabs.create({ url: chrome.runtime.getURL("setup.html") }, () => {
+    void chrome.runtime.lastError;
+  });
+});
+
 function speechEvent(owner, state, extra = {}) {
   chrome.tabs.sendMessage(owner.tabId, {
     type: "easyview:speech-event",

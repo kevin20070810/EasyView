@@ -2,6 +2,8 @@
 
 EasyView 是一个 Chrome 扩展：在当前网页提取可见入口，生成少量面向老人的任务卡，并将用户带回原网页办理。它不代替原站登录、付款或提交。
 
+**评委入口：**[打开 EasyView 体验页](https://ev.jvda.online/)；页面可查看交互界面示意并下载插件体验包。安装 Chrome 扩展后，在自动打开的设置页输入团队提供的评委体验码，即可在普通网页上使用模型版敬老模式。浏览器安装步骤见[扩展说明](easyview-extension/README.md)。网页示意不等于在该网页运行插件。
+
 ## 当前架构
 
 | 路径 | 作用 |
@@ -17,7 +19,7 @@ EasyView 是一个 Chrome 扩展：在当前网页提取可见入口，生成少
 ## 本地使用
 
 1. 在 Chrome 的 `chrome://extensions` 开启开发者模式，加载 `easyview-extension/`。
-2. 扩展默认连接 `https://ev.jvda.online`；该服务要求访问令牌，设置方式见 [扩展说明](easyview-extension/README.md)。如需改用本地模型服务，在仓库根目录安装依赖并启动：
+2. 扩展默认连接 `https://ev.jvda.online`；该服务要求体验码，首次安装的设置页可直接输入。设置方式见 [扩展说明](easyview-extension/README.md)。如需改用本地模型服务，在仓库根目录安装依赖并启动：
 
    ```powershell
    python -m pip install -r ai-service/requirements.txt
@@ -25,7 +27,7 @@ EasyView 是一个 Chrome 扩展：在当前网页提取可见入口，生成少
    python ai-service/app.py --host 127.0.0.1 --port 8787
    ```
 
-3. 打开普通 HTTP(S) 网页，点击页面快捷入口或扩展图标。服务未运行时可选择本地规则版。
+3. 打开普通 HTTP(S) 网页，点击页面快捷入口或扩展图标。服务不可用或令牌尚未配置时，可选择本地规则版。
 
 模型默认使用 OpenAI 兼容接口；`EASYVIEW_BASE_URL` 和 `EASYVIEW_MODEL` 可按服务商配置。密钥仅放环境变量，不写入仓库。
 

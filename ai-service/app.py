@@ -17,9 +17,11 @@ from __future__ import annotations
 
 import argparse
 import hmac
+import io
 import json
 import os
 import sys
+import zipfile
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any, Mapping
@@ -41,6 +43,28 @@ except ImportError:  # 允许从仓库根目录以包方式导入
 MAX_BODY_BYTES = 8 * 1024 * 1024
 # 说明书是压缩过的精选文字，正常几 KB；给足余量但别让人拿它当文件上传通道
 MAX_DIGEST_CHARS = 200_000
+SERVICE_DIR = Path(__file__).resolve().parent
+EXTENSION_DIR = SERVICE_DIR.parent / "easyview-extension"
+
+
+def _extension_archive() -> tuple[bytes, str]:
+    """把运行插件所需文件打成可直接解压的目录，不包含测试工具或密钥。"""
+    manifest_path = EXTENSION_DIR / "manifest.json"
+    version = json.loads(manifest_path.read_text(encoding="utf-8"))["version"]
+    files = [
+        EXTENSION_DIR / name
+        for name in ("manifest.json", "README.md", "setup.html", "setup.js", "setup.css")
+    ]
+    for folder in ("src", "assets"):
+        files.extend(
+            path for path in sorted((EXTENSION_DIR / folder).rglob("*"))
+            if path.is_file() and not path.name.startswith(".")
+        )
+    output = io.BytesIO()
+    with zipfile.ZipFile(output, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+        for path in files:
+            archive.write(path, f"EasyView/{path.relative_to(EXTENSION_DIR).as_posix()}")
+    return output.getvalue(), f"EasyView-{version}.zip"
 
 
 def _ai_client() -> OpenAICompatibleClient:
@@ -91,6 +115,21 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(data)
 
+    def _bytes(self, status: int, data: bytes, content_type: str, filename: str = "") -> None:
+        self._headers(status, content_type)
+        self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header("Content-Length", str(len(data)))
+        if filename:
+            self.send_header("Content-Disposition", f'attachment; filename="{filename}"')
+        if content_type.startswith("text/html"):
+            self.send_header(
+                "Content-Security-Policy",
+                "default-src 'none'; style-src 'unsafe-inline'; img-src 'self'; "
+                "base-uri 'none'; frame-ancestors 'none'",
+            )
+        self.end_headers()
+        self.wfile.write(data)
+
     def _error(self, status: int, message: str, code: str = "bad_request") -> None:
         self._json(status, {"ok": False, "error": {"code": code, "message": message}})
 
@@ -100,6 +139,42 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self) -> None:  # noqa: N802
         path = urlparse(self.path).path
+        if path == "/access/check":
+            access_token = os.getenv("EASYVIEW_ACCESS_TOKEN", "").strip()
+            if not access_token:
+                self._error(503, "服务尚未配置体验码", "unavailable")
+                return
+            provided = self.headers.get("Authorization", "")
+            if not hmac.compare_digest(provided, f"Bearer {access_token}"):
+                self._error(401, "访问令牌无效", "unauthorized")
+                return
+            self._headers(204)
+            self.end_headers()
+            return
+        if path in ("/", "/index.html"):
+            try:
+                page = (SERVICE_DIR / "public" / "index.html").read_bytes()
+            except OSError:
+                self._error(500, "体验页暂不可用", "internal_error")
+                return
+            self._bytes(200, page, "text/html; charset=utf-8")
+            return
+        if path == "/icon.png":
+            try:
+                icon = (EXTENSION_DIR / "assets" / "easyview-icon-128.png").read_bytes()
+            except OSError:
+                self._error(500, "图标暂不可用", "internal_error")
+                return
+            self._bytes(200, icon, "image/png")
+            return
+        if path == "/download/easyview-extension.zip":
+            try:
+                archive, filename = _extension_archive()
+            except (OSError, ValueError, KeyError, zipfile.BadZipFile):
+                self._error(500, "安装包暂不可用", "internal_error")
+                return
+            self._bytes(200, archive, "application/zip", filename)
+            return
         if path == "/health":
             config = LlmConfig.from_env()
             self._json(200, {

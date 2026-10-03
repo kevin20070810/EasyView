@@ -1,6 +1,8 @@
 # 云服务器配置（Ubuntu + Nginx）
 
-云端运行 `ai-service/`。Chrome 扩展留在用户电脑上；`backend/` 不是线上服务。为方便安装，可以在服务器克隆整个仓库，实际进程只运行 `ai-service/app.py`；`/analyze` 的校验还会读取 `docs/drafts/ui-schema-0.3/` 和 `docs/elements.schema.json`。
+云端运行 `ai-service/`。Chrome 扩展留在用户电脑上；`backend/` 不是线上服务。为方便安装，可以在服务器克隆整个仓库，实际进程只运行 `ai-service/app.py`；体验页的下载接口会读取 `easyview-extension/`，`/analyze` 的校验还会读取 `docs/drafts/ui-schema-0.3/` 和 `docs/elements.schema.json`。
+
+公开 `GET /` 是评委体验页，`GET /download/easyview-extension.zip` 动态打包当前仓库的扩展文件；两者不需要访问令牌。设置页通过 `GET /access/check` 验证体验码，不触发模型调用。`POST /draft` 和 `POST /analyze` 仍由 `EASYVIEW_ACCESS_TOKEN` 保护。
 
 以下以 `api.example.com` 为例，请换成你的域名。先把域名 A/AAAA 记录指向服务器，并在云平台安全组开放 22、80、443；**不要开放 8787**。需要能访问模型服务的出站网络。
 
