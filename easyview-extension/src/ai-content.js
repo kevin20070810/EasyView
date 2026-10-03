@@ -1022,16 +1022,18 @@
       font-size: 22px; font-weight: 700; color: #0b5cad; }
 
     /* 筛选：只用大按钮，不用下拉框、不用输入框 ——
-       老人不该为了筛个时间还得打字或者展开菜单。 */
-    .ev-trainfilter { display: flex; gap: 12px; flex-wrap: wrap; align-items: center;
-      margin: 0 0 18px; }
+       老人不该为了筛个车还得打字或者展开菜单。
+       两行、各带标签：车型 / 出发时段，两个维度独立叠加。 */
+    .ev-trainfilters { display: grid; gap: 10px; margin: 0 0 20px; }
+    .ev-trainfilter { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    .ev-filterlabel { flex: 0 0 96px; font-size: 20px; font-weight: 700; color: #3d6a92; }
     .ev-trainfilter button {
       font: 21px/1 "Microsoft YaHei", system-ui, sans-serif;
-      padding: 15px 24px; border: 2px solid #bcd7ee; border-radius: 999px;
+      padding: 14px 22px; border: 2px solid #bcd7ee; border-radius: 999px;
       background: #fff; color: #14507f; cursor: pointer; font-weight: 700; }
     .ev-trainfilter button:hover { border-color: #7fb2dd; background: #f2f9ff; }
     .ev-trainfilter button.ev-on { background: #0b5cad; border-color: #0b5cad; color: #fff; }
-    .ev-trainfilter .ev-traincount { margin-left: auto; font-size: 20px; color: #4a7ba6; font-weight: 700; }
+    .ev-traincount { justify-self: end; font-size: 20px; color: #4a7ba6; font-weight: 700; }
   `;
 
   function renderTrainCards(trains) {
@@ -1042,18 +1044,33 @@
     style.textContent = TRAIN_CSS;
     body.appendChild(style);
 
-    // ---- 筛选：只用大按钮。老人不该为了筛个时间还得打字或展开菜单 ----
-    const bar = el("div", "ev-trainfilter");
-    const count = el("span", "ev-traincount", "");
-    const FILTERS = [
+    // ---- 筛选：只用大按钮。老人不该为了筛个车还得打字或展开菜单 ----
+    // 两维独立叠加：车型 × 出发时段。每行各自有一个「全部」。
+    const pairs = [];
+    const state = { kind: "all", time: "all" };
+
+    const KINDS = [
+      { key: "all", label: "全部" },
+      { key: "gaotie", label: "高铁" },
+      { key: "dongche", label: "动车" },
+      { key: "putong", label: "火车" },
+    ];
+    const TIMES = [
       { key: "all", label: "全部" },
       { key: "morning", label: "上午出发" },
       { key: "afternoon", label: "下午出发" },
       { key: "evening", label: "晚上出发" },
     ];
-    const pairs = [];
 
-    function matches(train, key) {
+    /** 车次首字母就是车型：G 高铁、D 动车、C 城际（也算动车组），其余是普速。 */
+    function kindOf(code) {
+      const head = String(code || "").trim().charAt(0).toUpperCase();
+      if (head === "G") return "gaotie";
+      if (head === "D" || head === "C") return "dongche";
+      return "putong";
+    }
+
+    function timeOk(train, key) {
       if (key === "all") return true;
       const hour = Number(String(train.depart || "00:00").split(":")[0]);
       if (Number.isNaN(hour)) return true;
@@ -1062,26 +1079,42 @@
       return hour >= 18;
     }
 
-    function applyFilter(key) {
+    const count = el("span", "ev-traincount", "");
+
+    function applyFilter() {
       let shown = 0;
       for (const pair of pairs) {
-        const ok = matches(pair.train, key);
+        const ok = (state.kind === "all" || kindOf(pair.train.code) === state.kind)
+          && timeOk(pair.train, state.time);
         pair.node.style.display = ok ? "" : "none";
         if (ok) shown += 1;
       }
-      count.textContent = `现在显示 ${shown} 趟`;
-      for (const b of bar.querySelectorAll("button")) {
-        b.classList.toggle("ev-on", b.dataset.key === key);
-      }
+      count.textContent = shown ? `现在显示 ${shown} 趟` : "这个条件下没有车次";
     }
 
-    for (const f of FILTERS) {
-      const b = button(f.label, () => applyFilter(f.key));
-      b.dataset.key = f.key;
-      bar.appendChild(b);
+    function makeRow(label, options, dim) {
+      const row = el("div", "ev-trainfilter");
+      row.appendChild(el("span", "ev-filterlabel", label));
+      for (const opt of options) {
+        const b = button(opt.label, () => {
+          state[dim] = opt.key;
+          for (const other of row.querySelectorAll("button")) {
+            other.classList.toggle("ev-on", other.dataset.key === opt.key);
+          }
+          applyFilter();
+        });
+        b.dataset.key = opt.key;
+        if (opt.key === "all") b.classList.add("ev-on");
+        row.appendChild(b);
+      }
+      return row;
     }
-    bar.appendChild(count);
-    body.appendChild(bar);
+
+    const bars = el("div", "ev-trainfilters");
+    bars.appendChild(makeRow("车型", KINDS, "kind"));
+    bars.appendChild(makeRow("出发时段", TIMES, "time"));
+    bars.appendChild(count);
+    body.appendChild(bars);
 
     const wrap = el("div", "ev-trains");
     for (const t of trains) {
@@ -1138,7 +1171,7 @@
     const box = el("div", "ev-ai-trainbox");
     box.appendChild(wrap);
     body.appendChild(box);
-    applyFilter("all");
+    applyFilter();
 
     const foot = el("div", "ev-ai-foot");
     foot.appendChild(el("div", "", "看好了就点那一趟，我们会带您到原网页的「预订」。"));

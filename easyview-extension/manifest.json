@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "EasyView 简界 · 敬老版",
-  "version": "0.17.0",
+  "version": "0.18.0",
   "description": "为常用网站提供敬老版，并可在当前网页生成候选敬老版。",
   "permissions": ["activeTab", "scripting", "storage"],
   "host_permissions": [
