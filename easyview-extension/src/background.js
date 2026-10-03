@@ -247,26 +247,14 @@ async function handleActionClick(tab) {
   }
 
   try {
-    const rootId = dedicatedRootFor(url);
-    if (rootId) {
-      const results = await chrome.scripting.executeScript({
-        target: { tabId },
-        func: openDedicatedOverlay,
-        args: [rootId]
-      });
-      const state = results.find(({ result }) => typeof result === "string")?.result;
-      // 第一次点：开专用敬老版 —— 它对这几个站点做得更深，能真正替你操作原页面。
-      // 再点一次：切到 AI 通用版。不加这一条，AI 路径在这几个站点上永远看不到 ——
-      // 之前就卡在这里：代码没问题、测试也过，但用户点图标走的一直是专用分支。
-      // 专用版没起来时（state === "missing"）也落到 AI，而不是只弹个错误提示。
-      if (state === "opened") return;
-      if (state === "missing") {
-        console.warn("[EasyView] 专用敬老版不可用，改用 AI 通用版");
-      }
-    }
-
-    // 通用网页：本地提取 → 本地生成说明书并脱敏 → 用户同意
-    //          → 分析服务只回任务草稿 → 本地绑定 → 渲染
+    // 图标点击一律打开 AI 通用版，专用站点也不例外。
+    //
+    // 专用站点的手写敬老版并没有被删掉 —— 它是 content_scripts 注册的，
+    // 仍然会在 12306 / 10086 / 天气 / 邮政 页面上挂自己的「敬老版」悬浮入口，
+    // 需要它那套深度操作（真正替你填表）时点那个就行。
+    //
+    // 之前这里是「先开专用版、成功就 return」，结果是：在 12306 上点图标
+    // 永远看到的是手写版，AI 版和步骤引导完全不可达。
     await chrome.scripting.executeScript({
       target: { tabId },
       files: CONTENT_FILES
