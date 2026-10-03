@@ -46,6 +46,7 @@
   let host = null;
   let shadow = null;
   let panel = null;
+  let brandTheme = null;
   let previousFocus = null;
   let resolveElement = null;
   let currentUi = null;
@@ -203,6 +204,17 @@
     `;
     shadow.appendChild(extra);
 
+    // 通用网页也复用同一套品牌提取：变量写在宿主元素上，继承进 Shadow DOM。
+    try {
+      if (window.EasyViewBrand) {
+        brandTheme = window.EasyViewBrand.extract();
+        window.EasyViewBrand.apply(brandTheme, host);
+      }
+    } catch (error) {
+      brandTheme = null;
+      console.warn("[EasyView] Brand tokens unavailable, using defaults.", error);
+    }
+
     const overlay = el("div", "ev-overlay ev-generic");
     overlay.setAttribute("role", "dialog");
     overlay.setAttribute("aria-modal", "true");
@@ -241,13 +253,21 @@
   function header(title, summary) {
     panel.replaceChildren();
     const bar = el("header", "ev-header");
-    const copy = el("div");
+    const brand = el("div", "ev-brandline");
+    // 通用层的标题是问候语（不是站名），所以这里只加 Logo，不做标题隐藏。
+    if (brandTheme && brandTheme.logoUrl && window.EasyViewBrand) {
+      const slot = el("div", "ev-logoslot");
+      window.EasyViewBrand.mountLogo(slot, brandTheme, { textFallback: false });
+      if (slot.childNodes.length) brand.append(slot);
+    }
+    const copy = el("div", "ev-brandcopy");
     copy.append(el("h1", "", title));
     if (summary) copy.append(el("p", "", summary));
+    brand.append(copy);
     const exit = el("button", "ev-exit", "退出敬老版");
     exit.type = "button";
     exit.addEventListener("click", close);
-    bar.append(copy, exit);
+    bar.append(brand, exit);
     panel.appendChild(bar);
     const body = el("div", "ev-content");
     panel.appendChild(body);

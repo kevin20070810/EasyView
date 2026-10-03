@@ -6,7 +6,7 @@
 交给分析服务理解，再渲染成几张老人看得懂的大按钮卡片。理解由模型完成，服务不可用时自动退回本地规则版。
 
 **专用站点（扩展内置，不联网）**：在中国铁路 12306、中国移动、中国天气网和中国邮政显示专用大字敬老版覆盖层。
-当前匹配 `https://*.12306.cn/*`、`https://www.10086.cn/*`、`https://shop.10086.cn/*`、`https://www.weather.com.cn/*`、`https://www.11185.cn/*` 和 `https://11185.cn/*`。
+当前匹配 `https://*.12306.cn/*`、`https://10086.cn/*`、`https://*.10086.cn/*`、`https://www.weather.com.cn/*`、`https://www.11185.cn/*` 和 `https://11185.cn/*`。
 
 > 通用网页会把你**当前页面的结构**（元素文字、链接地址、表单标签）发到分析服务。
 > 不读取已填写的内容，不上传账号密码。专用站点模式完全在本地完成，不连服务端，也不访问 AI 服务。
@@ -68,6 +68,38 @@
 11. 在 12306 其他页面重复检查；无法定位入口时应显示提示，可退出后使用原页面。
 
 ## 当前支持
+
+### 品牌与 Logo（所有站点复用）
+
+覆盖层不再写死颜色和图标，统一由 `src/brand.js` 从原站页面读品牌令牌：
+
+- `EasyViewBrand.extract()` 返回 `{ name, logoUrl, logoText, brand, brandDeep, accent, text, muted, surface, line, focus, fontFamily, radius, dark }`，
+  颜色取自原站的 CSS 变量、主色块和主题色声明，取不到才回退到内置的中性值。
+- `EasyViewBrand.apply(theme, target)` 把令牌写成 `--ev-brand / --ev-accent / --ev-radius / --ev-font` 等 CSS 变量，
+  挂在 Shadow DOM 的宿主元素上靠继承生效，样式表里不再出现站点专属的硬编码色值。
+- `EasyViewBrand.mountLogo(container, theme)` 挂原站 Logo；图片挂了会换成文字标识，页头已有标题时传 `{ textFallback: false }` 直接收起。
+- `EasyViewBrand.logoRepeatsHeading(theme, heading)` 判断 Logo 是不是自带站名（12306、中国移动都是 wordmark），
+  是的话标题只留给读屏，页头不会重复显示两遍站名。
+
+选主色时按“加权得分 × 颜色在多少个元素上重复出现”排序，而不是单看累加权重：
+品牌色通常铺在页头、导航和多个按钮上，页面里一个孤零零的促销按钮不该盖过它。
+浏览器给未访问链接的默认蓝 `#0000ee` 会被直接排除，否则几十个没设色的 `<a>` 会盖住真品牌色。
+
+新增站点时只需要在 `content_scripts` 的 `js` 数组里把 `src/brand.js` 放在覆盖层脚本之前，
+然后在覆盖层的 `create()` / `show()` 里调一次 `extract` + `apply` 即可，不必再配一套配色。
+实测量到的品牌色：12306 `#0472e7`、中国移动 `#e40077`、中国邮政 `#02782e`。
+
+对应的自动检查是 `tools/dedicated_site_check.py`：
+
+    python tools/dedicated_site_check.py --sites 12306,10086,postal
+
+它会加载扩展、打开真实站点、点开悬浮按钮，核对 `--ev-brand` 是否等于原站主色、Logo 是否真的加载出来、
+任务卡片能否点进去，并把截图写到 `tools/shots/`。
+
+单独排查某个站点的取色和 Logo 时用 `tools/brand_probe.py`（加 `--dump-samples` 可看加权采样明细）：
+
+    python tools/brand_probe.py --urls https://www.bilibili.com/,https://www.12306.cn/index/
+    python tools/brand_probe.py --dump-samples --urls https://www.12306.cn/index/
 
 - 仅在 `https://*.12306.cn/*` 注入右下角敬老版入口。
 - Shadow DOM 覆盖层与买票分步表单。

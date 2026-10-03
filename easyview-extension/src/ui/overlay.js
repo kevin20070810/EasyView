@@ -3,6 +3,29 @@
 
   const rootId = "easyview-root";
 
+  // 提取不到原站样式时的兜底，保持改造前的蓝色观感。
+  const FALLBACK_BRAND = Object.freeze({
+    brand: "#0756a5",
+    brandDeep: "#06417c",
+    accent: "#efad00",
+    text: "#16283a",
+    muted: "#4a5b6c",
+    surface: "#ffffff",
+    line: "#d3dfe9",
+    focus: "#b8791b",
+    radius: 14,
+    fontFamily: "\"Microsoft YaHei\", \"Noto Sans CJK SC\", sans-serif"
+  });
+
+  /** 读一次原站品牌令牌并写进 Shadow DOM；覆盖层与悬浮按钮共用。 */
+  function themeShadow(shadow) {
+    const api = window.EasyViewBrand;
+    if (!api || typeof api.extract !== "function") return null;
+    const theme = api.extract({ fallback: FALLBACK_BRAND });
+    api.apply(theme, shadow);
+    return theme;
+  }
+
   function create() {
     let host = document.getElementById(rootId);
     if (host) return host;
@@ -14,6 +37,7 @@
     stylesheet.rel = "stylesheet";
     stylesheet.href = chrome.runtime.getURL("src/styles.css");
     shadow.append(stylesheet);
+    themeShadow(shadow);
     const launcher = document.createElement("button");
     launcher.className = "ev-launcher";
     launcher.type = "button";
@@ -26,6 +50,7 @@
 
   function show(shadow) {
     if (shadow.querySelector(".ev-overlay")) return;
+    const theme = themeShadow(shadow);
     const launcher = shadow.querySelector(".ev-launcher");
     launcher.hidden = true;
     const overlay = document.createElement("section");
@@ -38,11 +63,28 @@
     const header = document.createElement("header");
     header.className = "ev-header";
     const brand = document.createElement("div");
+    brand.className = "ev-brandline";
+    const brandCopy = document.createElement("div");
+    brandCopy.className = "ev-brandcopy";
     const h1 = document.createElement("h1");
     h1.textContent = "中国铁路12306";
     const subtitle = document.createElement("p");
     subtitle.textContent = "请选择您要办理的业务";
-    brand.append(h1, subtitle);
+    brandCopy.append(h1, subtitle);
+    // 用原站自己的 Logo；旁边已经有站名标题，加载失败就直接收起，不重复显示文字。
+    if (theme && theme.logoUrl && window.EasyViewBrand) {
+      const logoSlot = document.createElement("div");
+      logoSlot.className = "ev-logoslot";
+      window.EasyViewBrand.mountLogo(logoSlot, theme, { textFallback: false });
+      if (logoSlot.childNodes.length) {
+        brand.append(logoSlot);
+        // Logo 自带站名时标题只留给读屏，避免重复显示。
+        if (window.EasyViewBrand.logoRepeatsHeading(theme, h1.textContent)) {
+          h1.className = "ev-sr-only";
+        }
+      }
+    }
+    brand.append(brandCopy);
     const exit = document.createElement("button");
     exit.className = "ev-exit";
     exit.type = "button";

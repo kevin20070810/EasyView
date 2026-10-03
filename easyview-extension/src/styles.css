@@ -1,8 +1,29 @@
-:host { all: initial; }
+/* EasyView 覆盖层样式。
+ *
+ * 配色不写死：全部走品牌令牌（brand.js 提取原站主色后写进这些变量）。
+ * :host 里给的是兜底值，宿主元素上的内联变量优先级更高，会被 apply() 覆盖。
+ * 语义色例外 —— 错误、危险提醒固定用红，不跟着站点品牌走。
+ */
+:host {
+  all: initial;
+  --ev-brand: #0756a5;
+  --ev-brand-deep: #06417c;
+  --ev-brand-soft: #f5f9fd;
+  --ev-brand-tint: #e2eefa;
+  --ev-brand-line: #b7cde0;
+  --ev-accent: #efad00;
+  --ev-text: #172b3d;
+  --ev-muted: #40566a;
+  --ev-surface: #ffffff;
+  --ev-line: #d8e4ef;
+  --ev-focus: #b8791b;
+  --ev-radius: 14px;
+  --ev-font: "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+}
 
 .ev-launcher, .ev-overlay, .ev-overlay * {
   box-sizing: border-box;
-  font-family: "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+  font-family: var(--ev-font);
 }
 
 .ev-launcher {
@@ -12,9 +33,9 @@
   bottom: 24px;
   min-height: 60px;
   padding: 12px 22px;
-  border: 0;
+  border: 3px solid #ffffff;
   border-radius: 14px;
-  background: #0756a5;
+  background: var(--ev-brand);
   color: #fff;
   font-size: 22px;
   font-weight: 700;
@@ -22,12 +43,7 @@
   cursor: pointer;
 }
 .ev-launcher[hidden] { display: none; }
-.ev-mobile-launcher { background: #0a6b3d; }
-.ev-mobile-launcher:hover { background: #075430; }
-.ev-weather-launcher { background: #086383; }
-.ev-weather-launcher:hover { background: #064e68; }
-.ev-postal-launcher { background: #b4232c; }
-.ev-postal-launcher:hover { background: #901b23; }
+.ev-launcher:hover { background: var(--ev-brand-deep); }
 
 .ev-overlay {
   position: fixed;
@@ -36,7 +52,7 @@
   overflow: auto;
   padding: clamp(16px, 4vh, 44px) 18px;
   background: #10223599;
-  color: #172b3d;
+  color: var(--ev-text);
   font-size: 20px;
 }
 
@@ -45,8 +61,8 @@
   min-height: min(80vh, 760px);
   margin: 0 auto;
   padding: clamp(22px, 4vw, 44px);
-  border-radius: 20px;
-  background: #fff;
+  border-radius: calc(var(--ev-radius) + 6px);
+  background: var(--ev-surface);
   box-shadow: 0 18px 60px #001a3355;
 }
 
@@ -59,24 +75,67 @@
   justify-content: space-between;
   gap: 18px;
   padding-bottom: 24px;
-  border-bottom: 2px solid #d8e4ef;
-  background: #fff;
+  border-bottom: 2px solid var(--ev-line);
+  background: var(--ev-surface);
 }
 
-.ev-header h1 { margin: 0; color: #123c62; font-size: clamp(28px, 4vw, 36px); }
+/* Logo 与原站同名同源；图片加载失败时 js 会换成 .ev-logo-text 文字标识。 */
+.ev-brandline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px 20px;
+  min-width: 0;
+}
+.ev-brandcopy { min-width: 0; }
+/* 原站 Logo 本身就是文字标（如 12306 的 wordmark）时，标题只留给读屏，避免重复。 */
+.ev-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+.ev-logo {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: min(260px, 52vw);
+  max-height: 62px;
+  object-fit: contain;
+}
+.ev-logo-text {
+  display: inline-flex;
+  align-items: center;
+  min-height: 48px;
+  padding: 8px 18px;
+  border-radius: var(--ev-radius);
+  background: var(--ev-brand);
+  color: #fff;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.ev-header h1 { margin: 0; color: var(--ev-brand-deep); font-size: clamp(28px, 4vw, 36px); }
 .ev-header p { margin: 10px 0 0; font-size: 21px; }
 .ev-exit {
   flex: 0 0 auto;
   min-height: 56px;
   padding: 10px 18px;
-  border: 2px solid #0756a5;
+  border: 2px solid var(--ev-brand);
   border-radius: 12px;
-  background: #fff;
-  color: #0756a5;
+  background: var(--ev-surface);
+  color: var(--ev-brand-deep);
   font-size: 19px;
   font-weight: 700;
   cursor: pointer;
 }
+.ev-exit:hover { background: var(--ev-brand-soft); }
 
 .ev-content { padding-top: 24px; }
 .ev-actions { display: grid; gap: 16px; }
@@ -87,16 +146,16 @@
   width: 100%;
   min-height: 94px;
   padding: 16px 20px;
-  border: 2px solid #b9cfdf;
-  border-radius: 14px;
-  background: #f7fbff;
-  color: #153a5b;
+  border: 2px solid var(--ev-brand-line);
+  border-radius: var(--ev-radius);
+  background: var(--ev-brand-soft);
+  color: var(--ev-text);
   text-align: left;
   text-decoration: none;
   cursor: pointer;
 }
-.ev-card:hover { border-color: #0756a5; background: #ecf5ff; }
-.ev-card:focus-visible { outline: 4px solid #efad00; outline-offset: 3px; }
+.ev-card:hover { border-color: var(--ev-brand); background: var(--ev-brand-tint); }
+.ev-card:focus-visible { outline: 4px solid var(--ev-focus); outline-offset: 3px; }
 .ev-card-icon {
   display: grid;
   flex: 0 0 54px;
@@ -104,67 +163,21 @@
   width: 54px;
   height: 54px;
   border-radius: 12px;
-  background: #e1eef9;
+  background: var(--ev-brand-tint);
   font-size: 28px;
   font-weight: 700;
 }
-.ev-card-copy { display: grid; gap: 4px; }
+.ev-card-copy { display: grid; gap: 4px; min-width: 0; }
 .ev-card-copy strong { font-size: 25px; line-height: 1.3; }
-.ev-card-copy > span { color: #40566a; font-size: 19px; line-height: 1.35; }
-.ev-card.ev-buy { border-color: #0756a5; background: #0756a5; color: #fff; }
+.ev-card-copy > span { color: var(--ev-muted); font-size: 19px; line-height: 1.35; }
+.ev-card.ev-buy { border-color: var(--ev-brand); background: var(--ev-brand); color: #fff; }
 .ev-card.ev-buy .ev-card-icon { background: #ffffff26; }
-.ev-card.ev-buy .ev-card-copy > span { color: #e7f2fc; }
-.ev-mobile .ev-card.ev-buy { border-color: #0a6b3d; background: #0a6b3d; }
-.ev-mobile .ev-card.ev-buy .ev-card-copy > span { color: #e8f7ee; }
-.ev-mobile .ev-card-icon { background: #e2f3e9; }
-.ev-mobile .ev-card.ev-buy .ev-card-icon { background: #ffffff26; }
-.ev-mobile .ev-card-copy > span, .ev-mobile .ev-message { font-size: 20px; }
-.ev-mobile .ev-button-primary { background: #0a6b3d; }
-.ev-mobile .ev-button-primary:hover { background: #075430; }
-.ev-mobile .ev-exit { border-color: #0a6b3d; color: #0a6b3d; }
-.ev-mobile .ev-header h1, .ev-mobile h2 { color: #155437; }
-.ev-weather .ev-header h1, .ev-weather h2 { color: #11526a; }
-.ev-weather .ev-button-primary { background: #086383; }
-.ev-weather .ev-button-primary:hover { background: #064e68; }
-.ev-weather .ev-exit { border-color: #086383; color: #086383; }
-.ev-weather .ev-card-icon { background: #e0f1f8; }
-.ev-postal .ev-header h1, .ev-postal h2 { color: #8f2028; }
-.ev-postal .ev-button-primary { background: #b4232c; }
-.ev-postal .ev-button-primary:hover { background: #901b23; }
-.ev-postal .ev-exit { border-color: #b4232c; color: #8f2028; }
-.ev-postal .ev-card-icon { background: #f8e6e7; }
-.ev-postal .ev-card.ev-buy { border-color: #a71f28; background: #a71f28; }
-.ev-postal .ev-card.ev-buy .ev-card-icon { background: #ffffff26; }
-.ev-postal .ev-card.ev-buy .ev-card-copy > span { color: #fff1f1; }
-.ev-postal .ev-card[data-icon="warning"] { border-color: #e4a4a7; background: #fff4f4; }
-.ev-postal .ev-card[data-icon="warning"] .ev-card-icon { background: #ffdede; color: #8f2028; }
-.ev-postal .ev-card-copy > span, .ev-postal .ev-message { font-size: 20px; }
-.ev-postal-summary { display: grid; grid-template-columns: minmax(110px, 0.35fr) 1fr; gap: 12px 18px; margin: 24px 0; padding: 22px; border-radius: 14px; background: #fff7f7; font-size: 20px; line-height: 1.5; }
-.ev-postal-summary dt { font-weight: 700; color: #5b3032; }
-.ev-postal-summary dd { margin: 0; overflow-wrap: anywhere; }
-.ev-postal-link { display: flex; align-items: center; margin-bottom: 14px; }
-.ev-postal-faq { display: grid; gap: 22px; }
-.ev-postal-faq h3 { margin: 0 0 8px; font-size: 23px; }
-.ev-postal-faq .ev-message { margin: 0; }
-.ev-weather-city { margin: 0 0 20px; font-size: 23px; font-weight: 700; }
-.ev-weather-today-card { border-color: #086383; background: #ecf8fc; }
+.ev-card.ev-buy .ev-card-copy > span { color: #ffffffd9; }
+.ev-weather-today-card { border-color: var(--ev-brand); background: var(--ev-brand-soft); }
 .ev-weather-today-card .ev-card-copy { width: 100%; }
-.ev-weather .ev-card-copy > .ev-weather-temperature { color: #075573; font-size: clamp(70px, 13vw, 112px); font-weight: 800; line-height: 1; }
-.ev-weather-detail-temperature { margin: 8px 0 24px; color: #075573; font-size: clamp(90px, 17vw, 140px); font-weight: 800; line-height: 1; }
-.ev-weather-phone-number { margin: 20px 0; font-size: clamp(52px, 12vw, 88px); letter-spacing: 0.03em; }
-.ev-weather-active-warning { border-color: #b42318; background: #fff0ee; color: #821a13; }
-.ev-weather-active-warning .ev-card-icon { background: #ffd9d4; }
-.ev-weather-active-warning .ev-card-copy > span { color: #821a13; }
-.ev-weather .ev-card-copy > span, .ev-weather .ev-message { font-size: 20px; }
-.ev-weather-refresh { margin-top: 18px; }
-.ev-weather-section { margin-top: 36px; padding-top: 24px; border-top: 2px solid #d8e4ef; scroll-margin-top: 125px; }
-.ev-weather-section .ev-message + .ev-message { margin-top: 12px; }
-.ev-weather-days, .ev-weather-advice { display: grid; gap: 12px; margin: 16px 0 0; padding-left: 1.4em; font-size: 21px; line-height: 1.55; }
-.ev-weather-advice li span { display: block; }
-.ev-weather-link { display: flex; align-items: center; margin: 18px 0; }
 .ev-login-entry { margin-bottom: 18px; }
 .ev-more-entry { margin-top: 18px; }
-.ev-faq { margin-top: 42px; padding-top: 24px; border-top: 2px solid #d8e4ef; scroll-margin-top: 120px; }
+.ev-faq { margin-top: 42px; padding-top: 24px; border-top: 2px solid var(--ev-line); scroll-margin-top: 120px; }
 .ev-faq h3 { margin: 0 0 10px; font-size: 24px; }
 .ev-faq p { margin: 0 0 20px; font-size: 20px; line-height: 1.6; }
 .ev-button {
@@ -172,19 +185,23 @@
   min-height: 68px;
   padding: 16px 22px;
   border: 2px solid transparent;
-  border-radius: 13px;
+  border-radius: var(--ev-radius);
   text-align: left;
   font-size: 23px;
   font-weight: 700;
   line-height: 1.35;
   cursor: pointer;
 }
-.ev-button:focus-visible, .ev-exit:focus-visible, .ev-launcher:focus-visible { outline: 4px solid #efad00; outline-offset: 3px; }
-.ev-button-primary { background: #0756a5; color: #fff; }
-.ev-button-primary:hover { background: #064581; }
-.ev-button-secondary { border-color: #9ab6cf; background: #f4f8fc; color: #183a58; }
+.ev-button:focus-visible, .ev-exit:focus-visible, .ev-launcher:focus-visible {
+  outline: 4px solid var(--ev-focus);
+  outline-offset: 3px;
+}
+.ev-button-primary { background: var(--ev-brand); color: #fff; }
+.ev-button-primary:hover { background: var(--ev-brand-deep); }
+.ev-button-secondary { border-color: var(--ev-brand-line); background: var(--ev-brand-soft); color: var(--ev-text); }
+.ev-button-secondary:hover { background: var(--ev-brand-tint); }
 .ev-buy { min-height: 82px; font-size: 27px; }
-.ev-overlay h2 { margin: 0 0 22px; color: #123c62; font-size: 30px; }
+.ev-overlay h2 { margin: 0 0 22px; color: var(--ev-brand-deep); font-size: 30px; }
 .ev-flow-body { display: grid; gap: 16px; }
 .ev-field { display: grid; gap: 10px; font-weight: 700; }
 .ev-field span { font-size: 21px; }
@@ -192,18 +209,18 @@
   width: 100%;
   min-height: 68px;
   padding: 14px 16px;
-  border: 2px solid #829bb1;
+  border: 2px solid var(--ev-muted);
   border-radius: 12px;
-  background: #fff;
-  color: #172b3d;
+  background: var(--ev-surface);
+  color: var(--ev-text);
   font-size: 24px;
 }
-.ev-field input:focus, .ev-date-input:focus { outline: 4px solid #b5d9fb; border-color: #0756a5; }
-.ev-message { margin: 0; color: #354c60; font-size: 19px; line-height: 1.6; }
+.ev-field input:focus, .ev-date-input:focus { outline: 4px solid var(--ev-brand-tint); border-color: var(--ev-brand); }
+.ev-message { margin: 0; color: var(--ev-muted); font-size: 19px; line-height: 1.6; }
 .ev-error { padding: 14px 16px; border-left: 5px solid #b42318; background: #fff0ee; color: #791b14; }
-.ev-trip-summary { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 18px; padding: 22px; border-radius: 14px; background: #f0f6fc; text-align: center; }
+.ev-trip-summary { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 18px; padding: 22px; border-radius: var(--ev-radius); background: var(--ev-brand-soft); text-align: center; }
 .ev-trip-summary span { font-size: 27px; font-weight: 700; }
-.ev-trip-summary b { color: #0756a5; font-size: 28px; }
+.ev-trip-summary b { color: var(--ev-brand); font-size: 28px; }
 .ev-trip-summary strong { grid-column: 1 / -1; font-size: 21px; }
 .ev-flow-nav { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px; }
 .ev-flow-nav .ev-button { width: auto; flex: 1 1 180px; min-height: 60px; font-size: 20px; }
@@ -212,8 +229,8 @@
 .ev-guide-steps li { padding-left: 4px; }
 .ev-guide-actions { display: grid; gap: 16px; }
 .ev-filter-label { display: grid; gap: 10px; font-size: 21px; font-weight: 700; }
-.ev-filter-select { width: 100%; min-height: 68px; padding: 14px 16px; border: 2px solid #829bb1; border-radius: 12px; background: #fff; color: #172b3d; font-size: 22px; }
-.ev-filter-select:focus { outline: 4px solid #b5d9fb; border-color: #0756a5; }
+.ev-filter-select { width: 100%; min-height: 68px; padding: 14px 16px; border: 2px solid var(--ev-muted); border-radius: 12px; background: var(--ev-surface); color: var(--ev-text); font-size: 22px; }
+.ev-filter-select:focus { outline: 4px solid var(--ev-brand-tint); border-color: var(--ev-brand); }
 
 .ev-generic-intro { margin: 0 0 22px; }
 .ev-generic-options { display: grid; gap: 12px; margin: 20px 0; }
@@ -223,17 +240,17 @@
   gap: 18px;
   min-height: 78px;
   padding: 16px 18px;
-  border: 2px solid #b9cfdf;
-  border-radius: 14px;
-  background: #f7fbff;
+  border: 2px solid var(--ev-brand-line);
+  border-radius: var(--ev-radius);
+  background: var(--ev-brand-soft);
   cursor: pointer;
 }
-.ev-generic-option:has(input:checked) { border-color: #0756a5; background: #eef6ff; }
-.ev-generic-option input { flex: 0 0 26px; width: 26px; height: 26px; margin: 4px 0 0; accent-color: #0756a5; }
-.ev-generic-option input:focus-visible { outline: 4px solid #efad00; outline-offset: 4px; }
+.ev-generic-option:has(input:checked) { border-color: var(--ev-brand); background: var(--ev-brand-tint); }
+.ev-generic-option input { flex: 0 0 26px; width: 26px; height: 26px; margin: 4px 0 0; accent-color: var(--ev-brand); }
+.ev-generic-option input:focus-visible { outline: 4px solid var(--ev-focus); outline-offset: 4px; }
 .ev-generic-option-copy { display: grid; gap: 5px; overflow-wrap: anywhere; }
-.ev-generic-option-copy strong { color: #153a5b; font-size: 23px; line-height: 1.3; }
-.ev-generic-option-copy small { color: #40566a; font-size: 18px; line-height: 1.4; }
+.ev-generic-option-copy strong { color: var(--ev-text); font-size: 23px; line-height: 1.3; }
+.ev-generic-option-copy small { color: var(--ev-muted); font-size: 18px; line-height: 1.4; }
 .ev-generic-count { margin: 20px 0 10px; }
 .ev-generic-limit:empty { display: none; }
 .ev-generic-controls { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 20px; }
@@ -242,16 +259,50 @@
 .ev-generic .ev-actions { margin-top: 22px; }
 .ev-generic .ev-card-copy > span { overflow-wrap: anywhere; }
 
+/* ---------- 中国移动 ---------- */
+.ev-mobile .ev-card-copy > span, .ev-mobile .ev-message { font-size: 20px; }
+
+/* ---------- 中国天气网 ---------- */
+.ev-weather-city { margin: 0 0 20px; font-size: 23px; font-weight: 700; }
+.ev-weather .ev-card-copy > .ev-weather-temperature { color: var(--ev-brand-deep); font-size: clamp(70px, 13vw, 112px); font-weight: 800; line-height: 1; }
+.ev-weather-detail-temperature { margin: 8px 0 24px; color: var(--ev-brand-deep); font-size: clamp(90px, 17vw, 140px); font-weight: 800; line-height: 1; }
+.ev-weather-phone-number { margin: 20px 0; font-size: clamp(52px, 12vw, 88px); letter-spacing: 0.03em; }
+.ev-weather-active-warning { border-color: #b42318; background: #fff0ee; color: #821a13; }
+.ev-weather-active-warning .ev-card-icon { background: #ffd9d4; }
+.ev-weather-active-warning .ev-card-copy > span { color: #821a13; }
+.ev-weather .ev-card-copy > span, .ev-weather .ev-message { font-size: 20px; }
+.ev-weather-refresh { margin-top: 18px; }
+.ev-weather-section { margin-top: 36px; padding-top: 24px; border-top: 2px solid var(--ev-line); scroll-margin-top: 125px; }
+.ev-weather-section .ev-message + .ev-message { margin-top: 12px; }
+.ev-weather-days, .ev-weather-advice { display: grid; gap: 12px; margin: 16px 0 0; padding-left: 1.4em; font-size: 21px; line-height: 1.55; }
+.ev-weather-advice li span { display: block; }
+.ev-weather-link { display: flex; align-items: center; margin: 18px 0; }
+
+/* ---------- 中国邮政 ---------- */
+.ev-postal .ev-card[data-icon="warning"] { border-color: #e4a4a7; background: #fff4f4; }
+.ev-postal .ev-card[data-icon="warning"] .ev-card-icon { background: #ffdede; color: #8f2028; }
+.ev-postal .ev-card-copy > span, .ev-postal .ev-message { font-size: 20px; }
+.ev-postal-summary { display: grid; grid-template-columns: minmax(110px, 0.35fr) 1fr; gap: 12px 18px; margin: 24px 0; padding: 22px; border-radius: var(--ev-radius); background: var(--ev-brand-soft); font-size: 20px; line-height: 1.5; }
+.ev-postal-summary dt { font-weight: 700; color: var(--ev-muted); }
+.ev-postal-summary dd { margin: 0; overflow-wrap: anywhere; }
+.ev-postal-link { display: flex; align-items: center; margin-bottom: 14px; }
+.ev-postal-faq { display: grid; gap: 22px; }
+.ev-postal-faq h3 { margin: 0 0 8px; font-size: 23px; }
+.ev-postal-faq .ev-message { margin: 0; }
+
 @media (max-width: 600px) {
   .ev-launcher { right: 14px; bottom: 14px; min-height: 56px; font-size: 20px; }
   .ev-overlay { padding: 10px; }
-  .ev-panel { min-height: calc(100vh - 20px); padding: 20px 16px; border-radius: 14px; }
+  .ev-panel { min-height: calc(100vh - 20px); padding: 20px 16px; border-radius: var(--ev-radius); }
   .ev-header { flex-direction: column; }
   .ev-exit { align-self: flex-end; }
+  .ev-logo { max-height: 46px; max-width: min(200px, 62vw); }
+  .ev-logo-text { min-height: 42px; font-size: 20px; }
   .ev-button { min-height: 64px; font-size: 21px; }
   .ev-buy { font-size: 23px; }
   .ev-card { min-height: 84px; padding: 13px; gap: 12px; }
   .ev-card-icon { flex-basis: 48px; width: 48px; height: 48px; font-size: 25px; }
   .ev-card-copy strong { font-size: 22px; }
   .ev-card-copy > span { font-size: 18px; }
+  .ev-postal-summary { grid-template-columns: 1fr; gap: 6px; }
 }

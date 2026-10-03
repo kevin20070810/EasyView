@@ -3,6 +3,15 @@
 
   const rootId = "easyview-mobile-root";
 
+  /** 读一次原站品牌令牌写进 Shadow DOM；与 12306 覆盖层共用同一套接口。 */
+  function themeShadow(shadow) {
+    const api = window.EasyViewBrand;
+    if (!api || typeof api.extract !== "function") return null;
+    const theme = api.extract();
+    api.apply(theme, shadow);
+    return theme;
+  }
+
   function create() {
     let host = document.getElementById(rootId);
     if (host) return host;
@@ -14,6 +23,7 @@
     stylesheet.rel = "stylesheet";
     stylesheet.href = chrome.runtime.getURL("src/styles.css");
     shadow.append(stylesheet);
+    themeShadow(shadow);
     const launcher = document.createElement("button");
     launcher.className = "ev-launcher ev-mobile-launcher";
     launcher.type = "button";
@@ -27,6 +37,7 @@
 
   function show(shadow, firstScreen) {
     if (shadow.querySelector(".ev-overlay")) return;
+    const theme = themeShadow(shadow);
     const launcher = shadow.querySelector(".ev-launcher");
     launcher.hidden = true;
     const overlay = document.createElement("section");
@@ -39,11 +50,25 @@
     const header = document.createElement("header");
     header.className = "ev-header";
     const brand = document.createElement("div");
+    brand.className = "ev-brandline";
+    if (theme && theme.logoUrl && window.EasyViewBrand) {
+      const logoSlot = document.createElement("div");
+      logoSlot.className = "ev-logoslot";
+      window.EasyViewBrand.mountLogo(logoSlot, theme, { textFallback: false });
+      if (logoSlot.childNodes.length) brand.append(logoSlot);
+    }
     const title = document.createElement("h1");
     title.textContent = "中国移动";
+    if (theme && window.EasyViewBrand
+        && window.EasyViewBrand.logoRepeatsHeading(theme, title.textContent)) {
+      title.className = "ev-sr-only";
+    }
+    const brandCopy = document.createElement("div");
+    brandCopy.className = "ev-brandcopy";
     const subtitle = document.createElement("p");
     subtitle.textContent = "请选择您要办理的业务";
-    brand.append(title, subtitle);
+    brandCopy.append(title, subtitle);
+    brand.append(brandCopy);
     const exit = makeButton("退出敬老版", () => {
       overlay.remove();
       launcher.hidden = false;
