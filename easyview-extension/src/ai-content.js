@@ -26,18 +26,34 @@
   // 隐私政策有实质变化时改这个值，会重新征求同意
   const CONSENT_VERSION = "2026-10-local-v1";
 
-  // 0.3 的 16 个冻结图标名 -> 字形
+  // 0.3 的 16 个冻结图标名 -> 统一的线性图标。图形均为本地静态内容。
   const ICONS = {
-    home: "⌂", calendar: "▦", document: "▤", payment: "¥",
-    phone: "☎", user: "♙", search: "⌕", location: "⌖",
-    bus: "🚌", train: "🚆", hospital: "✚", government: "▥",
-    warning: "!", info: "i", help: "?", back: "←"
+    home: '<path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/><path d="M9 21v-7h6v7"/>',
+    calendar: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4m10-4v4M3 10h18"/>',
+    document: '<path d="M6 3h9l4 4v14H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M14 3v5h5M8 13h8m-8 4h8"/>',
+    payment: '<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20m-15 5h4"/>',
+    phone: '<path d="M6 3h3l1.3 4-2 1.7a16 16 0 0 0 7 7l1.7-2L21 15v3a3 3 0 0 1-3 3C9.7 21 3 14.3 3 6a3 3 0 0 1 3-3z"/>',
+    user: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+    search: '<circle cx="11" cy="11" r="7"/><path d="m16 16 5 5"/>',
+    location: '<path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0z"/><circle cx="12" cy="10" r="2.5"/>',
+    bus: '<rect x="4" y="3" width="16" height="15" rx="3"/><path d="M4 11h16M7 18v3m10-3v3M8 7h3m2 0h3"/>',
+    train: '<rect x="5" y="2" width="14" height="17" rx="3"/><path d="M5 11h14M8 6h8M8 19l-2 3m10-3 2 3M8 15h.01M16 15h.01"/>',
+    hospital: '<rect x="3" y="4" width="18" height="17" rx="2"/><path d="M12 8v8m-4-4h8M7 21v-3h10v3"/>',
+    government: '<path d="m2 9 10-6 10 6M3 21h18M5 10v9m5-9v9m4-9v9m5-9v9"/>',
+    warning: '<path d="m12 3 10 18H2L12 3z"/><path d="M12 9v5m0 3h.01"/>',
+    info: '<circle cx="12" cy="12" r="10"/><path d="M12 11v6m0-10h.01"/>',
+    help: '<circle cx="12" cy="12" r="10"/><path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 2-2.5 2-2.5 4m0 4h.01"/>',
+    back: '<path d="m14 5-7 7 7 7M8 12h13"/>'
   };
 
   const RISK_NOTE = {
-    blocked: "这项需要您自己在原网页办理",
-    sensitive: "打开前会先跟您确认"
+    blocked: "原网页办理",
+    sensitive: "打开前确认"
   };
+
+  function iconMarkup(name) {
+    return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name] || ICONS.info}</svg>`;
+  }
 
   // 会被脱敏的文本字段（结构字段如 selector/href 不动，否则绑定会坏）
   // 注意：这些字段只在 buildPayload 的兜底分支里用到；
@@ -54,6 +70,7 @@
   let lastDropped = [];
   let lastElementsJson = null;
   let busy = false;
+  let brandLogoBitmapPromise = null;
 
   /* ---------- 小工具 ---------- */
 
@@ -62,6 +79,46 @@
     if (className) node.className = className;
     if (text !== undefined) node.textContent = text;
     return node;
+  }
+
+  function brandLogoBitmap() {
+    if (!brandLogoBitmapPromise) {
+      brandLogoBitmapPromise = new Promise((resolve, reject) => {
+        chrome.runtime.sendMessage({ type: "easyview:brand-logo" }, (reply) => {
+          if (chrome.runtime.lastError || !reply?.ok || !reply.base64) {
+            reject(new Error(chrome.runtime.lastError?.message || reply?.error || "Logo unavailable"));
+            return;
+          }
+          try {
+            const binary = atob(reply.base64);
+            const bytes = new Uint8Array(binary.length);
+            for (let index = 0; index < binary.length; index += 1) {
+              bytes[index] = binary.charCodeAt(index);
+            }
+            resolve(createImageBitmap(new Blob([bytes], { type: "image/png" })));
+          } catch (error) {
+            reject(error);
+          }
+        });
+      }).catch((error) => {
+        brandLogoBitmapPromise = null;
+        throw error;
+      });
+    }
+    return brandLogoBitmapPromise;
+  }
+
+  async function paintBrandLogo(canvas, fallback) {
+    try {
+      const bitmap = await brandLogoBitmap();
+      if (!canvas.isConnected) return;
+      const context = canvas.getContext("2d");
+      if (!context) return;
+      context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+      fallback.hidden = true;
+    } catch (_) {
+      fallback.hidden = false;
+    }
   }
 
   function button(label, onClick, primary) {
@@ -128,12 +185,12 @@
     const raw = digest.build(elements);
     const text = priv ? priv.redactText(raw) : raw;
     return {
-      kind: "页面说明书",
+      kind: "网页文字",
       text,
       chars: text.length,
       redactions: priv ? priv.describe() : null,
       full: false,
-      note: "只包含这台页面的文字说明。不含选择器、坐标、完整链接，也不含您填过的内容。"
+      note: "只包含这页的部分文字，不包含您填写的内容和密码。"
     };
   }
 
@@ -178,32 +235,7 @@
     link.href = chrome.runtime.getURL("src/styles.css");
     shadow.appendChild(link);
 
-    const extra = document.createElement("style");
-    extra.textContent = `
-      .ev-ai-banner { margin: 0 0 12px; padding: 10px 14px; border-radius: 8px;
-        background: #fff6e5; color: #7a5200; font-size: 17px; line-height: 1.5; }
-      .ev-ai-note { display: block; margin-top: 4px; font-size: 15px; color: #8a6d3b; }
-      .ev-ai-risk-blocked .ev-card-copy > span { color: #8a6d3b; }
-      .ev-ai-confirm { margin-top: 14px; padding: 16px; border: 2px solid #0b5cad;
-        border-radius: 10px; background: #f2f7fd; }
-      .ev-ai-confirm p { margin: 0 0 14px; font-size: 20px; line-height: 1.6; }
-      .ev-ai-confirm .ev-actions { display: flex; gap: 12px; }
-      .ev-ai-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 16px; }
-      .ev-ai-stats { margin-top: 18px; font-size: 14px; color: #5c6b7a; line-height: 1.7; }
-      .ev-ai-consent { margin-top: 14px; padding: 14px 16px; border: 2px solid #0b5cad;
-        border-radius: 10px; background: #f2f7fd; }
-      .ev-ai-consent ul { margin: 8px 0 0; padding-left: 22px; font-size: 17px; line-height: 1.8; }
-      .ev-ai-preview { margin-top: 12px; max-height: 260px; overflow: auto; padding: 12px;
-        border: 1px solid #c3ccd6; border-radius: 8px; background: #fff;
-        font-family: Consolas, Menlo, monospace; font-size: 13px; line-height: 1.6;
-        white-space: pre-wrap; word-break: break-all; }
-      .ev-ai-foot { margin-top: 18px; padding-top: 12px; border-top: 1px solid #dde3ea;
-        font-size: 14px; color: #5c6b7a; line-height: 1.8; }
-      .ev-ai-foot button { margin-top: 8px; font-size: 14px; padding: 6px 12px; }
-    `;
-    shadow.appendChild(extra);
-
-    const overlay = el("div", "ev-overlay ev-generic");
+    const overlay = el("div", "ev-overlay ev-generic ev-ai");
     overlay.setAttribute("role", "dialog");
     overlay.setAttribute("aria-modal", "true");
     overlay.setAttribute("aria-label", "EasyView 适老视图");
@@ -238,16 +270,36 @@
     }
   }
 
+  function siteName() {
+    const title = String(pendingElements?.page_title || "").trim();
+    return title.split(/[|｜_—–]/)[0].trim().slice(0, 18);
+  }
+
   function header(title, summary) {
     panel.replaceChildren();
     const bar = el("header", "ev-header");
-    const copy = el("div");
-    copy.append(el("h1", "", title));
-    if (summary) copy.append(el("p", "", summary));
-    const exit = el("button", "ev-exit", "退出敬老版");
+    const top = el("div", "ev-ai-topline");
+    const brand = el("div", "ev-ai-brand");
+    brand.setAttribute("role", "img");
+    brand.setAttribute("aria-label", "EasyView 标志");
+    const logo = el("canvas", "ev-ai-brand-image");
+    logo.width = 256;
+    logo.height = 256;
+    logo.setAttribute("aria-hidden", "true");
+    const fallback = el("span", "ev-ai-brand-fallback", "EasyView");
+    fallback.setAttribute("aria-hidden", "true");
+    brand.append(logo, fallback);
+    paintBrandLogo(logo, fallback);
+    const exit = el("button", "ev-exit", "返回原网页");
     exit.type = "button";
     exit.addEventListener("click", close);
-    bar.append(copy, exit);
+    const copy = el("div", "ev-ai-heading");
+    const site = siteName();
+    if (site) copy.append(el("span", "ev-ai-site", `当前网页 · ${site}`));
+    copy.append(el("h1", "", title));
+    if (summary) copy.append(el("p", "", summary));
+    top.append(brand, copy, exit);
+    bar.appendChild(top);
     panel.appendChild(bar);
     const body = el("div", "ev-content");
     panel.appendChild(body);
@@ -258,10 +310,10 @@
   /* ---------- 同意界面 ---------- */
 
   function showConsent(payload, onAgree) {
-    const body = header("开始之前，先说清楚一件事", "看完再决定用不用。");
+    const body = header("先确认一件事", "您可以先看看会发送什么。");
 
     body.appendChild(el("p", "ev-message",
-      "要帮您把这个页面整理成大字版，需要把页面上的文字发到分析服务去理解。"));
+      "为整理这页的服务入口，需要把部分网页文字发送到 EasyView 的分析服务。"));
     body.appendChild(el("p", "ev-message",
       "只读页面上的文字。不会读您填进去的内容，也不会读密码。"));
 
@@ -297,41 +349,37 @@
   /* ---------- 各状态 ---------- */
 
   function showLoading(text) {
-    const body = header("正在为您整理页面…", "请稍等，马上就好。");
+    const body = header("正在整理这页内容…", "请稍等，我们正在查找有用的入口。");
     body.appendChild(el("p", "ev-message", text));
   }
 
   function showError(message, endpoint) {
-    const body = header("这次没能帮上忙", "您可以继续使用原来的网页。");
+    const body = header("暂时没整理好", "您仍可以使用原网页。");
     body.appendChild(el("p", "ev-message ev-error", message));
-    pretty(body, "分析服务地址", endpoint || "未知");
+    if (endpoint) {
+      const details = el("details", "ev-ai-details");
+      details.append(el("summary", "", "查看技术信息"), el("p", "", `分析服务地址：${endpoint}`));
+      body.appendChild(details);
+    }
     const actions = el("div", "ev-ai-actions");
     actions.append(
       button("再试一次", () => requestAnalysis(), true),
-      button("用本地规则版", useLocalRules),
-      button("退出", close)
+      button("查看基础版", useLocalRules),
+      button("返回原网页", close)
     );
     body.appendChild(actions);
   }
 
-  function pretty(body, label, value) {
-    const box = el("div", "ev-ai-stats");
-    box.appendChild(el("div", "", `${label}：${value}`));
-    body.appendChild(box);
-    return box;
-  }
-
   function renderResult(ui) {
-    const page = ui.page || {};
     const cards = Array.isArray(ui.cards) ? ui.cards : [];
-    const body = header(page.greeting || "您想先办哪件事？", page.summary || "");
+    const body = header("请选择事项", "选一项，我们带您找到原网页的入口。");
 
     const banners = [];
     if (ui.generator && ui.generator.mode === "rules") {
-      banners.push("本次由本地规则生成（没能用上语义理解）。");
+      banners.push("目前显示的是简化版入口。\u00a0");
     }
     if (ui.generator && ui.generator.fallback_reason) {
-      banners.push(`原因：${ui.generator.fallback_reason}。`);
+      banners.push("部分入口可能需要您在原网页寻找。\u00a0");
     }
     if (ui.source === "fallback") {
       banners.push("这不是您刚才浏览的真实网页，页面内容来自降级快照。");
@@ -341,20 +389,18 @@
     if (ui.state === "empty" || !cards.length) {
       body.appendChild(el("p", "ev-message", "这个页面上暂时没找到能替您整理的事情。"));
       const actions = el("div", "ev-ai-actions");
-      actions.append(button("退出敬老版", close, true));
+      actions.append(button("返回原网页", close, true));
       body.appendChild(actions);
       appendDataFoot(body);
       return;
     }
 
+    const section = el("div", "ev-ai-section-head");
+    section.append(el("h2", "", "为您找到的入口"), el("span", "", `${cards.length} 项`));
+    body.appendChild(section);
     const list = el("div", "ev-actions");
-    for (const card of cards) list.appendChild(renderCard(card));
+    cards.forEach((card, index) => list.appendChild(renderCard(card, index)));
     body.appendChild(list);
-
-    const stats = el("div", "ev-ai-stats");
-    const s = ui.stats || {};
-    stats.appendChild(el("div", "", `从 ${s.input_elements || "?"} 个页面元素里整理了 ${cards.length} 件事。`));
-    body.appendChild(stats);
     appendDataFoot(body);
   }
 
@@ -362,8 +408,9 @@
   function appendDataFoot(body) {
     if (!lastPayload) return;
     const foot = el("div", "ev-ai-foot");
+    foot.appendChild(el("div", "", "这些入口来自当前网页，具体办理仍在原网页完成。"));
     const line = `本次发送：${lastPayload.kind}，约 ${kb(lastPayload.chars)}。`;
-    foot.appendChild(el("div", "", line + (lastPayload.redactions ? lastPayload.redactions.summary + "。" : "")));
+    foot.appendChild(el("div", "ev-ai-foot-meta", line + (lastPayload.redactions ? lastPayload.redactions.summary + "。" : "")));
     foot.appendChild(button("查看发送的内容", () => showPayloadReview()));
     body.appendChild(foot);
   }
@@ -385,22 +432,27 @@
     body.appendChild(actions);
   }
 
-  function renderCard(card) {
+  function renderCard(card, index) {
     const risk = (card.risk && card.risk.level) || "normal";
-    const node = el("button", `ev-card${risk === "blocked" ? " ev-ai-risk-blocked" : ""}`);
+    const node = el("button", `ev-card${index === 0 ? " ev-ai-featured" : ""}${risk === "blocked" ? " ev-ai-risk-blocked" : ""}`);
     node.type = "button";
 
     const iconName = card.icon || "info";
     node.dataset.icon = iconName;
-    const icon = el("span", "ev-card-icon", ICONS[iconName] || ICONS.info);
+    const icon = el("span", "ev-card-icon");
+    icon.innerHTML = iconMarkup(iconName);
     icon.setAttribute("aria-hidden", "true");
 
     const copy = el("span", "ev-card-copy");
-    copy.appendChild(el("strong", "", card.title || "未命名"));
+    const heading = el("span", "ev-ai-card-heading");
+    heading.appendChild(el("strong", "", card.title || "未命名"));
+    if (RISK_NOTE[risk]) heading.appendChild(el("span", "ev-ai-note", RISK_NOTE[risk]));
+    copy.appendChild(heading);
     if (card.subtitle) copy.appendChild(el("span", "", card.subtitle));
-    if (RISK_NOTE[risk]) copy.appendChild(el("span", "ev-ai-note", RISK_NOTE[risk]));
 
-    node.append(icon, copy);
+    const arrow = el("span", "ev-ai-card-arrow", "→");
+    arrow.setAttribute("aria-hidden", "true");
+    node.append(icon, copy, arrow);
     node.addEventListener("click", () => performAction(card));
     return node;
   }
@@ -427,15 +479,24 @@
   function performAction(card) {
     const action = (card && card.action) || {};
     if (action.confirmation) {
-      showConfirm(card, action.confirmation, () => activate(action));
+      showConfirm(card, action.confirmation, () => activate(action, card));
       return;
     }
-    activate(action);
+    activate(action, card);
   }
 
-  function activate(action) {
+  function activate(action, card) {
     const id = action.target_element_id;
     const element = id && resolveElement ? resolveElement(id) : null;
+
+    // 先看要不要分步引导：如果这张卡的来源元素里有本页的表单控件
+    // （12306 的「我要买火车票」就带着出发地/到达地/出发日期），
+    // 就在当前页面一步步带他填，比直接跳走有用得多。
+    //
+    // 这一步必须在 navigate/external 之前 —— 否则卡片一导航就走了，
+    // 步骤引导永远轮不到。来源里凑不出两个表单控件时会返回 false，
+    // 正常走下面的导航逻辑。
+    if (startSteps(card)) return;
 
     if (action.kind === "external" || action.kind === "navigate") {
       const href = action.href;
@@ -468,6 +529,177 @@
       }
       element.focus({ preventScroll: true });
     }
+  }
+
+  /* ---------- 去掉同名的隐藏副本 ----------
+   *
+   * 12306 上 #fromStationText（可见）和 #fromStationFanText（隐藏）的 label 完全一样，
+   * 是给不同版式准备的副本。模型若挑中隐藏那个，"滚动+高亮"就是白做 —— 用户看不见。
+   *
+   * 规则保守：**只有当存在同名同类型且可见的元素时，才丢掉隐藏的那个**。
+   * 隐藏元素本身不丢 —— 弹窗、折叠面板里的表单常常只有隐藏的一份。
+   */
+  function stripHiddenDuplicates(doc) {
+    const elements = doc.elements || [];
+    const visibleKeys = new Set();
+    for (const e of elements) {
+      if (!e.visible) continue;
+      const label = (e.label || e.placeholder || e.text || "").trim();
+      if (label) visibleKeys.add(`${e.type}::${label}`);
+    }
+    const removed = new Set();
+    const kept = elements.filter((e) => {
+      if (e.visible) return true;
+      const label = (e.label || e.placeholder || e.text || "").trim();
+      if (label && visibleKeys.has(`${e.type}::${label}`)) {
+        removed.add(e.id);
+        return false;
+      }
+      return true;
+    });
+    if (!removed.size) return doc;
+    const stats = { ...(doc.stats || {}) };
+    stats.total = kept.length;
+    stats.visible = kept.filter((e) => e.visible).length;
+    const groups = (doc.groups || [])
+      .map((g) => ({ ...g, element_ids: (g.element_ids || []).filter((id) => !removed.has(id)) }))
+      .filter((g) => g.element_ids.length);
+    return { ...doc, elements: kept, groups, stats };
+  }
+
+  /* ---------- 步骤引导 ----------
+   *
+   * 探针结论见 tools/probe_12306_flow.py：
+   *   识别 ✅  12306 的出发地 #fromStationText、到达地 #toStationText、
+   *           出发日期 #train_date 都能靠 label 精确定位，而且都可见
+   *   代填 ❌  通用执行器填了值 12306 不认 —— 站码是点自动补全建议项时才写进去的，
+   *           那是站点的内部逻辑，只有专门为它写的模块才处理得了
+   *
+   * 所以**只做高亮提示，不代填**：告诉老人下一步该点哪，并指给他看。
+   * 老人自己输、自己选、自己点 —— 既有掌控感，也不越界。
+   */
+
+  const STEP_TYPES = new Set(["input", "select", "textarea", "button"]);
+
+  /** 从一组元素 ID 里挑出可见的表单控件，按位置排序。
+   *
+   * 用卡片自己的 provenance.source_element_ids —— 模型在 also_cite 里已经
+   * 指明了支撑这张卡的元素。12306 的「我要买火车票」正是这种情况：它的目标
+   * 是一个 javascript: 链接（点不动），但 also_cite 里带着出发地/到达地/
+   * 出发日期三个真正的表单字段。
+   * 早先只看目标周围的邻居，结果把站点搜索框当成了第 1 步。
+   */
+  function stepsFromIds(ids, doc) {
+    const wanted = new Set((ids || []).filter(Boolean));
+    const group = (doc.elements || []).filter((e) => {
+      if (!wanted.has(e.id) || !e.visible || !e.bbox) return false;
+      if (!STEP_TYPES.has(e.type)) return false;
+      return Boolean((e.label || e.text || e.placeholder || "").trim());
+    });
+    group.sort((a, b) => (a.bbox.y - b.bbox.y) || (a.bbox.x - b.bbox.x));
+    return group;
+  }
+
+  let stepHost = null;
+  let stepHighlighted = null;
+
+  function clearStepBar() {
+    if (stepHighlighted && stepHighlighted.isConnected) {
+      stepHighlighted.style.outline = "";
+      stepHighlighted.style.outlineOffset = "";
+      stepHighlighted.style.backgroundColor = "";
+    }
+    stepHighlighted = null;
+    if (stepHost) stepHost.remove();
+    stepHost = null;
+  }
+
+  function highlightStep(element) {
+    if (!element) return;
+    if (stepHighlighted && stepHighlighted !== element && stepHighlighted.isConnected) {
+      stepHighlighted.style.outline = "";
+      stepHighlighted.style.outlineOffset = "";
+      stepHighlighted.style.backgroundColor = "";
+    }
+    element.scrollIntoView({ behavior: "smooth", block: "center" });
+    element.style.outline = "4px solid #0b5cad";
+    element.style.outlineOffset = "3px";
+    element.style.backgroundColor = "#eaf3ff";
+    stepHighlighted = element;
+    if (typeof element.focus === "function") element.focus({ preventScroll: true });
+  }
+
+  function showStepBar(steps, index) {
+    if (!stepHost) {
+      stepHost = document.createElement("div");
+      stepHost.id = "easyview-step-host";
+      const shadow = stepHost.attachShadow({ mode: "open" });
+      const link = document.createElement("link");
+      link.rel = "stylesheet";
+      link.href = chrome.runtime.getURL("src/styles.css");
+      shadow.appendChild(link);
+      const extra = document.createElement("style");
+      extra.textContent = `
+        .ev-stepbar { position: fixed; top: 0; left: 0; right: 0; z-index: 2147483600;
+          background: #0b5cad; color: #fff; padding: 14px 20px;
+          display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+          font: 20px/1.5 "Microsoft YaHei", system-ui, sans-serif;
+          box-shadow: 0 3px 14px rgba(0,0,0,.25); }
+        .ev-stepbar .ev-step-count { font-size: 24px; font-weight: 700; white-space: nowrap; }
+        .ev-stepbar .ev-step-text { flex: 1 1 300px; }
+        .ev-stepbar button { font: 20px/1 "Microsoft YaHei", system-ui, sans-serif;
+          padding: 12px 22px; border: 0; border-radius: 8px; cursor: pointer;
+          background: rgba(255,255,255,.18); color: #fff; }
+        .ev-stepbar button:hover { background: rgba(255,255,255,.32); }
+        .ev-stepbar button:disabled { opacity: .4; cursor: default; }
+        .ev-stepbar button.ev-step-exit { background: rgba(0,0,0,.25); }
+      `;
+      shadow.appendChild(extra);
+      const bar = el("div", "ev-stepbar");
+      shadow.appendChild(bar);
+      (document.documentElement || document.body).appendChild(stepHost);
+      stepHost.__bar = bar;
+    }
+
+    const bar = stepHost.__bar;
+    bar.replaceChildren();
+
+    const current = steps[index];
+    const label = (current.label || current.text || current.placeholder || "").trim();
+    const kindName = current.type === "button" ? "按钮" : "输入框";
+
+    bar.appendChild(el("span", "ev-step-count", `第 ${index + 1} 步 / 共 ${steps.length} 步`));
+    bar.appendChild(el("span", "ev-step-text", `请在「${label}」这个${kindName}里填写`));
+
+    const prev = button("上一步", () => {
+      if (index > 0) showStepBar(steps, index - 1);
+    });
+    prev.disabled = index === 0;
+
+    const next = button(index === steps.length - 1 ? "完成，收起提示" : "下一步", () => {
+      if (index === steps.length - 1) { clearStepBar(); return; }
+      showStepBar(steps, index + 1);
+    });
+
+    const exit = button("退出引导", () => clearStepBar());
+    exit.className = "ev-step-exit";
+
+    bar.append(prev, next, exit);
+
+    highlightStep(resolveElement ? resolveElement(current.id) : null);
+  }
+
+  /** 进入步骤引导。来源元素里凑不出两个表单控件就返回 false，交回单次定位。 */
+  function startSteps(card) {
+    if (!pendingElements) return false;
+    const action = card.action || {};
+    const provenance = card.provenance || {};
+    const ids = [action.target_element_id, ...(provenance.source_element_ids || [])];
+    const steps = stepsFromIds(ids, pendingElements);
+    if (steps.length < 2) return false;
+    close();
+    showStepBar(steps, 0);
+    return true;
   }
 
   /* ---------- 本地规则兜底 ---------- */
@@ -579,7 +811,8 @@
     try {
       extracted = globalThis.EasyViewExtract.run();
       resolveElement = extracted.resolve;
-      pendingElements = extracted.elements;
+      // 去掉同名的隐藏副本：模型可能挑中隐藏那份，"滚动+高亮"就白做了
+      pendingElements = stripHiddenDuplicates(extracted.elements);
     } catch (error) {
       busy = false;
       showError(`读取页面失败：${error && error.message ? error.message : error}`, null);

@@ -242,6 +242,97 @@
 .ev-generic .ev-actions { margin-top: 22px; }
 .ev-generic .ev-card-copy > span { overflow-wrap: anywhere; }
 
+/* 通用网页敬老版 · EasyView 品牌色。专用站点仍使用各自样式。 */
+.ev-ai {
+  --ev-forest: #006b7d;
+  --ev-forest-dark: #005466;
+  --ev-ink: #173b43;
+  --ev-muted: #526a70;
+  --ev-line: #cbdfe1;
+  --ev-mist: #e9f4f4;
+  --ev-paper: #fffaf5;
+  --ev-orange: #f47730;
+  background: #12343bc2;
+  color: var(--ev-ink);
+}
+.ev-ai .ev-panel {
+  width: min(100%, 820px);
+  min-height: min(80vh, 760px);
+  padding: 0 34px 30px;
+  border: 1px solid #a8cbd0;
+  border-radius: 22px;
+  background: var(--ev-paper);
+  box-shadow: none !important;
+}
+.ev-ai .ev-header {
+  display: block;
+  position: static;
+  padding: 12px 0 14px !important;
+  border-bottom: 1px solid var(--ev-line);
+  background: var(--ev-paper);
+}
+.ev-ai-topline { display: grid; grid-template-columns: 128px minmax(0, 1fr) auto; align-items: start; gap: 18px; }
+.ev-ai-brand { position: relative; display: grid; place-items: center; width: 128px; height: 128px; border-radius: 16px; background: #fff7ee; }
+.ev-ai-brand-image { display: block; width: 128px; height: 128px; object-fit: contain; }
+.ev-ai-brand-fallback { position: absolute; color: var(--ev-forest-dark); font-size: 18px; font-weight: 800; }
+.ev-ai-brand-fallback[hidden] { display: none; }
+.ev-ai .ev-exit { min-height: 46px; padding: 8px 14px; border: 1px solid #a8cbd0; border-radius: 12px; background: #fff; color: var(--ev-forest-dark); font-size: 17px; }
+.ev-ai .ev-exit:hover { background: var(--ev-mist); }
+.ev-ai-heading { min-width: 0; margin-top: 4px !important; }
+.ev-ai-site { display: inline-block; max-width: 100%; padding: 5px 11px; overflow: hidden; border-radius: 999px; background: var(--ev-mist); color: var(--ev-forest-dark); font-size: 15px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+.ev-ai .ev-header h1 { margin: 6px 0 0 !important; color: var(--ev-ink); font-size: clamp(28px, 4vw, 32px); line-height: 1.3; }
+.ev-ai .ev-header p { margin: 4px 0 0 !important; color: var(--ev-muted); font-size: 18px; line-height: 1.5; }
+.ev-ai .ev-content { padding-top: 10px !important; }
+.ev-ai-section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 2px 0 10px !important; }
+.ev-ai-section-head h2 { margin: 0; color: var(--ev-ink); font-size: 20px; font-weight: 800; }
+.ev-ai-section-head > span { color: var(--ev-muted); font-size: 16px; }
+.ev-ai .ev-actions { gap: 12px; margin-top: 0; }
+.ev-ai .ev-card {
+  min-height: 96px;
+  gap: 17px;
+  padding: 16px 19px;
+  border: 1px solid #bfd7da;
+  border-radius: 15px;
+  background: #fff;
+  color: var(--ev-ink);
+  box-shadow: none !important;
+}
+.ev-ai .ev-card:hover { border-color: var(--ev-forest); background: #f1f9f9; }
+.ev-ai .ev-card:focus-visible { outline: 4px solid var(--ev-orange); outline-offset: 3px; }
+.ev-ai .ev-card-icon { flex: 0 0 54px; width: 54px; height: 54px; border-radius: 14px; background: var(--ev-mist); color: var(--ev-forest); }
+.ev-ai .ev-card-icon svg { display: block; width: 27px; height: 27px; }
+.ev-ai .ev-card-copy { flex: 1 1 auto; min-width: 0; gap: 5px; }
+.ev-ai-card-heading { display: flex; align-items: center; flex-wrap: wrap; gap: 9px; }
+.ev-ai .ev-card-copy strong { color: inherit; font-size: 24px; line-height: 1.25; }
+.ev-ai .ev-card-copy > span:not(.ev-ai-card-heading) { color: var(--ev-muted); font-size: 18px; line-height: 1.45; }
+.ev-ai-note { display: inline-flex; align-items: center; min-height: 26px; padding: 2px 8px; border-radius: 6px; background: #fff0df; color: #824319; font-size: 14px; font-weight: 700; line-height: 1.25; }
+.ev-ai-card-arrow { flex: 0 0 auto; margin-left: 8px; color: var(--ev-forest); font-size: 27px; font-weight: 400; line-height: 1; }
+.ev-ai .ev-card.ev-ai-featured { min-height: 108px; border-color: var(--ev-forest); background: var(--ev-forest); color: #fff; box-shadow: none !important; }
+.ev-ai .ev-card.ev-ai-featured:hover { background: var(--ev-forest-dark); }
+.ev-ai .ev-card.ev-ai-featured .ev-card-icon { background: #ffffff26; color: #fff; }
+.ev-ai .ev-card.ev-ai-featured .ev-card-copy strong { color: #fff; }
+.ev-ai .ev-card.ev-ai-featured .ev-card-copy > span:not(.ev-ai-card-heading) { color: #e5f5f6; }
+.ev-ai .ev-card.ev-ai-featured .ev-ai-card-arrow { color: #fff; }
+.ev-ai-banner { margin: 0 0 16px; padding: 12px 15px; border-left: 4px solid var(--ev-orange); border-radius: 8px; background: #fff2e6; color: #80451c; font-size: 17px; line-height: 1.5; }
+.ev-ai .ev-message { color: var(--ev-muted); font-size: 19px; }
+.ev-ai .ev-error { margin-top: 12px; color: #7b2b24; }
+.ev-ai .ev-button { min-height: 58px; width: auto; padding: 12px 20px; border-radius: 12px; font-size: 19px; text-align: center; }
+.ev-ai .ev-button-primary { background: var(--ev-forest); color: #fff; }
+.ev-ai .ev-button-primary:hover { background: var(--ev-forest-dark); }
+.ev-ai .ev-button-secondary { border-color: #b6d1d4; background: #fff; color: var(--ev-forest-dark); }
+.ev-ai-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 20px; }
+.ev-ai-confirm, .ev-ai-consent { margin-top: 16px; padding: 20px; border: 1px solid var(--ev-line); border-radius: 14px; background: #fff; }
+.ev-ai-confirm p { margin: 0 0 18px; color: var(--ev-ink); font-size: 20px; line-height: 1.6; }
+.ev-ai-confirm .ev-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+.ev-ai-consent ul { margin: 10px 0 0; padding-left: 1.4em; color: var(--ev-muted); font-size: 17px; line-height: 1.7; }
+.ev-ai-preview { max-height: 260px; margin-top: 14px; overflow: auto; padding: 14px; border: 1px solid var(--ev-line); border-radius: 9px; background: var(--ev-paper); color: var(--ev-ink); font-family: Consolas, Menlo, monospace; font-size: 13px; line-height: 1.6; white-space: pre-wrap; word-break: break-all; }
+.ev-ai-foot { display: grid; gap: 4px; margin-top: 25px; padding-top: 16px; border-top: 1px solid var(--ev-line); color: var(--ev-muted); font-size: 15px; line-height: 1.6; }
+.ev-ai-foot-meta { font-size: 13px; }
+.ev-ai-foot .ev-button { justify-self: start; min-height: 42px; margin-top: 5px; padding: 5px 0; border: 0; background: transparent; color: var(--ev-forest-dark); font-size: 15px; text-align: left; text-decoration: underline; }
+.ev-ai-details { margin-top: 14px; color: var(--ev-muted); font-size: 15px; }
+.ev-ai-details summary { cursor: pointer; }
+.ev-ai-details p { margin: 8px 0 0; overflow-wrap: anywhere; }
+
 @media (max-width: 600px) {
   .ev-launcher { right: 14px; bottom: 14px; min-height: 56px; font-size: 20px; }
   .ev-overlay { padding: 10px; }
@@ -254,4 +345,22 @@
   .ev-card-icon { flex-basis: 48px; width: 48px; height: 48px; font-size: 25px; }
   .ev-card-copy strong { font-size: 22px; }
   .ev-card-copy > span { font-size: 18px; }
+  .ev-ai .ev-panel { min-height: calc(100vh - 20px); padding: 0 18px 24px; border-radius: 15px; }
+  .ev-ai .ev-header { padding: 12px 0 12px !important; }
+  .ev-ai-topline { grid-template-columns: 82px minmax(0, 1fr); gap: 8px 12px; }
+  .ev-ai-brand { grid-row: 1 / span 2; width: 82px; height: 82px; }
+  .ev-ai-brand-image { width: 82px; height: 82px; }
+  .ev-ai-topline .ev-exit { grid-column: 2; grid-row: 1; justify-self: end; }
+  .ev-ai .ev-exit { align-self: auto; min-height: 42px; padding: 7px 10px; font-size: 15px; }
+  .ev-ai-heading { grid-column: 2; grid-row: 2; margin-top: 0 !important; }
+  .ev-ai .ev-header h1 { font-size: 27px; }
+  .ev-ai .ev-header p { font-size: 17px; }
+  .ev-ai .ev-card { min-height: 88px; gap: 12px; padding: 13px 14px; }
+  .ev-ai .ev-card.ev-ai-featured { min-height: 94px; }
+  .ev-ai .ev-card-icon { flex-basis: 46px; width: 46px; height: 46px; }
+  .ev-ai .ev-card-icon svg { width: 24px; height: 24px; }
+  .ev-ai .ev-card-copy strong { font-size: 21px; }
+  .ev-ai .ev-card-copy > span:not(.ev-ai-card-heading) { font-size: 17px; }
+  .ev-ai-card-arrow { margin-left: 0; font-size: 22px; }
+  .ev-ai .ev-button { width: 100%; }
 }

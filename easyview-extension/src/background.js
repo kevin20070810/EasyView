@@ -18,6 +18,27 @@ const CONTENT_FILES = [
 ];
 globalThis.__easyviewContentFiles = CONTENT_FILES;
 
+let brandLogoBase64Promise = null;
+
+function brandLogoBase64() {
+  if (!brandLogoBase64Promise) {
+    brandLogoBase64Promise = (async () => {
+      const response = await fetch(chrome.runtime.getURL("assets/easyview-logo-v2.png"));
+      if (!response.ok) throw new Error(`Logo resource HTTP ${response.status}`);
+      const bytes = new Uint8Array(await response.arrayBuffer());
+      let binary = "";
+      for (let offset = 0; offset < bytes.length; offset += 32768) {
+        binary += String.fromCharCode(...bytes.subarray(offset, offset + 32768));
+      }
+      return btoa(binary);
+    })().catch((error) => {
+      brandLogoBase64Promise = null;
+      throw error;
+    });
+  }
+  return brandLogoBase64Promise;
+}
+
 /* ---------- 专用站点 ---------- */
 
 function dedicatedRootFor(url) {
@@ -144,6 +165,13 @@ async function analyzeViaService(bodyText, kind, useAi) {
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (!message || typeof message.type !== "string") return undefined;
+
+  if (message.type === "easyview:brand-logo") {
+    brandLogoBase64()
+      .then((base64) => sendResponse({ ok: true, base64 }))
+      .catch((error) => sendResponse({ ok: false, error: String(error) }));
+    return true;
+  }
 
   if (message.type === "easyview:analyze") {
     if (typeof message.body !== "string" || !message.body) {
