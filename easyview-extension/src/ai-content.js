@@ -978,69 +978,115 @@
    * 上还不存在（要下单后才有），所以没有硬塞，留到乘车人那一步再上。
    */
   const TRAIN_CSS = `
-    .ev-trains { display: grid; gap: 14px; }
+    /* 车次视图专用：面板加宽到 1240px。默认是 820px，
+       一排两张卡时每张只剩 390px，字就大不起来。 */
+    .ev-ai .ev-panel { width: min(100%, 1240px); }
+    /* 一排两个。 */
+    .ev-trains { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+    @media (max-width: 900px) { .ev-trains { grid-template-columns: 1fr; } }
     .ev-train {
       position: relative; overflow: hidden; box-sizing: border-box;
-      display: grid; gap: 10px; width: 100%; text-align: left;
-      padding: 18px 20px 16px; border: 0; cursor: pointer;
-      border-radius: 22px;
+      display: grid; gap: 12px; width: 100%; text-align: left;
+      padding: 26px 28px 22px; border: 0; cursor: pointer; border-radius: 26px;
       background:
-        radial-gradient(120% 90% at 8% 0%, #ffffff 0%, rgba(255,255,255,0) 58%),
-        linear-gradient(160deg, #e8f4ff 0%, #f7fbff 46%, #ffffff 100%);
-      box-shadow: 0 10px 28px rgba(23,72,124,.16), 0 2px 6px rgba(23,72,124,.08),
-                  inset 0 1px 0 rgba(255,255,255,.9);
+        radial-gradient(120% 90% at 8% 0%, #ffffff 0%, rgba(255,255,255,0) 60%),
+        linear-gradient(160deg, #eaf5ff 0%, #f8fcff 48%, #ffffff 100%);
+      box-shadow: 0 12px 30px rgba(23,72,124,.14), 0 2px 6px rgba(23,72,124,.07),
+                  inset 0 1px 0 rgba(255,255,255,.92);
       backdrop-filter: blur(14px) saturate(140%);
       -webkit-backdrop-filter: blur(14px) saturate(140%);
       color: #10314f;
-      font: 17px/1.45 "Microsoft YaHei", "PingFang SC", system-ui, sans-serif;
+      font: 20px/1.45 "Microsoft YaHei", "PingFang SC", system-ui, sans-serif;
       transition: transform .12s ease, box-shadow .12s ease;
     }
     .ev-train:hover { transform: translateY(-2px);
-      box-shadow: 0 16px 34px rgba(23,72,124,.22), 0 3px 8px rgba(23,72,124,.1),
+      box-shadow: 0 18px 38px rgba(23,72,124,.2), 0 3px 8px rgba(23,72,124,.09),
                   inset 0 1px 0 rgba(255,255,255,.95); }
-    .ev-train-head { display: flex; align-items: center; gap: 9px;
-      color: #4a7ba6; font-size: 15px; font-weight: 600; letter-spacing: .04em; }
-    .ev-train-head svg { width: 19px; height: 19px; }
-    .ev-train-code { font-size: 40px; font-weight: 800; line-height: 1.05;
+    .ev-train-code { font-size: 56px; font-weight: 800; line-height: 1;
       letter-spacing: .01em; color: #0b4f86; }
-    .ev-train-route { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
-      font-size: 24px; font-weight: 700; }
+    .ev-train-route { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap;
+      font-size: 32px; font-weight: 700; }
     .ev-train-route .ev-arrow { color: #6fa8d6; font-weight: 500; }
-    .ev-train-times { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
-      font-size: 27px; font-weight: 800; color: #0b4f86; font-variant-numeric: tabular-nums; }
-    .ev-train-times small { font-size: 16px; font-weight: 600; color: #5b7f9e; }
-    .ev-train-meta { display: flex; gap: 8px 14px; flex-wrap: wrap; align-items: center;
-      font-size: 17px; color: #43617c; }
-    .ev-train-price { font-size: 25px; font-weight: 800; color: #b3521a; }
-    .ev-train-left { padding: 3px 10px; border-radius: 999px; font-size: 15px; font-weight: 700;
+    .ev-train-times { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+      font-size: 36px; font-weight: 800; color: #0b4f86; font-variant-numeric: tabular-nums; }
+    .ev-train-times small { font-size: 19px; font-weight: 600; color: #5b7f9e; }
+    .ev-train-meta { display: flex; gap: 10px 16px; flex-wrap: wrap; align-items: center;
+      font-size: 20px; color: #43617c; }
+    .ev-train-price { font-size: 32px; font-weight: 800; color: #b3521a; }
+    .ev-train-left { padding: 5px 14px; border-radius: 999px; font-size: 19px; font-weight: 700;
       background: #e2f3e6; color: #1c6b39; }
     .ev-train-left.ev-tight { background: #fdecd8; color: #8a4a12; }
-    .ev-train-rule { height: 1px; margin: 2px 0 0;
+    .ev-train-rule { height: 1px;
       background: linear-gradient(90deg, rgba(23,72,124,.16), rgba(23,72,124,0)); }
     .ev-train-cta { display: flex; justify-content: space-between; align-items: center;
-      font-size: 18px; font-weight: 700; color: #0b5cad; }
-  `;
+      font-size: 22px; font-weight: 700; color: #0b5cad; }
 
-  function trainIcon() {
-    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"'
-      + ' stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
-      + '<rect x="5" y="2" width="14" height="17" rx="3"/>'
-      + '<path d="M5 11h14M8 6h8M8 19l-2 3m10-3 2 3M8 15h.01M16 15h.01"/></svg>';
-  }
+    /* 筛选：只用大按钮，不用下拉框、不用输入框 ——
+       老人不该为了筛个时间还得打字或者展开菜单。 */
+    .ev-trainfilter { display: flex; gap: 12px; flex-wrap: wrap; align-items: center;
+      margin: 0 0 18px; }
+    .ev-trainfilter button {
+      font: 21px/1 "Microsoft YaHei", system-ui, sans-serif;
+      padding: 15px 24px; border: 2px solid #bcd7ee; border-radius: 999px;
+      background: #fff; color: #14507f; cursor: pointer; font-weight: 700; }
+    .ev-trainfilter button:hover { border-color: #7fb2dd; background: #f2f9ff; }
+    .ev-trainfilter button.ev-on { background: #0b5cad; border-color: #0b5cad; color: #fff; }
+    .ev-trainfilter .ev-traincount { margin-left: auto; font-size: 20px; color: #4a7ba6; font-weight: 700; }
+  `;
 
   function renderTrainCards(trains) {
     ensureMount();
     const body = header("选一趟车", `这趟车有 ${trains.length} 个车次，点一下就是它。`);
 
+    const style = document.createElement("style");
+    style.textContent = TRAIN_CSS;
+    body.appendChild(style);
+
+    // ---- 筛选：只用大按钮。老人不该为了筛个时间还得打字或展开菜单 ----
+    const bar = el("div", "ev-trainfilter");
+    const count = el("span", "ev-traincount", "");
+    const FILTERS = [
+      { key: "all", label: "全部" },
+      { key: "morning", label: "上午出发" },
+      { key: "afternoon", label: "下午出发" },
+      { key: "evening", label: "晚上出发" },
+    ];
+    const pairs = [];
+
+    function matches(train, key) {
+      if (key === "all") return true;
+      const hour = Number(String(train.depart || "00:00").split(":")[0]);
+      if (Number.isNaN(hour)) return true;
+      if (key === "morning") return hour < 12;
+      if (key === "afternoon") return hour >= 12 && hour < 18;
+      return hour >= 18;
+    }
+
+    function applyFilter(key) {
+      let shown = 0;
+      for (const pair of pairs) {
+        const ok = matches(pair.train, key);
+        pair.node.style.display = ok ? "" : "none";
+        if (ok) shown += 1;
+      }
+      count.textContent = `现在显示 ${shown} 趟`;
+      for (const b of bar.querySelectorAll("button")) {
+        b.classList.toggle("ev-on", b.dataset.key === key);
+      }
+    }
+
+    for (const f of FILTERS) {
+      const b = button(f.label, () => applyFilter(f.key));
+      b.dataset.key = f.key;
+      bar.appendChild(b);
+    }
+    bar.appendChild(count);
+    body.appendChild(bar);
+
     const wrap = el("div", "ev-trains");
     for (const t of trains) {
       const card = el("button", "ev-train");
       card.type = "button";
-
-      const head = el("div", "ev-train-head");
-      head.innerHTML = trainIcon();
-      head.appendChild(el("span", "", "车次信息"));
-      card.appendChild(head);
 
       card.appendChild(el("div", "ev-train-code", t.code));
 
@@ -1063,7 +1109,7 @@
       if (t.left) {
         const tight = /无|候补/.test(t.left);
         meta.appendChild(el("span", `ev-train-left${tight ? " ev-tight" : ""}`,
-          tight ? `余票 ${t.left}` : `余票 ${t.left}`));
+          `余票 ${t.left}`));
       }
       card.appendChild(meta);
 
@@ -1084,6 +1130,7 @@
         }
       });
       wrap.appendChild(card);
+      pairs.push({ train: t, node: card });
     }
 
     // 注意别用 .ev-ai-consent 当容器 —— 那是同意页的类名，
@@ -1091,6 +1138,7 @@
     const box = el("div", "ev-ai-trainbox");
     box.appendChild(wrap);
     body.appendChild(box);
+    applyFilter("all");
 
     const foot = el("div", "ev-ai-foot");
     foot.appendChild(el("div", "", "看好了就点那一趟，我们会带您到原网页的「预订」。"));
