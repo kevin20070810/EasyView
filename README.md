@@ -1,1 +1,53 @@
-IyBFYXN5VmlldyDnroDnlYwKCkVhc3lWaWV3IOaYr+S4gOS4qiBDaHJvbWUg5omp5bGV77ya5Zyo5b2T5YmN572R6aG15o+Q5Y+W5Y+v6KeB5YWl5Y+j77yM55Sf5oiQ5bCR6YeP6Z2i5ZCR6ICB5Lq655qE5Lu75Yqh5Y2h77yM5bm25bCG55So5oi35bim5Zue5Y6f572R6aG15Yqe55CG44CC5a6D5LiN5Luj5pu/5Y6f56uZ55m75b2V44CB5LuY5qy+5oiW5o+Q5Lqk44CCCgoqKuivhOWnlOWFpeWPo++8mioqW+aJk+W8gCBFYXN5VmlldyDkvZPpqozpobVdKGh0dHBzOi8vZXYuanZkYS5vbmxpbmUvKeW5tuS4i+i9veaPkuS7tuS9k+mqjOWMheOAguWuieijhSBDaHJvbWUg5omp5bGV5ZCO77yM5Zyo5pmu6YCa572R6aG154K55Ye744CM5pWs6ICB54mI44CN5Y2z5Y+v55u05o6l5L2/55So5qih5Z6L54mI77yM5peg6ZyA5L2T6aqM56CB44CC5rWP6KeI5Zmo5a6J6KOF5q2l6aqk6KeBW+aJqeWxleivtOaYjl0oZWFzeXZpZXctZXh0ZW5zaW9uL1JFQURNRS5tZCnjgIIKCiMjIOW9k+WJjeaetuaehAoKfCDot6/lvoQgfCDkvZznlKggfAp8LS0tfC0tLXwKfCBbZWFzeXZpZXctZXh0ZW5zaW9uXShlYXN5dmlldy1leHRlbnNpb24vKSB8IOa1j+iniOWZqOWFpeWPo+OAgemhtemdouaPkOWPluOAgeS7u+WKoeWNoea4suafk+OAgeWOn+ermeWumuS9jeOAgeacl+ivu+S4juaUvuWkpyB8CnwgW2FpLXNlcnZpY2VdKGFpLXNlcnZpY2UvKSB8IOaOpeaUtuWOi+e8qeeahOmhtemdouivtOaYjuS5pu+8jOiwg+eUqOaooeWei+eUn+aIkOS7u+WKoeiNieeov++8m+WPpuaPkOS+m+emu+e6vyBgL2FuYWx5emVgIOi3r+W+hCB8CnwgW2RvY3MvZHJhZnRzL3VpLXNjaGVtYS0wLjNdKGRvY3MvZHJhZnRzL3VpLXNjaGVtYS0wLjMvKSB8IOW9k+WJjSAwLjMg5Y2P6K6u44CB5qCh6aqM5Zmo44CB5Lq65bel5qC35L6LIHwKfCBbZG9jcy9lbGVtZW50cy5zY2hlbWEuanNvbl0oZG9jcy9lbGVtZW50cy5zY2hlbWEuanNvbikgfCDpobXpnaLlhYPntKDmlbDmja7lpZHnuqYgfAp8IFtiYWNrZW5kXShiYWNrZW5kLykgfCDmnKzlnLAgZml4dHVyZSDkuI7lvIDlj5HmoKHpqozlt6XlhbfvvJvkuI3mmK/nur/kuIrmnI3liqEgfAoK6YCa55So5rWB56iL77ya54K55Ye744CM5pWs6ICB54mI44CN4oaSIOaJqeWxleivu+WPluW9k+WJjemhtemdouW5tuWOi+e8qeaIkOivtOaYjuS5piDihpIgYFBPU1QgL2RyYWZ0YCDihpIg5omp5bGV5Zyo5pys5Zyw57uR5a6a55yf5a6e5YWD57Sg44CB5qCh6aqM6aOO6Zmp5bm25riy5p+T5Y2h54mH44CC5qih5Z6L5pyN5Yqh5LiN5Y+v55So5pe277yM5omp5bGV5Y+v5YiH5o2i5pys5Zyw6KeE5YiZ54mI44CCMTIzMDYg5Y+m5pyJ6ZKI5a+56LSt56Wo5rWB56iL55qE6aG16Z2i6L6F5Yqp5Luj56CB44CCCgojIyDmnKzlnLDkvb/nlKgKCjEuIOWcqCBDaHJvbWUg55qEIGBjaHJvbWU6Ly9leHRlbnNpb25zYCDlvIDlkK/lvIDlj5HogIXmqKHlvI/vvIzliqDovb0gYGVhc3l2aWV3LWV4dGVuc2lvbi9g44CCCjIuIOaJqeWxlem7mOiupOi/nuaOpSBgaHR0cHM6Ly9ldi5qdmRhLm9ubGluZWDvvIzlhazlvIDnmoQgYC9kcmFmdGAg5o6l5Y+j5peg6ZyA5L2T6aqM56CB44CC5aaC6ZyA5pS555So5pys5Zyw5qih5Z6L5pyN5Yqh77yM5Zyo5LuT5bqT5qC555uu5b2V5a6J6KOF5L6d6LWW5bm25ZCv5Yqo77yaCgogICBgYGBwb3dlcnNoZWxsCiAgIHB5dGhvbiAtbSBwaXAgaW5zdGFsbCAtciBhaS1zZXJ2aWNlL3JlcXVpcmVtZW50cy50eHQKICAgJGVudjpFQVNZVklFV19BUElfS0VZID0gIuS9oOeahOaooeWei+WvhumSpSIKICAgcHl0aG9uIGFpLXNlcnZpY2UvYXBwLnB5IC0taG9zdCAxMjcuMC4wLjEgLS1wb3J0IDg3ODcKICAgYGBgCgozLiDmiZPlvIDmma7pgJogSFRUUChTKSDnvZHpobXvvIzngrnlh7vpobXpnaLlv6vmjbflhaXlj6PmiJbmianlsZXlm77moIfjgILmnI3liqHkuI3lj6/nlKjmiJbnuYHlv5nml7bvvIzlj6/pgInmi6nmnKzlnLDop4TliJnniYjjgIIKCuaooeWei+m7mOiupOS9v+eUqCBPcGVuQUkg5YW85a655o6l5Y+j77ybYEVBU1lWSUVXX0JBU0VfVVJMYCDlkowgYEVBU1lWSUVXX01PREVMYCDlj6/mjInmnI3liqHllYbphY3nva7jgILlr4bpkqXku4XmlL7njq/looPlj5jph4/vvIzkuI3lhpnlhaXku5PlupPjgIIKCiMjIOS6keerr+mDqOe9sgoK6KeBIFvkupHmnI3liqHlmajphY3nva5dKGFpLXNlcnZpY2UvREVQTE9ZLm1kKeOAguS6keacjeWKoeWZqOi/kOihjOeahOaYryBgYWktc2VydmljZS9g77yM5omp5bGV5LuN5a6J6KOF5Zyo55So5oi355qEIENocm9tZSDkuK3jgILmnI3liqHnq6/lj6rmjqXmlLbljovnvKnlkI7nmoTpobXpnaLmloflrZfvvJvnu5Hlrprnm67moIfkuI7po47pmannrZbnlaXlnKjmianlsZXmnKzlnLDmiafooYzjgIIKCiMjIOi+ueeVjAoKLSDljaHniYflhaXlj6PmnaXoh6rlvZPliY3pobXpnaLvvJvkuJrliqHmlbDmja7jgIHnmbvlvZXmgIHjgIHku7fmoLzlkozlj6/lip7nkIbmnaHku7bku6Xljp/nvZHpobXkuLrlh4bjgIIKLSDmianlsZXkuI3oh6rliqjnmbvlvZXjgIHku6PloavmlY/mhJ/kv6Hmga/jgIHku6Pku5jmiJbku6Pmj5DkuqTjgIIKLSDpgJrnlKjnvZHpobXnmoTor63kuYnotKjph4/kvp3otZblvZPliY3pobXpnaLnu5PmnoTkuI7mqKHlnovovpPlh7rvvJvnlJ/miJDlkI7ku43lupTmoLjlr7nljp/nq5njgIIKLSDmnKzlnLAgYGJhY2tlbmQvYCDmmK/lvIDlj5Hlt6XlhbfvvIzkupHnq6/ml6DpnIDpg6jnvbLjgIIKCi0tLQoKIyMg8J+RpSDpobnnm67lm6LpmJ8KCnwg5oiQ5ZGY5aS05YOPIHwgSUQgfCDogYzotKMgfAp8LS0tfC0tLXwtLS18CnwgWyFba2V2aW4yMDA3MDgxMF0oaHR0cHM6Ly9naXRodWIuY29tL2tldmluMjAwNzA4MTAucG5nP3NpemU9ODApXShodHRwczovL2dpdGh1Yi5jb20va2V2aW4yMDA3MDgxMCkgfCAqKmtldmluMjAwNzA4MTAqKiB8IOWQjuerryAmIOWJjeerr+W8gOWPkSB8CnwgWyFbbWFmdW1hZnU2NjZdKGh0dHBzOi8vZ2l0aHViLmNvbS9tYWZ1bWFmdTY2Ni5wbmc/c2l6ZT04MCldKGh0dHBzOi8vZ2l0aHViLmNvbS9tYWZ1bWFmdTY2NikgfCAqKm1hZnVtYWZ1NjY2KiogfCDkuqflk4HnrZbliJIgLyBVSSDop4bop4norr7orqEgLyDkuqTkupLkvJjljJYgfAp8IFshW3RldGUzNDE2XShodHRwczovL2dpdGh1Yi5jb20vdGV0ZTM0MTYucG5nP3NpemU9ODApXShodHRwczovL2dpdGh1Yi5jb20vdGV0ZTM0MTYpIHwgKip0ZXRlMzQxNioqIHwg6aG555uu562W5YiSICYg5paH5qGI562U6L6p77ya6aG555uu6LCD56CU44CB5Y+C6LWb5p2Q5paZ5pKw5YaZ44CB6Lev5ryU562U6L6p5YeG5aSHIHwK
+# EasyView 简界
+
+EasyView 是一个 Chrome 扩展：在当前网页提取可见入口，生成少量面向老人的任务卡，并将用户带回原网页办理。它不代替原站登录、付款或提交。
+
+**评委入口：**[打开 EasyView 体验页](https://ev.jvda.online/)并下载插件体验包。安装 Chrome 扩展后，在普通网页点击「敬老版」即可直接使用模型版，无需体验码。浏览器安装步骤见[扩展说明](easyview-extension/README.md)。
+
+## 当前架构
+
+| 路径 | 作用 |
+|---|---|
+| [easyview-extension](easyview-extension/) | 浏览器入口、页面提取、任务卡渲染、原站定位、朗读与放大 |
+| [ai-service](ai-service/) | 接收压缩的页面说明书，调用模型生成任务草稿；另提供离线 `/analyze` 路径 |
+| [docs/drafts/ui-schema-0.3](docs/drafts/ui-schema-0.3/) | 当前 0.3 协议、校验器、人工样例 |
+| [docs/elements.schema.json](docs/elements.schema.json) | 页面元素数据契约 |
+| [backend](backend/) | 本地 fixture 与开发校验工具；不是线上服务 |
+
+通用流程：点击「敬老版」→ 扩展读取当前页面并压缩成说明书 → `POST /draft` → 扩展在本地绑定真实元素、校验风险并渲染卡片。模型服务不可用时，扩展可切换本地规则版。12306 另有针对购票流程的页面辅助代码。
+
+## 本地使用
+
+1. 在 Chrome 的 `chrome://extensions` 开启开发者模式，加载 `easyview-extension/`。
+2. 扩展默认连接 `https://ev.jvda.online`，公开的 `/draft` 接口无需体验码。如需改用本地模型服务，在仓库根目录安装依赖并启动：
+
+   ```powershell
+   python -m pip install -r ai-service/requirements.txt
+   $env:EASYVIEW_API_KEY = "你的模型密钥"
+   python ai-service/app.py --host 127.0.0.1 --port 8787
+   ```
+
+3. 打开普通 HTTP(S) 网页，点击页面快捷入口或扩展图标。服务不可用或繁忙时，可选择本地规则版。
+
+模型默认使用 OpenAI 兼容接口；`EASYVIEW_BASE_URL` 和 `EASYVIEW_MODEL` 可按服务商配置。密钥仅放环境变量，不写入仓库。
+
+## 云端部署
+
+见 [云服务器配置](ai-service/DEPLOY.md)。云服务器运行的是 `ai-service/`，扩展仍安装在用户的 Chrome 中。服务端只接收压缩后的页面文字；绑定目标与风险策略在扩展本地执行。
+
+## 边界
+
+- 卡片入口来自当前页面；业务数据、登录态、价格和可办理条件以原网页为准。
+- 扩展不自动登录、代填敏感信息、代付或代提交。
+- 通用网页的语义质量依赖当前页面结构与模型输出；生成后仍应核对原站。
+- 本地 `backend/` 是开发工具，云端无需部署。
+
+---
+
+## 👥 项目团队
+
+| 成员头像 | ID | 职责 |
+|---|---|---|
+| [![kevin20070810](https://github.com/kevin20070810.png?size=80)](https://github.com/kevin20070810) | **kevin20070810** | 后端 & 前端开发 |
+| [![mafumafu666](https://github.com/mafumafu666.png?size=80)](https://github.com/mafumafu666) | **mafumafu666** | 产品策划 / UI 视觉设计 / 交互优化 |
+| [![tete3416](https://github.com/tete3416.png?size=80)](https://github.com/tete3416) | **tete3416** | 项目策划 & 文案答辩：项目调研、参赛材料撰写、路演答辩准备 |
